@@ -34,7 +34,7 @@ public class CoffeeShop {
     private Address address;
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
+    private String status;
     @ManyToMany
     @JoinTable(
             name = "coffee_shop_ambiance",
@@ -131,6 +131,8 @@ public class CoffeeShop {
     )
     private List<VisitTime> visitTimes;
 
+    @OneToMany
+    private List<Review> reviews;
     public void updateGalleryPhotos(List<Image> galleryPhotos) {
         this.galleryPhotos.addAll(0, galleryPhotos);
     }
