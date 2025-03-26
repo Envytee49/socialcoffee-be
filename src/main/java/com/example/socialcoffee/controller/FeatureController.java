@@ -22,8 +22,6 @@ public class FeatureController {
 
     private final CacheableService cacheableService;
 
-    // Existing POST, PUT, DELETE methods...
-
     // Ambiance GET
     @GetMapping("/ambiance")
     public ResponseEntity<ResponseMetaData> getAmbiances() {

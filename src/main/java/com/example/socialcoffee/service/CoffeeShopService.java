@@ -1,9 +1,13 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
+import com.example.socialcoffee.dto.response.SearchFilter;
+import com.example.socialcoffee.enums.CoffeeShopSort;
+import com.example.socialcoffee.enums.Distance;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.model.Address;
 import com.example.socialcoffee.model.CoffeeShop;
@@ -13,16 +17,19 @@ import com.example.socialcoffee.model.feature.*;
 import com.example.socialcoffee.repository.AddressRepository;
 import com.example.socialcoffee.repository.CoffeeShopRepository;
 import com.example.socialcoffee.repository.DescriptionEmbeddingRepository;
+import com.example.socialcoffee.repository.specification.CoffeeShopSpecification;
 import com.example.socialcoffee.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -193,5 +200,28 @@ public class CoffeeShopService {
         CoffeeShop coffeeShop = coffeeShopOptional.get();
         coffeeShop.updateGalleryPhotos(Collections.singletonList(Image.builder().url(coffeeShop.getCoverPhoto()).build()));
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShop));
+    }
+
+    public ResponseEntity<ResponseMetaData> search(CoffeeShopSearchRequest request, Pageable pageable) {
+        Specification<CoffeeShop> spec = CoffeeShopSpecification.searchCoffeeShops(request);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShopRepository.findAll(spec, pageable)));
+    }
+
+    public ResponseEntity<ResponseMetaData> getSearchFilters() {
+        SearchFilter searchFilter = new SearchFilter();
+        searchFilter.setAmbiances(cacheableService.findAmbiances().stream().map(Ambiance::getId).collect(Collectors.toList()));
+        searchFilter.setAmenities(cacheableService.findAmenities().stream().map(Amenity::getId).collect(Collectors.toList()));
+        searchFilter.setCapacities(cacheableService.findCapacities().stream().map(Capacity::getId).collect(Collectors.toList()));
+        searchFilter.setEntertainments(cacheableService.findEntertainments().stream().map(Entertainment::getId).collect(Collectors.toList()));
+        searchFilter.setParkings(cacheableService.findParkings().stream().map(Parking::getId).collect(Collectors.toList()));
+        searchFilter.setPrices(cacheableService.findPrices().stream().map(Price::getId).collect(Collectors.toList()));
+        searchFilter.setPurposes(cacheableService.findPurposes().stream().map(Purpose::getId).collect(Collectors.toList()));
+        searchFilter.setServiceTypes(cacheableService.findServiceTypes().stream().map(ServiceType::getId).collect(Collectors.toList()));
+        searchFilter.setSpaces(cacheableService.findSpaces().stream().map(Space::getId).collect(Collectors.toList()));
+        searchFilter.setSpecialties(cacheableService.findSpecialties().stream().map(Specialty::getId).collect(Collectors.toList()));
+        searchFilter.setVisitTimes(cacheableService.findVisitTimes().stream().map(VisitTime::getId).collect(Collectors.toList()));
+        searchFilter.setDistances(Arrays.stream(Distance.values()).map(Distance::getValue).collect(Collectors.toList()));
+        searchFilter.setDistances(Arrays.stream(CoffeeShopSort.values()).map(CoffeeShopSort::getValue).collect(Collectors.toList()));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), searchFilter));
     }
 }

@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.CoffeeShopService;
@@ -42,5 +43,15 @@ public class CoffeeShopController {
             Pageable pageable
     ) {
         return coffeeShopService.getAllCoffeeShop(pageable);
+    }
+
+    @GetMapping("/search-filters")
+    public ResponseEntity<ResponseMetaData> getSearchFilters() {
+        return coffeeShopService.getSearchFilters();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ResponseMetaData> searchCoffeeShop(CoffeeShopSearchRequest request, Pageable pageable) {
+        return coffeeShopService.search(request, pageable);
     }
 }
