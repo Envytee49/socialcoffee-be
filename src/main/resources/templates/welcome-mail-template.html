@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Chào Mừng AdFlex</title>
+    <style>
+        body {
+            font-family: Times New Roman, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .email-container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 20px;
+        }
+        .cta {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .cta a {
+            text-decoration: none;
+            color: white;
+            background-color: #D41616;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 15px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="content">
+        <p><i>Dear <b th:text="${fullName}">[Full Name]</b>,</i></p>
+        <p>Happy to see you on GoCoffee!</p>
+        <p>This is where you can surf, search for your desired coffee shops and join a community in building a diverse coffee shops review: </p>
+        <div class="cta">
+            <a href="http://localhost:8080" target="_blank">http://localhost:8080</a>
+        </div>
+    </div>
+    <p>------------</p>
+    <div class="footer">
+        <p>Thanks & Best regard!<br>
+        Thuan Nguyen</p>
+        <p>GoCoffee,. A start-up from a boy with passion</p>
+        <p>
+            <img src="https://ci4.googleusercontent.com/proxy/-OGu_YdAh92f2Ua8HVLIaiBWpPlSBUg8ziTPi16TbDMrx__aOJ_6TokCbe_zr8OV3A=s0-d-e1-ft#http://i.imgur.com/E4BjcCB.png" class="CToWUd" data-bit="iit">
+            nguyenvietthuan.work@gmail.com
+        </p>
+    </div>
+</div>
+</body>
+</html>

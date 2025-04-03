@@ -1,6 +1,6 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.model.feature.*;
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;

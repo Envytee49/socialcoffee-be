@@ -2,18 +2,15 @@ package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
-import com.example.socialcoffee.dto.response.CoffeeShopVM;
-import com.example.socialcoffee.dto.response.MetaDTO;
-import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.dto.response.SearchFilter;
+import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.CoffeeShopSort;
 import com.example.socialcoffee.enums.Distance;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.model.Address;
-import com.example.socialcoffee.model.CoffeeShop;
-import com.example.socialcoffee.model.DescriptionEmbedding;
-import com.example.socialcoffee.model.Image;
-import com.example.socialcoffee.model.feature.*;
+import com.example.socialcoffee.domain.Address;
+import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.DescriptionEmbedding;
+import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.AddressRepository;
 import com.example.socialcoffee.repository.CoffeeShopRepository;
 import com.example.socialcoffee.repository.DescriptionEmbeddingRepository;
@@ -22,13 +19,17 @@ import com.example.socialcoffee.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +57,8 @@ public class CoffeeShopService {
                 .longitude(req.getLongitude())
                 .latitude(req.getLatitude())
                 .build();
-        log.info("Start create coffee shop with name = {}", req.getName());
+        log.info("Start create coffee shop with name = {}",
+                 req.getName());
         Address savedAddress = addressRepository.save(address);
 
         CoffeeShop coffeeShop = new CoffeeShop();
@@ -158,7 +160,9 @@ public class CoffeeShopService {
         coffeeShop.setDescription(generateTextService.generateDescription(coffeeShop.featureToString()));
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
         generateEmbeddingDescription(saved);
-        log.info("Finish create coffee shop with name = {}, id = {}", req.getName(), coffeeShop.getId());
+        log.info("Finish create coffee shop with name = {}, id = {}",
+                 req.getName(),
+                 coffeeShop.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                       coffeeShop));
     }
@@ -194,34 +198,45 @@ public class CoffeeShopService {
 
     public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id) {
         Optional<CoffeeShop> coffeeShopOptional = coffeeShopRepository.findById(id);
-        if(coffeeShopOptional.isEmpty()) {
+        if (coffeeShopOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.BAD_REQUEST)));
         }
         CoffeeShop coffeeShop = coffeeShopOptional.get();
         coffeeShop.updateGalleryPhotos(Collections.singletonList(Image.builder().url(coffeeShop.getCoverPhoto()).build()));
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShop));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             coffeeShop));
     }
 
-    public ResponseEntity<ResponseMetaData> search(CoffeeShopSearchRequest request, Pageable pageable) {
+    public ResponseEntity<ResponseMetaData> search(CoffeeShopSearchRequest request,
+                                                   Pageable pageable) {
         Specification<CoffeeShop> spec = CoffeeShopSpecification.searchCoffeeShops(request);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShopRepository.findAll(spec, pageable)));
+        final Page<CoffeeShop> coffeeShops = coffeeShopRepository.findAll(spec,
+                                                                          pageable);
+        List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(CoffeeShopVM::toVM).toList();
+        PageDtoOut<CoffeeShopVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
+                                                              pageable.getPageSize(),
+                                                              coffeeShops.getTotalElements(),
+                                                              coffeeShopVMs);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             pageDtoOut));
     }
 
     public ResponseEntity<ResponseMetaData> getSearchFilters() {
         SearchFilter searchFilter = new SearchFilter();
-        searchFilter.setAmbiances(cacheableService.findAmbiances().stream().map(Ambiance::getId).collect(Collectors.toList()));
-        searchFilter.setAmenities(cacheableService.findAmenities().stream().map(Amenity::getId).collect(Collectors.toList()));
-        searchFilter.setCapacities(cacheableService.findCapacities().stream().map(Capacity::getId).collect(Collectors.toList()));
-        searchFilter.setEntertainments(cacheableService.findEntertainments().stream().map(Entertainment::getId).collect(Collectors.toList()));
-        searchFilter.setParkings(cacheableService.findParkings().stream().map(Parking::getId).collect(Collectors.toList()));
-        searchFilter.setPrices(cacheableService.findPrices().stream().map(Price::getId).collect(Collectors.toList()));
-        searchFilter.setPurposes(cacheableService.findPurposes().stream().map(Purpose::getId).collect(Collectors.toList()));
-        searchFilter.setServiceTypes(cacheableService.findServiceTypes().stream().map(ServiceType::getId).collect(Collectors.toList()));
-        searchFilter.setSpaces(cacheableService.findSpaces().stream().map(Space::getId).collect(Collectors.toList()));
-        searchFilter.setSpecialties(cacheableService.findSpecialties().stream().map(Specialty::getId).collect(Collectors.toList()));
-        searchFilter.setVisitTimes(cacheableService.findVisitTimes().stream().map(VisitTime::getId).collect(Collectors.toList()));
-        searchFilter.setDistances(Arrays.stream(Distance.values()).map(Distance::getValue).collect(Collectors.toList()));
-        searchFilter.setDistances(Arrays.stream(CoffeeShopSort.values()).map(CoffeeShopSort::getValue).collect(Collectors.toList()));
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), searchFilter));
+        searchFilter.setAmbiances(cacheableService.findAmbiances());
+        searchFilter.setAmenities(cacheableService.findAmenities());
+        searchFilter.setCapacities(cacheableService.findCapacities());
+        searchFilter.setEntertainments(cacheableService.findEntertainments());
+        searchFilter.setParkings(cacheableService.findParkings());
+        searchFilter.setPrices(cacheableService.findPrices());
+        searchFilter.setPurposes(cacheableService.findPurposes());
+        searchFilter.setServiceTypes(cacheableService.findServiceTypes());
+        searchFilter.setSpaces(cacheableService.findSpaces());
+        searchFilter.setSpecialties(cacheableService.findSpecialties());
+        searchFilter.setVisitTimes(cacheableService.findVisitTimes());
+        searchFilter.setDistances(Arrays.stream(Distance.values()).map(d -> new SearchFilter.DistanceDTO((long) d.ordinal(), d.getValue())).collect(Collectors.toList()));
+        searchFilter.setSorts(Arrays.stream(CoffeeShopSort.values()).map(s -> new SearchFilter.SortDTO((long) s.ordinal(), s.getValue())).collect(Collectors.toList()));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             searchFilter));
     }
 }

@@ -36,11 +36,16 @@ public class ExceptionTranslator {
         log.warn("Error", ex);
         return ResponseEntity.status(MetaData.INTERNAL_SERVER_ERROR.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INTERNAL_SERVER_ERROR), ""));
     }
-
     @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         log.warn("MissingServletRequestParameterException ", ex.getMessage());
         return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.PARAMETERS_MISSING), ""));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.warn("handleIllegalArgumentException ", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ILLEGAL_ARGUMENT, ex.getMessage()), ""));
     }
 
 //

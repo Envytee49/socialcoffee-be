@@ -5,7 +5,7 @@ import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.model.feature.*;
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.service.CacheableService;
 import com.example.socialcoffee.service.FeatureService;
 import lombok.RequiredArgsConstructor;

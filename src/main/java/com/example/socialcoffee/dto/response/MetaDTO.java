@@ -16,4 +16,9 @@ public class MetaDTO {
         this.code = metaData.getMetaCode();
         this.message = metaData.getMessage();
     }
+
+    public MetaDTO(MetaData metaData, String msg) {
+        this.code = metaData.getMetaCode();
+        this.message = String.format(metaData.getMessage(), msg);
+    }
 }

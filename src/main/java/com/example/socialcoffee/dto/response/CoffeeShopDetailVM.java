@@ -1,8 +1,8 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.model.Address;
-import com.example.socialcoffee.model.Image;
-import com.example.socialcoffee.model.feature.*;
+import com.example.socialcoffee.domain.Address;
+import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.feature.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

@@ -9,16 +9,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-//import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-//import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-//    private final CustomJwtDecoder customJwtDecoder;
-//    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomJwtDecoder customJwtDecoder;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -26,31 +26,31 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll()
-//                        .requestMatchers("/auth/**", "/purposes/**", "/tags/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/auth/**", "/purposes/**", "/tags/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-//                .oauth2ResourceServer(
-//                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
-//                                .jwt(jwtConfigurer ->
-//                                        jwtConfigurer
-//                                                .decoder(customJwtDecoder)
-//                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-//                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-//                )
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
+                                .jwt(jwtConfigurer ->
+                                        jwtConfigurer
+                                                .decoder(customJwtDecoder)
+                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
 
-//    @Bean
-//    JwtAuthenticationConverter jwtAuthenticationConverter() {
-//        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-//        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-//
-//        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-//        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
-//
-//        return jwtAuthenticationConverter;
-//    }
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+
+        return jwtAuthenticationConverter;
+    }
 
 }

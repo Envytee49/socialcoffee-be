@@ -17,7 +17,8 @@ public enum MetaData {
     ACTION_NOT_ALLOWED(1006, "Action Not Allowed"),
     METHOD_NOT_ALLOWED(1007, "Method Not Allowed"),
     MISSING_REQUEST_HEADER(1008, "Missing Request Header"),
-    NOT_FOUND(1009, "Not Found" );
+    NOT_FOUND(1009, "Not Found" ),
+    ILLEGAL_ARGUMENT(1010,"Illegal Argument: %s" );
 
     private final Integer metaCode;
     private final String message;

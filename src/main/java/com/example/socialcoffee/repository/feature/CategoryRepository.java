@@ -1,6 +1,6 @@
 package com.example.socialcoffee.repository.feature;
 
-import com.example.socialcoffee.model.feature.Category;
+import com.example.socialcoffee.domain.feature.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {

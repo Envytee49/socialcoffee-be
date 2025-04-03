@@ -4,13 +4,12 @@ import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.model.feature.*;
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
