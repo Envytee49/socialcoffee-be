@@ -36,6 +36,7 @@ dependencies {
 //    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}"
     implementation "com.google.api-client:google-api-client:2.7.0"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:3.3.2"
+    implementation "me.paulschwarz:spring-dotenv:4.0.0"
     implementation "com.sun.mail:jakarta.mail:2.0.1"
     implementation 'org.modelmapper:modelmapper:3.2.2'
     implementation 'org.hibernate:hibernate-vector:6.4.0.Final'

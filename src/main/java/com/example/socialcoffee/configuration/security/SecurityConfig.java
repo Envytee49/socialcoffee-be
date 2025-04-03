@@ -26,19 +26,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll()
-                        .requestMatchers("/auth/**", "/purposes/**", "/tags/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
-                        .anyRequest().authenticated()
+//                        .requestMatchers("/auth/**", "/purposes/**", "/tags/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
+//                        .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(
-                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
-                                .jwt(jwtConfigurer ->
-                                        jwtConfigurer
-                                                .decoder(customJwtDecoder)
-                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                )
-                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .oauth2ResourceServer(
+//                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
+//                                .jwt(jwtConfigurer ->
+//                                        jwtConfigurer
+//                                                .decoder(customJwtDecoder)
+//                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+//                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+//                )
+//                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
 

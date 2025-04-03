@@ -1,6 +1,8 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.domain.AuthProvider;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.repository.AuthProviderRepository;
 import com.example.socialcoffee.repository.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +26,7 @@ public class CacheableService {
     private final SpecialtyRepository specialtyRepository;
     private final VisitTimeRepository visitTimeRepository;
     private final PurposeRepository purposeRepository;
+    private final AuthProviderRepository authProviderRepository;
 
     @Cacheable(value = "ambiances")
     public List<Ambiance> findAmbiances() {
@@ -87,5 +90,10 @@ public class CacheableService {
     @Cacheable(value = "purposes")
     public List<Purpose> findPurposes() {
         return purposeRepository.findAll();
+    }
+
+    @Cacheable(value = "auth", key = "#authProvider")
+    public AuthProvider findProvider(String authProvider) {
+        return authProviderRepository.findByName(authProvider);
     }
 }

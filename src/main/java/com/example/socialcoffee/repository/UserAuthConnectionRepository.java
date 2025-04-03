@@ -1,0 +1,7 @@
+package com.example.socialcoffee.repository;
+
+import com.example.socialcoffee.domain.UserAuthConnection;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserAuthConnectionRepository extends JpaRepository<UserAuthConnection, Long> {
+}

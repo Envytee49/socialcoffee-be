@@ -1,5 +1,6 @@
 package com.example.socialcoffee.domain;
 
+import com.example.socialcoffee.enums.Status;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -34,10 +35,15 @@ public class Role {
     private String updatedBy;
 
     @Column(name = "status")
-    private Integer status;
+    private String status = Status.ACTIVE.getValue();
 
     @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     @JsonIgnore
     private List<User> users;
+
+    public Role(String name) {
+        this.name = name;
+        this.updatedBy = "system";
+    }
 }
 
