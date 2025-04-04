@@ -1,20 +1,18 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.constants.CommonConstant;
+import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
 import com.example.socialcoffee.dto.response.*;
-import com.example.socialcoffee.enums.CoffeeShopSort;
-import com.example.socialcoffee.enums.Distance;
-import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.domain.Address;
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.DescriptionEmbedding;
-import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.AddressRepository;
 import com.example.socialcoffee.repository.CoffeeShopRepository;
 import com.example.socialcoffee.repository.DescriptionEmbeddingRepository;
 import com.example.socialcoffee.repository.specification.CoffeeShopSpecification;
+import com.example.socialcoffee.utils.SecurityUtil;
 import com.example.socialcoffee.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -158,6 +153,14 @@ public class CoffeeShopService {
         coffeeShop.setGalleryPhotos(imageService.save(req.getGalleryPhotos()));
         coffeeShop.setCoverPhoto(cloudinaryService.upload(req.getCoverPhoto()));
         coffeeShop.setDescription(generateTextService.generateDescription(coffeeShop.featureToString()));
+        String userRole = SecurityUtil.getUserRole();
+        if(RoleEnum.ADMIN.getValue().equalsIgnoreCase(userRole)){
+            coffeeShop.setCreatedBy(CommonConstant.ADMIN_INDEX);
+            coffeeShop.setStatus(Status.ACTIVE.getValue());
+        } else {
+            coffeeShop.setStatus(Status.PENDING.getValue());
+            coffeeShop.setCreatedBy(SecurityUtil.getUserId());
+        }
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
         generateEmbeddingDescription(saved);
         log.info("Finish create coffee shop with name = {}, id = {}",
@@ -238,5 +241,42 @@ public class CoffeeShopService {
         searchFilter.setSorts(Arrays.stream(CoffeeShopSort.values()).map(s -> new SearchFilter.SortDTO((long) s.ordinal(), s.getValue())).collect(Collectors.toList()));
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              searchFilter));
+    }
+
+    @Transactional
+    public void updateCoffeeShopStatus(Long shopId, String newStatus) {
+        CoffeeShop coffeeShop = findPendingCoffeeShop(shopId);
+        coffeeShop.setStatus(newStatus);
+        coffeeShopRepository.save(coffeeShop);
+    }
+
+    private CoffeeShop findPendingCoffeeShop(Long shopId) {
+        CoffeeShop coffeeShop = coffeeShopRepository.findById(shopId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coffee shop not found with id: " + shopId));
+
+        if (!CoffeeShop.Status.PENDING.getValue().equals(coffeeShop.getStatus())) {
+            throw new BusinessException("Can only approve or reject coffee shops with PENDING status");
+        }
+
+        return coffeeShop;
+    }
+
+
+
+    public Page<CoffeeShopDTO> findCoffeeShops(String name, String status, Pageable pageable) {
+        String statusValue = StringUtils.isBlank(status) ? status : null;
+
+        Page<CoffeeShop> coffeeShops;
+        if (name != null && statusValue != null) {
+            coffeeShops = coffeeShopRepository.findByNameContainingIgnoreCaseAndStatus(name, statusValue, pageable);
+        } else if (name != null) {
+            coffeeShops = coffeeShopRepository.findByNameContainingIgnoreCase(name, pageable);
+        } else if (statusValue != null) {
+            coffeeShops = coffeeShopRepository.findByStatus(statusValue, pageable);
+        } else {
+            coffeeShops = coffeeShopRepository.findAll(pageable);
+        }
+
+        return coffeeShops.map(coffeeShopMapper::toCoffeeShopDTO);
     }
 }

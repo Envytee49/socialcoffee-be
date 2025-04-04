@@ -42,4 +42,8 @@ public class Review {
         this.comment = comment;
         this.images = images;
     }
+
+    public void addImages(List<Image> newImages) {
+        this.images.addAll(newImages);
+    }
 }

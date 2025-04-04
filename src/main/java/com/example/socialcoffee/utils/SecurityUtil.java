@@ -17,6 +17,10 @@ public class SecurityUtil {
         return extractPrincipal().getClaimAsLong("userId");
     }
 
+    public String getUserRole() {
+        return extractPrincipal().getClaimAsString("role");
+    }
+
     // SecurityContextHolder.getContext().getAuthentication() could not be null
     // since to get to this method authentication must have been set
     private Jwt extractPrincipal() {

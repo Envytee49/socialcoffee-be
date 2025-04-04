@@ -1,4 +1,4 @@
-package com.example.socialcoffee.dto.response;
+package com.example.socialcoffee.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

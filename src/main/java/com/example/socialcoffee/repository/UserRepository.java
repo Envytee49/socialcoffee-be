@@ -1,6 +1,8 @@
 package com.example.socialcoffee.repository;
 
 import com.example.socialcoffee.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,4 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.email = :email and u.status = :status")
     Optional<User> findByEmailAndStatus(@Param("email") String email,
                                         @Param("status") String status);
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findByUserId(Long id);
+
+    Page<User> findByUsernameOrNameOrDisplayNameContainingIgnoreCase(String name, Pageable pageable);
 }

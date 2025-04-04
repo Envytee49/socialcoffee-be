@@ -1,40 +1,27 @@
 package com.example.socialcoffee.dto.request;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Objects;
 
 @Setter
+@Getter
 public class EditReviewRequest {
 
+    private Integer rating;
+    private String title;
     private String content;
-    private String sub_comment_id;
-    private Boolean is_delete_resource = false;
-    private MultipartFile resource;
+    private String subCommentId;
+    private List<EditReviewImage> editReviewImages;
+    private MultipartFile[] resources;
     private String resource_sizes;
 
-    public String getContent() {
-        return StringUtils.trimToEmpty(content);
-    }
-
-    public String getSubCommentID() {
-        return sub_comment_id;
-    }
-
-    public Boolean getIsDeleteResource() {
-        return Objects.nonNull(is_delete_resource) ? is_delete_resource : false;
-    }
-
-    public MultipartFile getResource() {
-        return resource;
-    }
-
-    public String getResourceSizes() {
-        return StringUtils.trimToEmpty(resource_sizes);
-    }
-
-    public String getSecondSubCommentId() {
-        return this.second_sub_comment_id;
+    @Getter
+    public static class EditReviewImage {
+        private Long id;
+        private Boolean isDeleteResource = false;
     }
 }

@@ -36,7 +36,7 @@ public class JwtService {
     private long refreshExpireLengthInSeconds;
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
-    @Value("${redis.prefix}")
+    @Value("${spring.redis.prefix-key}")
     private String redisPrefix;
 
     public String generateToken(JWTClaimsSet jwtClaimsSet, String tokenPrefix, long expireLength) {

@@ -7,6 +7,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @Getter
 public class RedisConfig {
-    @Value("${redis.prefix}")
+    @Value("${spring.redis.prefix-key}")
     private String redisPrefix;
 }

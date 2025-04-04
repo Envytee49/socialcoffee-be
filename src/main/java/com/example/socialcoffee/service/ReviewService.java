@@ -4,11 +4,16 @@ import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.domain.Image;
 import com.example.socialcoffee.domain.Review;
 import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.dto.request.PageDtoIn;
-import com.example.socialcoffee.dto.response.*;
+import com.example.socialcoffee.dto.request.EditReviewRequest;
+import com.example.socialcoffee.dto.common.PageDtoIn;
+import com.example.socialcoffee.dto.response.MetaDTO;
+import com.example.socialcoffee.dto.common.PageDtoOut;
+import com.example.socialcoffee.dto.response.ResponseMetaData;
+import com.example.socialcoffee.dto.response.ReviewVM;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.repository.CoffeeShopRepository;
+import com.example.socialcoffee.repository.ImageRepository;
 import com.example.socialcoffee.repository.ReviewRepository;
 import com.example.socialcoffee.repository.UserRepository;
 import com.example.socialcoffee.utils.SecurityUtil;
@@ -20,8 +25,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,6 +41,7 @@ public class ReviewService {
     private final ImageService imageService;
     private final CoffeeShopRepository coffeeShopRepository;
     private final ReviewRepository reviewRepository;
+    private final ImageRepository imageRepository;
 
     public ResponseEntity<ResponseMetaData> uploadReview(Long shopId, Integer rating, String title,
                                                          String content, Boolean isAnonymous, MultipartFile[] file, Long parentId) {
@@ -84,5 +92,33 @@ public class ReviewService {
                 reviews.getTotalElements(),
                 reviewVMS);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
+    }
+
+    public ResponseEntity<ResponseMetaData> editReview(Long shopId, Long reviewId, EditReviewRequest editReviewRequest) {
+        Review review = reviewRepository.findByIdAndCoffeeShopIdAndStatus(reviewId, shopId, Status.ACTIVE.getValue());
+        if (Objects.isNull(review)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        }
+        List<Image> newImages = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(editReviewRequest.getEditReviewImages())) {
+            List<Long> editReviewImageIds = editReviewRequest.getEditReviewImages()
+                    .stream()
+                    .filter(EditReviewRequest.EditReviewImage::getIsDeleteResource)
+                    .map(EditReviewRequest.EditReviewImage::getId)
+                    .toList();
+            List<Image> deletedImages = imageRepository.findAllById(editReviewImageIds);
+            deletedImages.forEach(image -> image.setStatus(Status.INACTIVE.getValue()));
+            imageRepository.saveAll(deletedImages);
+        }
+        if(Objects.nonNull(editReviewRequest.getResources()) && editReviewRequest.getResources().length > 0) {
+            newImages = imageService.save(editReviewRequest.getResources());
+        }
+
+        review.setTitle(editReviewRequest.getTitle());
+        review.setComment(editReviewRequest.getContent());
+        review.setRating(editReviewRequest.getRating());
+        review.addImages(newImages);
+        reviewRepository.save(review);
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 }

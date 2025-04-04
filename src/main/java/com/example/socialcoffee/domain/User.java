@@ -1,5 +1,7 @@
 package com.example.socialcoffee.domain;
 
+import com.example.socialcoffee.dto.response.UserDTO;
+import com.example.socialcoffee.mapper.UserMapper;
 import com.example.socialcoffee.model.FacebookUserInfo;
 import com.example.socialcoffee.model.GoogleUserInfo;
 import com.example.socialcoffee.enums.Status;
@@ -19,7 +21,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User {
+public class User implements UserMapper {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -74,5 +76,10 @@ public class User {
 
     public void addReview(Review review) {
         this.reviews.add(review);
+    }
+
+    @Override
+    public UserDTO toUserDTO(User user) {
+        return new UserDTO(user);
     }
 }

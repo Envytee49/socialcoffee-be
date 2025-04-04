@@ -1,7 +1,7 @@
 package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.dto.request.EditReviewRequest;
-import com.example.socialcoffee.dto.request.PageDtoIn;
+import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.ReviewService;
@@ -51,5 +51,6 @@ public class ReviewController {
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
         return reviewService.deleteReview(reviewId);
     }
+
 
 }

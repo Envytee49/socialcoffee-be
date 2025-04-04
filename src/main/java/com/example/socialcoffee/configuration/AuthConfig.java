@@ -15,5 +15,7 @@ public class AuthConfig {
     private String clientSecret;
     @Value("${app.security.user-facebook-api}")
     private String userFacebookApi;
+    @Value("${spring.redis.prefix-key}")
+    private String prefixRedisKey;
 
 }

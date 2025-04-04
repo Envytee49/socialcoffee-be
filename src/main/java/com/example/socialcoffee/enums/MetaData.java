@@ -7,6 +7,7 @@ public enum MetaData {
     INTERNAL_SERVER_ERROR(500, "Interal Server Error"),
     BAD_REQUEST(400, "Bad Request"),
     SUCCESS(200, "Success"),
+    SERVICE_UNAVAILABLE(503, "Service Unavailable"),
 
     PARAMETERS_MISSING(1000, "Parameters Missing"),
     HTTP_MEDIA_TYPE_NOT_SUPPORTED(1001, "HTTP Media Type Not Supported"),
@@ -22,11 +23,19 @@ public enum MetaData {
     NOT_REGISTERED(1011, "You are not registered in the system"),
     ALREADY_REGISTER(1012, "You already registerd with this account"),
     FACEBOOK_ERROR(1013, "Facebook Service Is Currently Down"),
-    GOOGLE_ERROR(1014, "Google Service Is Currently Down" ),
+    GOOGLE_ERROR(1014, "Google Service Is Currently Down"),
     CONTENT_AND_FILE_MISSING(4758, "Content and files are missing"),
     EXCEED_MAX_LENGTH_COMMENT_POST(4095, "The comment of post exceed %s characters"),
-    EXCEED_MAX_LENGTH_COMMENT_POST(4095, "The comment of post exceed %s characters"),
-    FILE_EXTENSION_NOT_ACCEPTED(4964, "File extension not accepted");
+    FILE_EXTENSION_NOT_ACCEPTED(4964, "File extension not accepted"),
+    PASSWORD_INVALID(4660, "Password must contain at least 8 characters, at least one lowercase letter, one uppercase letter, one numeric digit, and one special character"),
+    PASSWORD_MISSING(4764, "Password is missing"),
+    PASSWORD_INCORRECT(4090, "Login password is incorrect"),
+    PASSWORD_ALREADY_USED(4091, "The new password is the same as one of your three previous passwords. Please enter a new ones"),
+    YOU_DO_NOT_HAVE_RIGHTS(4019, "You do not have rights to do this action"),
+    ALREADY_FOLLOWING(4020, "You already followed this user"),
+    NOT_FOLLOWING(4021, "You are not following this user"),
+    ;
+
 
     private final Integer metaCode;
     private final String message;

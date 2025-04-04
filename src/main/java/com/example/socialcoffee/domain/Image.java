@@ -1,10 +1,8 @@
 package com.example.socialcoffee.domain;
 
+import com.example.socialcoffee.enums.Status;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Table(name = "images")
 @Entity
@@ -12,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,4 +20,5 @@ public class Image {
     private double width;
     private double height;
     private double size;
+    private String status = Status.ACTIVE.getValue();
 }

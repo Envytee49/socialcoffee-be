@@ -1,4 +1,4 @@
-package com.example.socialcoffee.dto.request;
+package com.example.socialcoffee.dto.common;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

@@ -35,6 +35,7 @@ public class CoffeeShop {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     private String status;
+    private Long createdBy;
     @ManyToMany
     @JoinTable(
             name = "coffee_shop_ambiance",

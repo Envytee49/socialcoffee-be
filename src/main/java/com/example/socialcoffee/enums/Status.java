@@ -8,7 +8,8 @@ public enum Status {
     INACTIVE("inactive"),
     APPROVED("approved"),
     REJECTED("rejected"),
-    REPORTED("reported");
+    REPORTED("reported"),
+    PENDING("pending");
     private final String value;
 
     Status(final String value) {
