@@ -13,17 +13,8 @@ public class SecurityUtil {
         return extractPrincipal().getSubject();
     }
 
-    public Integer getUserAttendanceId() {
-        Object attendanceId = extractPrincipal().getClaim("attendanceId");
-        if (attendanceId instanceof Long longVal)
-            return longVal.intValue();
-        else if (attendanceId instanceof String stringVal)
-            return Integer.parseInt(stringVal);
-        return null;
-    }
-
-    public String getDirectLead() {
-        return extractPrincipal().getClaimAsString("directLead");
+    public Long getUserId() {
+        return extractPrincipal().getClaimAsLong("userId");
     }
 
     // SecurityContextHolder.getContext().getAuthentication() could not be null

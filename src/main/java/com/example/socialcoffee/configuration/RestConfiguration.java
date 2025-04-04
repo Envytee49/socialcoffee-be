@@ -8,10 +8,10 @@ import org.springframework.http.MediaType;
 @Configuration
 public class RestConfiguration {
     @Bean
-    public HttpHeaders defaultHeaders(ConfigResource configResource) {
+    public HttpHeaders defaultHeaders(OllamaConfig ollamaConfig) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(configResource.getApiKey());
+        headers.setBearerAuth(ollamaConfig.getApiKey());
         return headers;
     }
 }

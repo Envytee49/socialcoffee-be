@@ -20,30 +20,30 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/coffee-shops")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Validated
 public class CoffeeShopController {
 
     private final CoffeeShopService coffeeShopService;
 
-    @GetMapping("/recommendation")
+    @GetMapping("/coffee-shops/recommendation")
     public ResponseEntity<ResponseMetaData> getRecommendation(@RequestParam String prompt) {
         return coffeeShopService.getRecommendation(prompt);
     }
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping(value = "/coffee-shops", consumes = "multipart/form-data")
     public ResponseEntity<ResponseMetaData> createCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request) {
         return coffeeShopService.createCoffeeShop(request);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/coffee-shops/{id}")
     public ResponseEntity<ResponseMetaData> getCoffeeShopById(@PathVariable Long id) {
         return coffeeShopService.getCoffeeShopById(id);
     }
 
 
-    @GetMapping("")
+    @GetMapping("/coffee-shops")
     public ResponseEntity<ResponseMetaData> getAllCoffeeShop(
             Pageable pageable
     ) {
@@ -58,7 +58,6 @@ public class CoffeeShopController {
     @GetMapping("/search")
     public ResponseEntity<ResponseMetaData> searchCoffeeShop(CoffeeShopSearchRequest request, PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize(),
-
                                            Sort.unsorted());
         return coffeeShopService.search(request, pageable);
     }

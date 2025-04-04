@@ -1,16 +1,16 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.configuration.AuthConfig;
 import com.example.socialcoffee.domain.AuthProvider;
+import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserAuthConnection;
-import com.example.socialcoffee.dto.response.GoogleUserResponse;
+import com.example.socialcoffee.enums.*;
+import com.example.socialcoffee.model.FacebookUserInfo;
+import com.example.socialcoffee.model.GoogleUserInfo;
 import com.example.socialcoffee.dto.response.JwtTokenResponse;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.enums.AuthAction;
-import com.example.socialcoffee.enums.AuthProviderEnum;
-import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.repository.AuthProviderRepository;
 import com.example.socialcoffee.repository.UserAuthConnectionRepository;
 import com.example.socialcoffee.repository.UserRepository;
@@ -28,8 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -40,28 +50,24 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
-    private final AuthProviderRepository authProviderRepository;
+    private final CacheableService cacheableService;
     //    private final StringRedis redisTemplate;
 //    private final MailService mailService;
 //    @Value("#{'${email.list}'.split(',')}")
 //    private List<String> ccList;
-    @Value("${oauth2.client.registration.google.userinfo-endpoint}")
-    private String userInfoEndpoint;
-    @Value("${oauth2.client.registration.google.client-id}")
-    private String clientId;
-    @Value("${oauth2.client.registration.google.client-secret}")
-    private String clientSecret;
-    @Value("${redis.prefix}")
-    private String redisPrefix;
+    private final AuthConfig authConfig;
+    private final GoogleService googleService;
+    private final FacebookService facebookService;
 
     public ResponseEntity<ResponseMetaData> authWithGoogle(String code, String redirectUri, String authAction) {
         try {
-            NetHttpTransport transport = new NetHttpTransport();
-            String accessToken = getGoogleAccessToken(code, transport, redirectUri);
-            GoogleUserResponse userInfo = getUserInfoFromGoogle(accessToken, transport);
+            GoogleUserInfo userInfo = googleService.getUserInfoFromGoogle(code, redirectUri);
+            if(Objects.isNull(userInfo))
+                return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.GOOGLE_ERROR)));
+
             Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(), Status.ACTIVE.getValue());
-            if(AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
-                if(optionalUser.isEmpty()) {
+            if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
+                if (optionalUser.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
                 }
                 User user = optionalUser.get();
@@ -70,23 +76,57 @@ public class AuthService {
                 String jwtToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                     new JwtTokenResponse(jwtToken,
-                                                                                          refreshToken)));
-            }
-            else {
-                if(optionalUser.isPresent()) {
+                        new JwtTokenResponse(jwtToken,
+                                refreshToken)));
+            } else {
+                if (optionalUser.isPresent()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
                 }
+                Role role = cacheableService.findRole(RoleEnum.USER.getValue());
                 User user = new User(userInfo);
+                user.setRoles(List.of(role));
                 user = userRepository.save(user);
-                AuthProvider authProvider = authProviderRepository.findByName(AuthProviderEnum.GOOGLE.getValue());
+                AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.GOOGLE.getValue());
                 UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
-                                                                               authProvider.getId());
+                        authProvider.getId());
                 userAuthConnectionRepository.save(userAuthConnection);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
             }
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public ResponseEntity<ResponseMetaData> authWithFacebook(String accessToken, String authAction) {
+        FacebookUserInfo userInfo = facebookService.getUserInfoFromFacebook(accessToken);
+        if (Objects.isNull(userInfo))
+            return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.FACEBOOK_ERROR)));
+        Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(), Status.ACTIVE.getValue());
+        if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
+            }
+            User user = optionalUser.get();
+            user.setProfilePhoto(userInfo.getPictureUrl());
+            user = userRepository.save(user);
+            String jwtToken = jwtService.generateAccessToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                    new JwtTokenResponse(jwtToken,
+                            refreshToken)));
+        } else {
+            if (optionalUser.isPresent()) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
+            }
+            Role role = cacheableService.findRole(RoleEnum.USER.getValue());
+            User user = new User(userInfo);
+            user.setRoles(List.of(role));
+            user = userRepository.save(user);
+            AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.FACEBOOK.getValue());
+            UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
+                    authProvider.getId());
+            userAuthConnectionRepository.save(userAuthConnection);
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
         }
     }
 
@@ -110,29 +150,6 @@ public class AuthService {
 //        redisTemplate.delete(redisPrefix + REFRESH_TOKEN_PREFIX + SecurityUtil.getUserEmail());
 //    }
 
-    private String getGoogleAccessToken(String code, NetHttpTransport transport, String redirectUri) throws IOException {
-        String accessToken;
-        GsonFactory gsonFactory = new GsonFactory();
-        accessToken = new GoogleAuthorizationCodeTokenRequest(
-                transport,
-                gsonFactory,
-                clientId,
-                clientSecret,
-                code,
-                redirectUri
-        ).execute().getAccessToken();
-        return accessToken;
-    }
-
-    private GoogleUserResponse getUserInfoFromGoogle(String accessToken, NetHttpTransport transport) throws IOException {
-        Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod()).setAccessToken(accessToken);
-        HttpRequest request = transport
-                .createRequestFactory(credential)
-                .buildGetRequest(new GenericUrl(userInfoEndpoint));
-        HttpResponse response = request.execute();
-        String userInfoResponse = response.parseAsString();
-        return objectMapper.readValue(userInfoResponse, GoogleUserResponse.class);
-    }
 
 //    private void sendWelcomeEmail(User user) {
 //        String subject = "WELCOME TO GOCOFFEE";

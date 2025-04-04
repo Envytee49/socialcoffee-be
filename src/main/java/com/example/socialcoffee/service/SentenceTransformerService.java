@@ -1,6 +1,6 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.configuration.ConfigResource;
+import com.example.socialcoffee.configuration.OllamaConfig;
 import com.example.socialcoffee.dto.request.EmbedRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +20,12 @@ import java.util.Objects;
 @Slf4j
 public class SentenceTransformerService {
     private final RestTemplate restTemplate;
-    private final ConfigResource configResource;
+    private final OllamaConfig ollamaConfig;
     private final HttpHeaders defaultHeaders;
     public Float[] generateEmbeddingDescription(String description) {
         if (Objects.isNull(description)) return null;
         log.info("Start generating embedding description");
-        String embeddingUrl = configResource.getEmbeddingUrl() + configResource.getEmbeddingModel();
+        String embeddingUrl = ollamaConfig.getEmbeddingUrl() + ollamaConfig.getEmbeddingModel();
         EmbedRequest embedRequest = new EmbedRequest(description);
 
         // Retry parameters

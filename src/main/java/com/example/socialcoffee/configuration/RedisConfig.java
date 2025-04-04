@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @Getter
-public class ConfigResource {
-    @Value("${app.posts.max-length-comment}")
-    private Integer maxLengthCommentPost;
+public class RedisConfig {
+    @Value("${redis.prefix}")
+    private String redisPrefix;
 }

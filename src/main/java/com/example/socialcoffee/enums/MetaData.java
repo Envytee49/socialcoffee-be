@@ -17,10 +17,16 @@ public enum MetaData {
     ACTION_NOT_ALLOWED(1006, "Action Not Allowed"),
     METHOD_NOT_ALLOWED(1007, "Method Not Allowed"),
     MISSING_REQUEST_HEADER(1008, "Missing Request Header"),
-    NOT_FOUND(1009, "Not Found" ),
-    ILLEGAL_ARGUMENT(1010,"Illegal Argument: %s" ),
+    NOT_FOUND(1009, "Not Found"),
+    ILLEGAL_ARGUMENT(1010, "Illegal Argument: %s"),
     NOT_REGISTERED(1011, "You are not registered in the system"),
-    ALREADY_REGISTER(1012,"You already registerd with this account");
+    ALREADY_REGISTER(1012, "You already registerd with this account"),
+    FACEBOOK_ERROR(1013, "Facebook Service Is Currently Down"),
+    GOOGLE_ERROR(1014, "Google Service Is Currently Down" ),
+    CONTENT_AND_FILE_MISSING(4758, "Content and files are missing"),
+    EXCEED_MAX_LENGTH_COMMENT_POST(4095, "The comment of post exceed %s characters"),
+    EXCEED_MAX_LENGTH_COMMENT_POST(4095, "The comment of post exceed %s characters"),
+    FILE_EXTENSION_NOT_ACCEPTED(4964, "File extension not accepted");
 
     private final Integer metaCode;
     private final String message;

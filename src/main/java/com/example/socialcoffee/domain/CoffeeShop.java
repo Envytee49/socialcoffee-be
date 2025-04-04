@@ -131,8 +131,12 @@ public class CoffeeShop {
     )
     private List<VisitTime> visitTimes;
 
-//    @OneToMany
-//    private List<Review> reviews;
+    @OneToMany
+    private List<Review> reviews;
+
+    public void addReview(Review review) {
+        this.reviews.add(review);
+    }
     public void updateGalleryPhotos(List<Image> galleryPhotos) {
         this.galleryPhotos.addAll(0, galleryPhotos);
     }

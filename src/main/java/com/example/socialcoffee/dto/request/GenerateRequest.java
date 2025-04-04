@@ -1,6 +1,6 @@
 package com.example.socialcoffee.dto.request;
 
-import com.example.socialcoffee.configuration.ConfigResource;
+import com.example.socialcoffee.configuration.OllamaConfig;
 import com.example.socialcoffee.dto.common.Message;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -25,8 +25,8 @@ public class GenerateRequest {
         this.stream = false;
     }
 
-    public static  GenerateRequest getDefaultMessage(ConfigResource configResource, String message) {
-        return new GenerateRequest(configResource.getGeneratingModel(),
+    public static  GenerateRequest getDefaultMessage(OllamaConfig ollamaConfig, String message) {
+        return new GenerateRequest(ollamaConfig.getGeneratingModel(),
                                    new Message("user", message));
     }
 

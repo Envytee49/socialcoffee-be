@@ -1,11 +1,11 @@
-package com.example.socialcoffee.dto.response;
+package com.example.socialcoffee.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class GoogleUserResponse {
+public class GoogleUserInfo {
     private String sub;
     private String name;
     private String givenName;

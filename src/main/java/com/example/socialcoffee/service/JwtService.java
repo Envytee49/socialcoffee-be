@@ -21,8 +21,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.socialcoffee.utils.Constants.REFRESH_TOKEN_PREFIX;
-import static com.example.socialcoffee.utils.Constants.TOKEN_PREFIX;
+import static com.example.socialcoffee.constants.CommonConstant.REFRESH_TOKEN_PREFIX;
+import static com.example.socialcoffee.constants.CommonConstant.TOKEN_PREFIX;
 
 @Service
 @Slf4j
@@ -59,7 +59,7 @@ public class JwtService {
     }
 
     public String generateAccessToken(final User user) {
-        JWTClaimsSet jwtClaimsSet = buildBaseJwtClaimsSet(user.getEmail(), expireLengthInSeconds)
+        JWTClaimsSet jwtClaimsSet = buildBaseJwtClaimsSet(user, expireLengthInSeconds)
                 .claim("scope", getRoleList(user))
                 .build();
 
@@ -67,14 +67,15 @@ public class JwtService {
     }
 
     public String generateRefreshToken(final User user) {
-        JWTClaimsSet jwtClaimsSet = buildBaseJwtClaimsSet(user.getEmail(), refreshExpireLengthInSeconds).build();
+        JWTClaimsSet jwtClaimsSet = buildBaseJwtClaimsSet(user, refreshExpireLengthInSeconds).build();
         return generateToken(jwtClaimsSet, REFRESH_TOKEN_PREFIX, refreshExpireLengthInSeconds);
     }
 
-    private JWTClaimsSet.Builder buildBaseJwtClaimsSet(String subject, long expireLength) {
+    private JWTClaimsSet.Builder buildBaseJwtClaimsSet(User user, long expireLength) {
         return new JWTClaimsSet.Builder()
                 .issueTime(new Date())
-                .subject(subject)
+                .subject(user.getEmail())
+                .claim("userId", user.getId())
                 .expirationTime(Date.from(Instant.now().plusSeconds(expireLength)));
     }
 

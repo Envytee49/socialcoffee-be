@@ -1,6 +1,7 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.dto.request.GoogleLoginRequest;
+import com.example.socialcoffee.dto.request.FacebookAuthRequest;
+import com.example.socialcoffee.dto.request.GoogleAuthRequest;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.AuthAction;
 import com.example.socialcoffee.service.AuthService;
@@ -17,23 +18,28 @@ public class AuthController {
 
     private final AuthService authService;
 
-//    @GetMapping("/url")
-//    public ResponseEntity<ResponseMetaData> auth(@RequestParam("redirect_uri") String redirectUri) {
-//        return authService.getGoogleAuthorizationCodeRequestUrl(redirectUri);
-//    }
-
     @PostMapping("/google/login")
-    public ResponseEntity<ResponseMetaData> loginWithGoogle(@RequestBody GoogleLoginRequest request) {
+    public ResponseEntity<ResponseMetaData> loginWithGoogle(@RequestBody GoogleAuthRequest request) {
         return authService.authWithGoogle(request.getCode(),
-                                          request.getRedirectUrl(),
-                                          AuthAction.LOGIN.getValue());
+                request.getRedirectUrl(),
+                AuthAction.LOGIN.getValue());
     }
 
     @PostMapping("/google/register")
-    public ResponseEntity<ResponseMetaData> registerWithGoogle(@RequestBody GoogleLoginRequest request) {
+    public ResponseEntity<ResponseMetaData> registerWithGoogle(@RequestBody GoogleAuthRequest request) {
         return authService.authWithGoogle(request.getCode(),
-                                          request.getRedirectUrl(),
-                                          AuthAction.REGISTER.getValue());
+                request.getRedirectUrl(),
+                AuthAction.REGISTER.getValue());
+    }
+
+    @PostMapping("/facebook/login")
+    public ResponseEntity<ResponseMetaData> loginWithFacebook(@RequestBody FacebookAuthRequest request) {
+        return authService.authWithFacebook(request.getAccessToken(), AuthAction.LOGIN.getValue());
+    }
+
+    @PostMapping("/facebook/register")
+    public ResponseEntity<ResponseMetaData> registerWithFacebook(@RequestBody FacebookAuthRequest request) {
+        return authService.authWithFacebook(request.getAccessToken(), AuthAction.REGISTER.getValue());
     }
 
 //    @PostMapping("/refresh")

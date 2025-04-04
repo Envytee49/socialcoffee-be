@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 
-import static com.example.socialcoffee.utils.Constants.TOKEN_PREFIX;
+import static com.example.socialcoffee.constants.CommonConstant.TOKEN_PREFIX;
 
 @Component
 @RequiredArgsConstructor

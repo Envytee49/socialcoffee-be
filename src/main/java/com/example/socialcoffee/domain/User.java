@@ -1,13 +1,16 @@
 package com.example.socialcoffee.domain;
 
-import com.example.socialcoffee.dto.response.GoogleUserResponse;
+import com.example.socialcoffee.model.FacebookUserInfo;
+import com.example.socialcoffee.model.GoogleUserInfo;
 import com.example.socialcoffee.enums.Status;
+import com.example.socialcoffee.utils.DateTimeUtil;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,6 +29,8 @@ public class User {
     private String email;
     private String password;
     private String phone;
+    private LocalDate dob;
+    private String gender;
     @OneToOne
     private Address address;
     private String bio;
@@ -49,11 +54,25 @@ public class User {
     @OneToMany
     private List<Collection> collections;
 
-    public User(GoogleUserResponse info) {
+    public User(GoogleUserInfo info) {
         this.displayName = info.getName();
         this.username = info.getName();
         this.name = info.getName();
         this.profilePhoto = info.getPicture();
         this.email = info.getEmail();
+    }
+
+    public User(FacebookUserInfo info) {
+        this.displayName = info.getName();
+        this.username = info.getName();
+        this.name = info.getName();
+        this.profilePhoto = info.getPictureUrl();
+        this.gender = info.getGender();
+        this.dob = DateTimeUtil.convertStringToLocalDate(info.getBirthday());
+        this.email = info.getEmail();
+    }
+
+    public void addReview(Review review) {
+        this.reviews.add(review);
     }
 }

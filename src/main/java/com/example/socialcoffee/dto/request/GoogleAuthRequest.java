@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GoogleLoginRequest {
+public class GoogleAuthRequest {
     private String code;
     @JsonProperty("redirect_url")
     private String redirectUrl;
