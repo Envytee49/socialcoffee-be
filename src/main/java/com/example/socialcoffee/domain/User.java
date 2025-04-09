@@ -21,7 +21,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User implements UserMapper {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -78,8 +78,7 @@ public class User implements UserMapper {
         this.reviews.add(review);
     }
 
-    @Override
-    public UserDTO toUserDTO(User user) {
-        return new UserDTO(user);
+    public UserDTO toUserDTO() {
+        return new UserDTO(this);
     }
 }

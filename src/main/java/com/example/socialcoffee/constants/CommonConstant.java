@@ -1,6 +1,8 @@
 package com.example.socialcoffee.constants;
 
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 public interface CommonConstant {
     String TOKEN_PREFIX = "TOKEN_";
     String REFRESH_TOKEN_PREFIX = "REFRESH_TOKEN_";

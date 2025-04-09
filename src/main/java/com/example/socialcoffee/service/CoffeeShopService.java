@@ -13,9 +13,10 @@ import com.example.socialcoffee.repository.CoffeeShopRepository;
 import com.example.socialcoffee.repository.DescriptionEmbeddingRepository;
 import com.example.socialcoffee.repository.specification.CoffeeShopSpecification;
 import com.example.socialcoffee.utils.SecurityUtil;
-import com.example.socialcoffee.utils.StringUtils;
+import com.example.socialcoffee.utils.StringAppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -172,7 +173,7 @@ public class CoffeeShopService {
 
     private void generateEmbeddingDescription(CoffeeShop coffeeShop) {
         try {
-            Float[] embeddingDescription = sentenceTransformerService.generateEmbeddingDescription(StringUtils.removeNewLineCharacter(coffeeShop.getDescription()));
+            Float[] embeddingDescription = sentenceTransformerService.generateEmbeddingDescription(StringAppUtils.removeNewLineCharacter(coffeeShop.getDescription()));
             DescriptionEmbedding descriptionEmbedding = DescriptionEmbedding.builder()
                     .descriptionEmbedding(embeddingDescription)
                     .coffeeShop(coffeeShop)
@@ -244,24 +245,19 @@ public class CoffeeShopService {
     }
 
     @Transactional
-    public void updateCoffeeShopStatus(Long shopId, String newStatus) {
-        CoffeeShop coffeeShop = findPendingCoffeeShop(shopId);
-        coffeeShop.setStatus(newStatus);
-        coffeeShopRepository.save(coffeeShop);
-    }
-
-    private CoffeeShop findPendingCoffeeShop(Long shopId) {
-        CoffeeShop coffeeShop = coffeeShopRepository.findById(shopId)
-                .orElseThrow(() -> new ResourceNotFoundException("Coffee shop not found with id: " + shopId));
-
-        if (!CoffeeShop.Status.PENDING.getValue().equals(coffeeShop.getStatus())) {
-            throw new BusinessException("Can only approve or reject coffee shops with PENDING status");
+    public ResponseEntity<ResponseMetaData> updateCoffeeShopStatus(Long shopId, String newStatus) {
+        CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
+        if(Objects.isNull(coffeeShop)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
 
-        return coffeeShop;
+        if (!Status.PENDING.getValue().equals(coffeeShop.getStatus())) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.BAD_REQUEST)));
+        }
+        coffeeShop.setStatus(newStatus);
+        coffeeShopRepository.save(coffeeShop);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
-
-
 
     public Page<CoffeeShopDTO> findCoffeeShops(String name, String status, Pageable pageable) {
         String statusValue = StringUtils.isBlank(status) ? status : null;
@@ -277,6 +273,6 @@ public class CoffeeShopService {
             coffeeShops = coffeeShopRepository.findAll(pageable);
         }
 
-        return coffeeShops.map(coffeeShopMapper::toCoffeeShopDTO);
+        return coffeeShops.map(CoffeeShop::toCoffeeShopDTO);
     }
 }

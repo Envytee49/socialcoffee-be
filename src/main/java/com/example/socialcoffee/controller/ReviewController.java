@@ -7,6 +7,7 @@ import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;

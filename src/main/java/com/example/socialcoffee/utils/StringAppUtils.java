@@ -3,7 +3,7 @@ package com.example.socialcoffee.utils;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class StringUtils {
+public class StringAppUtils {
     public static String removeNewLineCharacter(String str) {
         return str.replaceAll("\\n",
                               "");

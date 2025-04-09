@@ -49,14 +49,14 @@ public class UserController {
                 users.getContent());
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
     }
-    @PutMapping("/users/update-password")
-    public ResponseEntity<ResponseMetaData> updatePassword(@RequestBody UpdateNewPassword updateNewPassword) {
-        List<MetaDTO> metaList = validationService.validateUpdateNewPassword(updateNewPassword);
-        if (!CollectionUtils.isEmpty(metaList))
-            return ResponseEntity.badRequest().body(new ResponseMetaData(metaList));
-
-        return userService.updateNewPassword(updateNewPassword);
-    }
+//    @PutMapping("/users/update-password")
+//    public ResponseEntity<ResponseMetaData> updatePassword(@RequestBody UpdateNewPassword updateNewPassword) {
+//        List<MetaDTO> metaList = validationService.validateUpdateNewPassword(updateNewPassword);
+//        if (!CollectionUtils.isEmpty(metaList))
+//            return ResponseEntity.badRequest().body(new ResponseMetaData(metaList));
+//
+//        return userService.updateNewPassword(updateNewPassword);
+//    }
 
     @PostMapping("/users/{followeeId}/follow")
     public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followeeId) {
@@ -93,11 +93,11 @@ public class UserController {
     }
 
 
-    public ResponseEntity<ResponseMetaData> getUserReview() {
-
-    }
-
-    public ResponseEntity<ResponseMetaData> reactUserReview() {
-
-    }
+//    public ResponseEntity<ResponseMetaData> getUserReview() {
+//
+//    }
+//
+//    public ResponseEntity<ResponseMetaData> reactUserReview() {
+//
+//    }
 }

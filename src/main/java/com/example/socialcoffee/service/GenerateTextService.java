@@ -3,7 +3,7 @@ package com.example.socialcoffee.service;
 import com.example.socialcoffee.configuration.OllamaConfig;
 import com.example.socialcoffee.dto.request.GenerateRequest;
 import com.example.socialcoffee.dto.response.GenerateResponse;
-import com.example.socialcoffee.utils.StringUtils;
+import com.example.socialcoffee.utils.StringAppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -22,7 +22,7 @@ public class GenerateTextService {
     private final HttpHeaders defaultHeaders;
     public String generateDescription(String features) {
         try {
-            if (StringUtils.isEmpty(features)) return null;
+            if (StringAppUtils.isEmpty(features)) return null;
             log.info("Start generating description");
             GenerateRequest request = GenerateRequest
                     .getDefaultMessage(ollamaConfig,"Generate description for a coffee shop with these features (limit 150 words):"

@@ -1,8 +1,10 @@
 package com.example.socialcoffee.domain;
 
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.dto.response.CoffeeShopDTO;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.beans.BeanUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -182,6 +184,12 @@ public class CoffeeShop {
                 })
                 .filter(name -> !name.isEmpty())
                 .toList();
+    }
+
+    public CoffeeShopDTO toCoffeeShopDTO() {
+        CoffeeShopDTO coffeeShopDTO  = new CoffeeShopDTO();
+        BeanUtils.copyProperties(this, coffeeShopDTO);
+        return coffeeShopDTO;
     }
 
 

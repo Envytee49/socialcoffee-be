@@ -14,7 +14,7 @@ public class SecurityUtil {
     }
 
     public Long getUserId() {
-        return extractPrincipal().getClaimAsLong("userId");
+        return Long.parseLong(extractPrincipal().getClaim("userId"));
     }
 
     public String getUserRole() {

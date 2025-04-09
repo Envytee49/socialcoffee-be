@@ -7,6 +7,7 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.utils.PasswordUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,8 +32,8 @@ public class ValidationService {
                     String.format(MetaData.EXCEED_MAX_LENGTH_COMMENT_POST.getMessage(), configResource.getMaxLengthCommentPost())));
         }
 
-        if (checkNotAcceptedFileExtension(file))
-            metaDTOList.add(new MetaDTO(MetaData.FILE_EXTENSION_NOT_ACCEPTED));
+//        if (checkNotAcceptedFileExtension(file))
+//            metaDTOList.add(new MetaDTO(MetaData.FILE_EXTENSION_NOT_ACCEPTED));
         return metaDTOList;
     }
 
