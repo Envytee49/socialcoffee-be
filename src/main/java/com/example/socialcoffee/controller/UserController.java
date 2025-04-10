@@ -49,7 +49,8 @@ public class UserController {
                 users.getContent());
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
     }
-//    @PutMapping("/users/update-password")
+
+    //    @PutMapping("/users/update-password")
 //    public ResponseEntity<ResponseMetaData> updatePassword(@RequestBody UpdateNewPassword updateNewPassword) {
 //        List<MetaDTO> metaList = validationService.validateUpdateNewPassword(updateNewPassword);
 //        if (!CollectionUtils.isEmpty(metaList))
@@ -57,6 +58,11 @@ public class UserController {
 //
 //        return userService.updateNewPassword(updateNewPassword);
 //    }
+    @GetMapping("/users/profile")
+    public ResponseEntity<ResponseMetaData> getProfile() {
+        Long userId = SecurityUtil.getUserId();
+        return userService.getProfile(userId);
+    }
 
     @PostMapping("/users/{followeeId}/follow")
     public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followeeId) {

@@ -1,5 +1,6 @@
 package com.example.socialcoffee.configuration.security;
 
+import com.example.socialcoffee.enums.RoleEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,21 +27,21 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll()
-//                        .requestMatchers("/auth/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/feature/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
-//                        .anyRequest().authenticated()
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/users/**").hasRole(RoleEnum.USER.getValue())
+                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-//                .oauth2ResourceServer(
-//                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
-//                                .jwt(jwtConfigurer ->
-//                                        jwtConfigurer
-//                                                .decoder(customJwtDecoder)
-//                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-//                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-//                )
-//                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(Customizer.withDefaults())
+                                .jwt(jwtConfigurer ->
+                                        jwtConfigurer
+                                                .decoder(customJwtDecoder)
+                                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .build();
     }
 

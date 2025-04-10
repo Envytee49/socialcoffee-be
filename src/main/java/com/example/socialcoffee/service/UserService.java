@@ -4,6 +4,7 @@ import com.example.socialcoffee.configuration.AuthConfig;
 import com.example.socialcoffee.domain.Address;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserFollow;
+import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
 import com.example.socialcoffee.dto.response.ContributorDTO;
@@ -41,7 +42,7 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final CoffeeShopRepository coffeeShopRepository;
 
-//    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
+    //    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
 //        Long userId = SecurityUtil.getUserId();
 //        Optional<User> optionUser = userRepository.findByUserId(userId);
 //        if (optionUser.isEmpty() || Status.ACTIVE.getValue().equalsIgnoreCase(optionUser.get().getStatus())) {
@@ -85,9 +86,19 @@ public class UserService {
 //            redisTemplate.delete(accessTokenKeyList);
 //        log.info("SUCCESS delete old token with userId = {}", userId);
 //    }
+    public ResponseEntity<ResponseMetaData> getProfile(Long userId) {
+        Optional<User> optionalUser = userRepository.findByUserId(userId);
+        if (optionalUser.isEmpty())
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        User user = optionalUser.get();
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             new UserProfile(user.getProfilePhoto(),
+                                                                             user.getUsername())));
+    }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> followUser(Long followerId, Long followeeId) {
+    public ResponseEntity<ResponseMetaData> followUser(Long followerId,
+                                                       Long followeeId) {
         // Check if users exist
         Optional<User> optionalFollower = userRepository.findByUserId(followerId);
         if (optionalFollower.isEmpty())
@@ -97,7 +108,8 @@ public class UserService {
         if (optionalFollowee.isEmpty())
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         // Check if already following
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followerId, followeeId);
+        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followerId,
+                                                                     followeeId);
         if (userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_FOLLOWING)));
         }
@@ -110,8 +122,10 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> unfollowUser(Long followerId, Long followeeId) {
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followerId, followeeId);
+    public ResponseEntity<ResponseMetaData> unfollowUser(Long followerId,
+                                                         Long followeeId) {
+        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followerId,
+                                                                     followeeId);
 
         if (!userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOLLOWING)));
@@ -121,29 +135,38 @@ public class UserService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public Page<UserDTO> getFollowers(Long userId, Pageable pageable) {
+    public Page<UserDTO> getFollowers(Long userId,
+                                      Pageable pageable) {
         // Get users who follow the specified user
-        Page<User> followers = userFollowRepository.findFollowersByFolloweeId(userId, pageable);
+        Page<User> followers = userFollowRepository.findFollowersByFolloweeId(userId,
+                                                                              pageable);
         return followers.map(User::toUserDTO);
     }
 
-    public Page<UserDTO> getFollowing(Long userId, Pageable pageable) {
+    public Page<UserDTO> getFollowing(Long userId,
+                                      Pageable pageable) {
         // Get users who the specified user follows
-        Page<User> following = userFollowRepository.findFolloweesByFollowerId(userId, pageable);
+        Page<User> following = userFollowRepository.findFolloweesByFollowerId(userId,
+                                                                              pageable);
         return following.map(User::toUserDTO);
     }
 
-    public Page<UserDTO> search(UserSearchRequest request, Pageable pageable) {
+    public Page<UserDTO> search(UserSearchRequest request,
+                                Pageable pageable) {
         String name = request.getName();
-        Page<User> users = userRepository.findByUsernameOrNameOrDisplayNameContainingIgnoreCase(name, name, name, pageable);
+        Page<User> users = userRepository.findByUsernameOrNameOrDisplayNameContainingIgnoreCase(name,
+                                                                                                name,
+                                                                                                name,
+                                                                                                pageable);
         return users.map(User::toUserDTO);
     }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> updateUserProfile(Long userId, UserUpdateDTO userUpdateDTO) {
+    public ResponseEntity<ResponseMetaData> updateUserProfile(Long userId,
+                                                              UserUpdateDTO userUpdateDTO) {
         // Find the user by ID
         Optional<User> optionalUser = userRepository.findByUserId(userId);
-        if(optionalUser.isEmpty()) return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        if (optionalUser.isEmpty()) return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         User user = optionalUser.get();
         // Update only the fields that are provided in the DTO
         if (userUpdateDTO.getDisplayName() != null) {
@@ -175,11 +198,13 @@ public class UserService {
             // Update address or create a new one if it doesn't exist
             if (user.getAddress() == null) {
                 Address address = new Address();
-                BeanUtils.copyProperties(userUpdateDTO.getAddress(), address);
+                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
+                                         address);
                 addressRepository.save(address);
                 user.setAddress(address);
             } else {
-                BeanUtils.copyProperties(userUpdateDTO.getAddress(), user.getAddress());
+                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
+                                         user.getAddress());
             }
         }
 
@@ -210,6 +235,9 @@ public class UserService {
             }
         }
 
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), contributors));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             contributors));
     }
+
+
 }

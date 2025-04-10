@@ -28,18 +28,23 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Override
     public Jwt decode(String token) throws JwtException {
         try {
-            jwtService.verifyToken(token, TOKEN_PREFIX);
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HS512");
+            jwtService.verifyToken(token,
+                                   TOKEN_PREFIX);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(),
+                                                            "HS512");
             NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
                     .withSecretKey(secretKeySpec)
                     .macAlgorithm(MacAlgorithm.HS512)
                     .build();
+            System.out.println("Token: " + jwtDecoder.decode(token));
             return jwtDecoder.decode(token);
         } catch (JOSEException | ParseException e) {
-            log.error("401 Unauthenticated: {}", e.getMessage());
+            log.error("401 Unauthenticated: {}",
+                      e.getMessage());
             throw new RuntimeException(e.getMessage());
         } catch (JwtException e) {
-            throw new JwtException("Token decoding error", e);
+            throw new JwtException("Token decoding error",
+                                   e);
         }
     }
 }

@@ -5,7 +5,8 @@ import com.example.socialcoffee.domain.AuthProvider;
 import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserAuthConnection;
-import com.example.socialcoffee.dto.response.JwtTokenResponse;
+import com.example.socialcoffee.dto.request.UserProfile;
+import com.example.socialcoffee.dto.response.LoginResponse;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.*;
@@ -41,13 +42,17 @@ public class AuthService {
     private final GoogleService googleService;
     private final FacebookService facebookService;
 
-    public ResponseEntity<ResponseMetaData> authWithGoogle(String code, String redirectUri, String authAction) {
+    public ResponseEntity<ResponseMetaData> authWithGoogle(String code,
+                                                           String redirectUri,
+                                                           String authAction) {
         try {
-            GoogleUserInfo userInfo = googleService.getUserInfoFromGoogle(code, redirectUri);
-            if(Objects.isNull(userInfo))
+            GoogleUserInfo userInfo = googleService.getUserInfoFromGoogle(code,
+                                                                          redirectUri);
+            if (Objects.isNull(userInfo))
                 return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.GOOGLE_ERROR)));
 
-            Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(), Status.ACTIVE.getValue());
+            Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(),
+                                                                              Status.ACTIVE.getValue());
             if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
                 if (optionalUser.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
@@ -58,8 +63,9 @@ public class AuthService {
                 String jwtToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                        new JwtTokenResponse(jwtToken,
-                                refreshToken)));
+                                                                     new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                                       jwtToken,
+                                                                                       refreshToken)));
             } else {
                 if (optionalUser.isPresent()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
@@ -70,7 +76,7 @@ public class AuthService {
                 user = userRepository.save(user);
                 AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.GOOGLE.getValue());
                 UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
-                        authProvider.getId());
+                                                                               authProvider.getId());
                 userAuthConnectionRepository.save(userAuthConnection);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
             }
@@ -79,11 +85,13 @@ public class AuthService {
         }
     }
 
-    public ResponseEntity<ResponseMetaData> authWithFacebook(String accessToken, String authAction) {
+    public ResponseEntity<ResponseMetaData> authWithFacebook(String accessToken,
+                                                             String authAction) {
         FacebookUserInfo userInfo = facebookService.getUserInfoFromFacebook(accessToken);
         if (Objects.isNull(userInfo))
             return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.FACEBOOK_ERROR)));
-        Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(), Status.ACTIVE.getValue());
+        Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(),
+                                                                          Status.ACTIVE.getValue());
         if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
             if (optionalUser.isEmpty()) {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
@@ -94,8 +102,9 @@ public class AuthService {
             String jwtToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                    new JwtTokenResponse(jwtToken,
-                            refreshToken)));
+                                                                 new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                                   jwtToken,
+                                                                                   refreshToken)));
         } else {
             if (optionalUser.isPresent()) {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
@@ -106,11 +115,13 @@ public class AuthService {
             user = userRepository.save(user);
             AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.FACEBOOK.getValue());
             UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
-                    authProvider.getId());
+                                                                           authProvider.getId());
             userAuthConnectionRepository.save(userAuthConnection);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
         }
     }
+
+
 
 //    @Override
 //    public ResponseEntity<ResponseMetaData> refreshToken(final TokenRefreshRequest request) {

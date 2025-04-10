@@ -5,6 +5,7 @@ import com.example.socialcoffee.dto.request.GoogleAuthRequest;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.AuthAction;
 import com.example.socialcoffee.service.AuthService;
+import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,25 +22,27 @@ public class AuthController {
     @PostMapping("/google/login")
     public ResponseEntity<ResponseMetaData> loginWithGoogle(@RequestBody GoogleAuthRequest request) {
         return authService.authWithGoogle(request.getCode(),
-                request.getRedirectUrl(),
-                AuthAction.LOGIN.getValue());
+                                          request.getRedirectUrl(),
+                                          AuthAction.LOGIN.getValue());
     }
 
     @PostMapping("/google/register")
     public ResponseEntity<ResponseMetaData> registerWithGoogle(@RequestBody GoogleAuthRequest request) {
         return authService.authWithGoogle(request.getCode(),
-                request.getRedirectUrl(),
-                AuthAction.REGISTER.getValue());
+                                          request.getRedirectUrl(),
+                                          AuthAction.REGISTER.getValue());
     }
 
     @PostMapping("/facebook/login")
     public ResponseEntity<ResponseMetaData> loginWithFacebook(@RequestBody FacebookAuthRequest request) {
-        return authService.authWithFacebook(request.getAccessToken(), AuthAction.LOGIN.getValue());
+        return authService.authWithFacebook(request.getAccessToken(),
+                                            AuthAction.LOGIN.getValue());
     }
 
     @PostMapping("/facebook/register")
     public ResponseEntity<ResponseMetaData> registerWithFacebook(@RequestBody FacebookAuthRequest request) {
-        return authService.authWithFacebook(request.getAccessToken(), AuthAction.REGISTER.getValue());
+        return authService.authWithFacebook(request.getAccessToken(),
+                                            AuthAction.REGISTER.getValue());
     }
 
 //    @PostMapping("/refresh")

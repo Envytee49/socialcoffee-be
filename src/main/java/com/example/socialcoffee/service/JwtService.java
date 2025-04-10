@@ -47,11 +47,11 @@ public class JwtService {
             JWSSigner signer = new MACSigner(secretKey);
             jwsObject.sign(signer);
             String token = jwsObject.serialize();
-            redisTemplate.opsForValue().set(
-                    redisPrefix + tokenPrefix + jwtClaimsSet.getSubject(),
-                    token,
-                    expireLength,
-                    TimeUnit.SECONDS);
+//            redisTemplate.opsForValue().set(
+//                    redisPrefix + tokenPrefix + jwtClaimsSet.getSubject(),
+//                    token,
+//                    expireLength,
+//                    TimeUnit.SECONDS);
             return token;
         } catch (JOSEException e) {
             throw new JwtException(e.getMessage());
@@ -85,8 +85,12 @@ public class JwtService {
         JWTClaimsSet jwtClaimsSet = signedJWT.getJWTClaimsSet();
         Date expirationTime = jwtClaimsSet.getExpirationTime();
         boolean isVerified = signedJWT.verify(verifier);
-        String validToken = redisTemplate.opsForValue().get(redisPrefix + tokenPrefix + jwtClaimsSet.getSubject());
-        if (!(validToken != null && isVerified && expirationTime.after(new Date()))) {
+//        String validToken = redisTemplate.opsForValue().get(redisPrefix + tokenPrefix + jwtClaimsSet.getSubject());
+//        if (!(validToken != null && isVerified && expirationTime.after(new Date()))) {
+//            throw new RuntimeException("Invalid Token");
+//        }
+
+        if (!(isVerified && expirationTime.after(new Date()))) {
             throw new RuntimeException("Invalid Token");
         }
         return signedJWT;
