@@ -2,6 +2,7 @@ package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
+import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.request.UpdateNewPassword;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
@@ -98,6 +99,36 @@ public class UserController {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
     }
 
+    @GetMapping("/users/my-followers")
+    public ResponseEntity<ResponseMetaData> getMyFollowers(PageDtoIn pageDtoIn) {
+        Page<UserDTO> followers = userService.getFollowers(SecurityUtil.getUserId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
+        PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
+                pageDtoIn.getSize(),
+                followers.getTotalElements(),
+                followers.getContent());
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
+    }
+
+    @GetMapping("/users/my-following")
+    public ResponseEntity<ResponseMetaData> getMyFollowing(PageDtoIn pageDtoIn) {
+        Page<UserDTO> following = userService.getFollowing(SecurityUtil.getUserId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
+        PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
+                pageDtoIn.getSize(),
+                following.getTotalElements(),
+                following.getContent());
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
+    }
+
+    @PostMapping("/users/collections")
+    public ResponseEntity<ResponseMetaData> createNewCollection(@Valid @RequestBody CollectionRequest request) {
+        return userService.createNewCollection(request);
+    }
+
+    @PutMapping("/users/collections/{collectionId}")
+    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(@PathVariable Long collectionId,
+                                                                      @RequestPart(value = "shopId") String shopId) {
+        return userService.addCoffeeShopToCollection(collectionId, Long.parseLong(shopId));
+    }
 
 //    public ResponseEntity<ResponseMetaData> getUserReview() {
 //

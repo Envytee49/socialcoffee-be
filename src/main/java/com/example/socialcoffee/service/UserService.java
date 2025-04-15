@@ -1,9 +1,8 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.configuration.AuthConfig;
-import com.example.socialcoffee.domain.Address;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.UserFollow;
+import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
@@ -12,10 +11,8 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.dto.response.UserDTO;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.repository.AddressRepository;
-import com.example.socialcoffee.repository.CoffeeShopRepository;
-import com.example.socialcoffee.repository.UserFollowRepository;
-import com.example.socialcoffee.repository.UserRepository;
+import com.example.socialcoffee.repository.*;
+import com.example.socialcoffee.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,19 +25,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService {
-    private final UserRepository userRepository;
+public class UserService extends BaseService {
     private final BCryptPasswordEncoder encoder;
     private final UserFollowRepository userFollowRepository;
     private final JwtService jwtService;
     private final AuthConfig authConfig;
     private final AddressRepository addressRepository;
     private final CoffeeShopRepository coffeeShopRepository;
+    private final CollectionRepository collectionRepository;
 
     //    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
 //        Long userId = SecurityUtil.getUserId();
@@ -240,4 +238,35 @@ public class UserService {
     }
 
 
+    public ResponseEntity<ResponseMetaData> createNewCollection(CollectionRequest request) {
+        User user = getCurrentUser();
+        if(Obejcts.isNull(user))
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        Collection collection = Collection.builder()
+                .description(request.getDescription())
+                .name(request.getName())
+                .privacy(request.getPrivacy().getValue())
+                .user(user)
+                .build();
+        collectionRepository.save(collection);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    }
+
+    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(Long collectionId, Long shopId) {
+        User user = getCurrentUser();
+        if(Obejcts.isNull(user))
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        Optional<Collection> optionalCollection = collectionRepository.findById(collectionId);
+        if (optionalCollection.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        }
+        CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
+        if(Objects.isNull(coffeeShop)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        }
+        Collection collection = optionalCollection.get();
+        collection.addCoffeeShop(coffeeShop);
+        collectionRepository.save(collection);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    }
 }

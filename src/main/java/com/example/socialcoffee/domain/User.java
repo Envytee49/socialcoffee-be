@@ -53,7 +53,7 @@ public class User {
     private LocalDateTime lastLogin;
     @OneToMany
     private List<Review> reviews;
-    @OneToMany
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Collection> collections;
 
     public User(GoogleUserInfo info) {
