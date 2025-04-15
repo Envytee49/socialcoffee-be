@@ -34,8 +34,7 @@ public enum MetaData {
     YOU_DO_NOT_HAVE_RIGHTS(4019, "You do not have rights to do this action"),
     ALREADY_FOLLOWING(4020, "You already followed this user"),
     NOT_FOLLOWING(4021, "You are not following this user"),
-    INVALID_CREDENTIALS(4022, "Username or Password is incorrect"),
-    USERNAME_MISSING(4023, "Username is missing");
+    INVALID_REACTION(4022, "Invalid reaction" ),;
 
 
     private final Integer metaCode;

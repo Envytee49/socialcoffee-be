@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    Page<Review> findAllByCoffeeShopAndStatus(CoffeeShop coffeeShop, String status, Pageable pageable);
+    Page<Review> findAllByCoffeeShop(CoffeeShop coffeeShop, Pageable pageable);
 
     Review findByIdAndCoffeeShopIdAndStatus(Long reviewId, Long shopId, String value);
 
