@@ -4,6 +4,7 @@ import com.example.socialcoffee.configuration.ConfigResource;
 import com.example.socialcoffee.dto.request.UpdateNewPassword;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.Privacy;
 import com.example.socialcoffee.enums.ReviewReaction;
 import com.example.socialcoffee.utils.PasswordUtils;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.List;
 @Slf4j
 public class ValidationService {
     private final ConfigResource configResource;
-    public List<MetaDTO> validationCommentPost(String content, MultipartFile[] file, boolean isCreateComment) {
+    public List<MetaDTO> validationCommentPost(String privacy, String content, MultipartFile[] file, boolean isCreateComment) {
         List<MetaDTO> metaDTOList = new ArrayList<>();
         content = StringUtils.trimToEmpty(content);
 
@@ -33,8 +34,10 @@ public class ValidationService {
                     String.format(MetaData.EXCEED_MAX_LENGTH_COMMENT_POST.getMessage(), configResource.getMaxLengthCommentPost())));
         }
 
-//        if (checkNotAcceptedFileExtension(file))
-//            metaDTOList.add(new MetaDTO(MetaData.FILE_EXTENSION_NOT_ACCEPTED));
+        if(!StringUtils.isNotBlank(privacy) && !Privacy.privacyExist(privacy)) {
+            metaDTOList.add(new MetaDTO(MetaData.INVALID_PRIVACY));
+        }
+
         return metaDTOList;
     }
 

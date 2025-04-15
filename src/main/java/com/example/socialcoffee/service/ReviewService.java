@@ -10,7 +10,6 @@ import com.example.socialcoffee.dto.response.ReviewVM;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.repository.*;
-import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReviewService {
+public class ReviewService extends BaseService {
     private final UserRepository userRepository;
     private final ImageService imageService;
     private final CoffeeShopRepository coffeeShopRepository;
@@ -36,11 +35,10 @@ public class ReviewService {
     private final ImageRepository imageRepository;
     private final ReviewReactionRepository reviewReactionRepository;
 
-    public ResponseEntity<ResponseMetaData> uploadReview(Long shopId, Integer rating, String title,
+    public ResponseEntity<ResponseMetaData> uploadReview(Long shopId, String privacy, Integer rating,
                                                          String content, Boolean isAnonymous, MultipartFile[] file, Long parentId) {
-        Long userId = SecurityUtil.getUserId();
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
+        User user = getCurrentUser();
+        if (Objects.isNull(user)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
@@ -48,11 +46,10 @@ public class ReviewService {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         List<Image> images = imageService.save(file);
-        Review review = new Review(rating, title, content, isAnonymous, images);
+        Review review = new Review(rating, privacy, content, isAnonymous, images);
         review = reviewRepository.save(review);
         coffeeShop.addReview(review);
         coffeeShopRepository.save(coffeeShop);
-        User user = optionalUser.get();
         user.addReview(review);
         userRepository.save(user);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

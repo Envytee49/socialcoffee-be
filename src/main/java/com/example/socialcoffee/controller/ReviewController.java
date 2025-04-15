@@ -30,18 +30,18 @@ public class ReviewController {
 
     @PostMapping("coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
+                                                         @RequestPart(value = "privacy", required = false) String privacy,
                                                          @RequestPart(value = "rating") Integer rating,
-                                                         @RequestPart(value = "title", required = false) String title,
                                                          @RequestPart(value = "content", required = false) String content,
                                                          @RequestPart(value = "is_annonymous", required = false) Boolean isAnonymous,
                                                          @RequestPart(value = "review_id", required = false) Long parentId,
                                                          @RequestPart(value = "resource", required = false) MultipartFile[] file) {
         content = StringUtils.trimToEmpty(content);
-        List<MetaDTO> metaDTOList = validationService.validationCommentPost(content, file, Boolean.TRUE);
+        List<MetaDTO> metaDTOList = validationService.validationCommentPost(privacy, content, file, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(metaDTOList)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList, null));
         }
-        return reviewService.uploadReview(shopId, rating, title, content, isAnonymous, file, parentId);
+        return reviewService.uploadReview(shopId, privacy, rating, content, isAnonymous, file, parentId);
     }
 
     @PutMapping("/reviews/{reviewID}/react")
