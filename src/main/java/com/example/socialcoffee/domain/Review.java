@@ -1,11 +1,12 @@
 package com.example.socialcoffee.domain;
 
+import com.example.socialcoffee.enums.Privacy;
 import com.example.socialcoffee.enums.Status;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -21,6 +22,7 @@ public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String privacy;
     private Integer rating;
     private String comment;
     private Boolean isAnonymous;
@@ -35,10 +37,11 @@ public class Review {
     private User user;
     @ManyToOne(fetch = FetchType.LAZY)
     private CoffeeShop coffeeShop;
-    public Review(Integer rating, String comment, Boolean isAnonymous, List<Image> images,
+    public Review(Integer rating, String privacy, String comment, Boolean isAnonymous, List<Image> images,
                   final User user,
                   final CoffeeShop coffeeShop) {
         this.rating = rating;
+        this.privacy = StringUtils.isBlank(privacy) ? Privacy.PUBLIC.getValue() : privacy;
         this.isAnonymous = isAnonymous;
         this.comment = comment;
         this.images = images;

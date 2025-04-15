@@ -40,6 +40,7 @@ public class ReviewService {
 
     @Transactional
     public ResponseEntity<ResponseMetaData> uploadReview(Long shopId,
+                                                         String privacy,
                                                          Integer rating,
                                                          String content,
                                                          Boolean isAnonymous,
@@ -57,6 +58,7 @@ public class ReviewService {
         User user = optionalUser.get();
         List<Image> images = imageService.save(file);
         Review review = new Review(rating,
+                                   privacy,
                                    content,
                                    isAnonymous,
                                    images,
