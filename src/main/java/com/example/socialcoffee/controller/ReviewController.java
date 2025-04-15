@@ -6,10 +6,14 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
+import com.example.socialcoffee.utils.SecurityUtil;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +22,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/")
+@Valid
+@Validated
 public class ReviewController {
     private final ReviewService reviewService;
     private final ValidationService validationService;
@@ -37,6 +43,17 @@ public class ReviewController {
         }
         return reviewService.uploadReview(shopId, rating, title, content, isAnonymous, file, parentId);
     }
+
+    @PutMapping("/reviews/{reviewID}/react")
+    public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") @NotBlank Long reviewId, String reaction) {
+        Long userId = SecurityUtil.getUserId();
+        List<MetaDTO> metaDTOS = validationService.validateReviewReact(reaction);
+        if(!CollectionUtils.isEmpty(metaDTOS)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
+        }
+        return reviewService.react(userId, reviewId, reaction);
+    }
+
     @PutMapping("coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> editReview(@PathVariable("shop_id") Long shopId,
                                                        @PathVariable("review_id") Long reviewId,

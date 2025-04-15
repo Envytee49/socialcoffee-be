@@ -1,21 +1,15 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Image;
-import com.example.socialcoffee.domain.Review;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.dto.request.EditReviewRequest;
+import com.example.socialcoffee.domain.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
-import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.common.PageDtoOut;
+import com.example.socialcoffee.dto.request.EditReviewRequest;
+import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.dto.response.ReviewVM;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
-import com.example.socialcoffee.repository.CoffeeShopRepository;
-import com.example.socialcoffee.repository.ImageRepository;
-import com.example.socialcoffee.repository.ReviewRepository;
-import com.example.socialcoffee.repository.UserRepository;
+import com.example.socialcoffee.repository.*;
 import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -42,6 +34,7 @@ public class ReviewService {
     private final CoffeeShopRepository coffeeShopRepository;
     private final ReviewRepository reviewRepository;
     private final ImageRepository imageRepository;
+    private final ReviewReactionRepository reviewReactionRepository;
 
     public ResponseEntity<ResponseMetaData> uploadReview(Long shopId, Integer rating, String title,
                                                          String content, Boolean isAnonymous, MultipartFile[] file, Long parentId) {
@@ -84,9 +77,11 @@ public class ReviewService {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Page<Review> reviews = reviewRepository.findAllByCoffeeShop(coffeeShop, pageable);
+        List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+        Map<Long, Map<String, Long>> groupedReactions = groupedReactions(reviewIds);
         List<ReviewVM> reviewVMS = reviews.getContent().stream()
                 .filter(r -> Status.ACTIVE.getValue().equals(r.getStatus()))
-                .map(ReviewVM::new).toList();
+                .map(r -> new ReviewVM(r, groupedReactions.getOrDefault(r.getId(), null))).toList();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
                 pageable.getPageSize(),
                 reviews.getTotalElements(),
@@ -94,6 +89,18 @@ public class ReviewService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
     }
 
+    private Map<Long, Map<String, Long>> groupedReactions(List<Long> reviewIds) {
+        List<ReviewReaction> reviewReactions = reviewReactionRepository.findByReviewIdIn(reviewIds);
+        return reviewReactions.stream()
+                .collect(Collectors.groupingBy(
+                        rr -> rr.getId().getReviewId(),
+                        Collectors.toMap(
+                                ReviewReaction::getType,
+                                rr -> 1L,
+                                Long::sum
+                        )
+                ));
+    }
     public ResponseEntity<ResponseMetaData> editReview(Long shopId, Long reviewId, EditReviewRequest editReviewRequest) {
         Review review = reviewRepository.findByIdAndCoffeeShopIdAndStatus(reviewId, shopId, Status.ACTIVE.getValue());
         if (Objects.isNull(review)) {
@@ -110,7 +117,7 @@ public class ReviewService {
             deletedImages.forEach(image -> image.setStatus(Status.INACTIVE.getValue()));
             imageRepository.saveAll(deletedImages);
         }
-        if(Objects.nonNull(editReviewRequest.getResources()) && editReviewRequest.getResources().length > 0) {
+        if (Objects.nonNull(editReviewRequest.getResources()) && editReviewRequest.getResources().length > 0) {
             newImages = imageService.save(editReviewRequest.getResources());
         }
 
@@ -119,6 +126,23 @@ public class ReviewService {
         review.setRating(editReviewRequest.getRating());
         review.addImages(newImages);
         reviewRepository.save(review);
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    }
+
+    public ResponseEntity<ResponseMetaData> react(Long userId, Long reviewId, String reaction) {
+        Optional<Review> optionalReview = reviewRepository.findById(reviewId);
+        if (optionalReview.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        }
+        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, userId);
+        Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
+        if (optionalReviewReaction.isEmpty()) {
+            ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId, reaction);
+            reviewReactionRepository.save(reviewReaction);
+        } else {
+            ReviewReaction reviewReaction = optionalReviewReaction.get();
+            reviewReaction.setType(reaction);
+        }
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 }
