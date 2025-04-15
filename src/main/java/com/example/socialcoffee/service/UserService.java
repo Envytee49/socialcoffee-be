@@ -39,6 +39,7 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final CoffeeShopRepository coffeeShopRepository;
     private final CollectionRepository collectionRepository;
+    private final UserRepository userRepository;
 
     //    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
 //        Long userId = SecurityUtil.getUserId();

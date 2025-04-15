@@ -47,7 +47,7 @@ public class ReviewController extends BaseController {
         if (!CollectionUtils.isEmpty(metaDTOList)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList, null));
         }
-        return reviewService.uploadReview(shopId, privacy, Integer.parseInt(rating), content, Boolean.parseBoolean(isAnonymous), file, NumberUtils.toLong(parentId));
+        return reviewService.uploadReview(user, shopId, privacy, Integer.parseInt(rating), content, Boolean.parseBoolean(isAnonymous), file, NumberUtils.toLong(parentId));
     }
 
     @PutMapping("/reviews/{reviewID}/react")

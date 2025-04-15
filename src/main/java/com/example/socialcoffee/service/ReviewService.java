@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReviewService extends BaseService {
+public class ReviewService {
     private final UserRepository userRepository;
     private final ImageService imageService;
     private final CoffeeShopRepository coffeeShopRepository;
@@ -38,7 +38,8 @@ public class ReviewService extends BaseService {
     private final ReviewReactionRepository reviewReactionRepository;
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> uploadReview(User user, Long shopId,
+    public ResponseEntity<ResponseMetaData> uploadReview(User user,
+                                                         Long shopId,
                                                          String privacy,
                                                          Integer rating,
                                                          String content,
@@ -96,7 +97,9 @@ public class ReviewService extends BaseService {
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
-                .map(r -> new ReviewVM(r, groupedReactions.getOrDefault(r.getId(), null)))
+                .map(r -> new ReviewVM(r,
+                                       groupedReactions.getOrDefault(r.getId(),
+                                                                     null)))
                 .toList();
         final long totalElements = reviews.getTotalElements();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
@@ -125,8 +128,13 @@ public class ReviewService extends BaseService {
                         )
                 ));
     }
-    public ResponseEntity<ResponseMetaData> editReview(Long shopId, Long reviewId, EditReviewRequest editReviewRequest) {
-        Review review = reviewRepository.findByIdAndCoffeeShopIdAndStatus(reviewId, shopId, Status.ACTIVE.getValue());
+
+    public ResponseEntity<ResponseMetaData> editReview(Long shopId,
+                                                       Long reviewId,
+                                                       EditReviewRequest editReviewRequest) {
+        Review review = reviewRepository.findByIdAndCoffeeShopIdAndStatus(reviewId,
+                                                                          shopId,
+                                                                          Status.ACTIVE.getValue());
         if (Objects.isNull(review)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
@@ -152,15 +160,19 @@ public class ReviewService extends BaseService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> react(User user, Long reviewId, String reaction) {
+    public ResponseEntity<ResponseMetaData> react(User user,
+                                                  Long reviewId,
+                                                  String reaction) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, user.getId());
+        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId,
+                                                                                               user.getId());
         Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
         if (optionalReviewReaction.isEmpty()) {
-            ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId, reaction);
+            ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId,
+                                                               reaction);
             reviewReactionRepository.save(reviewReaction);
         } else {
             ReviewReaction reviewReaction = optionalReviewReaction.get();
@@ -175,7 +187,15 @@ public class ReviewService extends BaseService {
                                                  Sort.by(Sort.Direction.DESC,
                                                          "createdAt"));
         final Page<Review> reviews = reviewRepository.findAll(pageRequest);
-        List<ReviewVM> reviewVMS = reviews.getContent().stream().map(ReviewVM::new).toList();
+        List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+        Map<Long, Map<String, Long>> groupedReactions = groupedReactions(reviewIds);
+
+        List<ReviewVM> reviewVMS = reviews.getContent()
+                .stream()
+                .map(r -> new ReviewVM(r,
+                                       groupedReactions.getOrDefault(r.getId(),
+                                                                     null)))
+                .toList();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
                                                           pageDtoIn.getSize(),
                                                           reviews.getTotalElements(),

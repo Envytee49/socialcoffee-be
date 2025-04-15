@@ -17,4 +17,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query(value = "SELECT r.rating, COUNT(r.rating) FROM Review r WHERE r.coffeeShop = :coffeeShop GROUP BY r.rating")
     List<Object[]> getReviewSummary(@Param(value = "coffeeShop") CoffeeShop coffeeShop);
+
+    Page<Review> findAllByCoffeeShopAndStatus(CoffeeShop coffeeShop,
+                                              String status,
+                                              Pageable pageable);
 }

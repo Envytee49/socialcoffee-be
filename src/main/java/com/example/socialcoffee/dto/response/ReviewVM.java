@@ -13,7 +13,6 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ReviewVM {
     private Long id;
-    private String title;
     private Integer rating;
     private String content;
     private Boolean isAnonymous;

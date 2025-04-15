@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.request.BasicAuthRequest;
 import com.example.socialcoffee.dto.request.FacebookAuthRequest;
 import com.example.socialcoffee.dto.request.GoogleAuthRequest;
@@ -14,11 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-public class AuthController {
+public class AuthController extends BaseController {
 
     private final AuthService authService;
     private final UserService userService;
@@ -26,8 +29,10 @@ public class AuthController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/validate")
     public ResponseEntity<ResponseMetaData> validate() {
-        Long userId = SecurityUtil.getUserId();
-        return userService.getProfile(userId);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.getProfile(user);
     }
 
     @PostMapping("/google/login")
