@@ -11,3 +11,5 @@ select * from user_auth_connection;
 select * from coffee_shops;
 
 select * from reviews;
+
+select * from users_roles;

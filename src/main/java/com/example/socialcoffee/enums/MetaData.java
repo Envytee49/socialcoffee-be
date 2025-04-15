@@ -8,7 +8,7 @@ public enum MetaData {
     BAD_REQUEST(400, "Bad Request"),
     SUCCESS(200, "Success"),
     SERVICE_UNAVAILABLE(503, "Service Unavailable"),
-
+    UNAUTHORIZED(401, "Unauthorized"),
     PARAMETERS_MISSING(1000, "Parameters Missing"),
     HTTP_MEDIA_TYPE_NOT_SUPPORTED(1001, "HTTP Media Type Not Supported"),
     MISSING_SERVLET_REQUEST_PART(1002, "Missing Servlet Request Part"),
@@ -34,7 +34,8 @@ public enum MetaData {
     YOU_DO_NOT_HAVE_RIGHTS(4019, "You do not have rights to do this action"),
     ALREADY_FOLLOWING(4020, "You already followed this user"),
     NOT_FOLLOWING(4021, "You are not following this user"),
-    ;
+    INVALID_CREDENTIALS(4022, "Username or Password is incorrect"),
+    USERNAME_MISSING(4023, "Username is missing");
 
 
     private final Integer metaCode;

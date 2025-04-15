@@ -18,7 +18,7 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final CloudinaryService cloudinaryService;
     public List<Image> save(MultipartFile[] files) {
-        if(Objects.isNull(files) || files.length == 0) return null;
+        if(Objects.isNull(files) || files.length == 0) return new ArrayList<>();
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : files) {
             String url = cloudinaryService.upload(file);

@@ -15,7 +15,7 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
     List<Object[]> findSimilarCoffeeShops(@Param("embedding") String embedding, @Param("limit") int limit);
 
     @Query(value = "SELECT c FROM CoffeeShop c WHERE c.id = :shopId")
-    CoffeeShop findByShopId(@Param("shop_id") Long shopId);
+    CoffeeShop findByShopId(@Param("shopId") Long shopId);
 
     Page<CoffeeShop> findByNameContainingIgnoreCaseAndStatus(String name, String status, Pageable pageable);
 

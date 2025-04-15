@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -35,6 +36,11 @@ public class ExceptionTranslator {
     public ResponseEntity<ResponseMetaData> handleException(Exception ex) {
         log.warn("Error", ex);
         return ResponseEntity.status(MetaData.INTERNAL_SERVER_ERROR.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INTERNAL_SERVER_ERROR), ""));
+    }
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleInsufficientAuthenticationException(InsufficientAuthenticationException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.status(MetaData.UNAUTHORIZED.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.UNAUTHORIZED)));
     }
     @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {

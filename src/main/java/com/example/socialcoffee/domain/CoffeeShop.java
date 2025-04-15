@@ -2,10 +2,13 @@ package com.example.socialcoffee.domain;
 
 import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.response.CoffeeShopDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -134,10 +137,12 @@ public class CoffeeShop {
     )
     private List<VisitTime> visitTimes;
 
-    @OneToMany
+    @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Review> reviews;
 
     public void addReview(Review review) {
+        if(CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
         this.reviews.add(review);
     }
     public void updateGalleryPhotos(List<Image> galleryPhotos) {

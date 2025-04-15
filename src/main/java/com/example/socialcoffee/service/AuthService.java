@@ -5,7 +5,7 @@ import com.example.socialcoffee.domain.AuthProvider;
 import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserAuthConnection;
-import com.example.socialcoffee.dto.request.UserProfile;
+import com.example.socialcoffee.dto.request.BasicAuthRequest;
 import com.example.socialcoffee.dto.response.LoginResponse;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
@@ -17,8 +17,11 @@ import com.example.socialcoffee.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +37,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final CacheableService cacheableService;
+    private final PasswordEncoder passwordEncoder;
+    private final ValidationService validationService;
     //    private final StringRedis redisTemplate;
 //    private final MailService mailService;
 //    @Value("#{'${email.list}'.split(',')}")
@@ -121,6 +126,57 @@ public class AuthService {
         }
     }
 
+    public ResponseEntity<ResponseMetaData> basicAuth(BasicAuthRequest request,
+                                                      String authAction) {
+        String username = request.getUsername();
+        String password = request.getPassword();
+        final List<MetaDTO> metaDTOS = validationService.validateBasicAuthRequest(request,
+                                                                                  authAction);
+        if(!CollectionUtils.isEmpty(metaDTOS)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
+        }
+
+        Optional<User> optionalUser = userRepository.findByUsernameAndStatus(username,
+                                                                             Status.ACTIVE.getValue());
+
+        if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
+            // Login logic
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
+            }
+
+            User user = optionalUser.get();
+            // Verify password
+            if (!passwordEncoder.matches(password,
+                                         user.getPassword())) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_CREDENTIALS)));
+            }
+
+            String jwtToken = jwtService.generateAccessToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                 new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                                   jwtToken,
+                                                                                   refreshToken)));
+        } else {
+            // Register logic
+            if (optionalUser.isPresent()) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
+            }
+
+            Role role = cacheableService.findRole(RoleEnum.USER.getValue());
+            User user = new User();
+            user.setUsername(username);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setStatus(Status.ACTIVE.getValue());
+            user.setRoles(List.of(role));
+
+            userRepository.save(user);
+
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+        }
+    }
 
 
 //    @Override

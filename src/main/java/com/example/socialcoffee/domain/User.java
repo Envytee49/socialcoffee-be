@@ -11,9 +11,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -51,7 +53,7 @@ public class User {
     @CreationTimestamp
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
-    @OneToMany
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
     @OneToMany
     private List<Collection> collections;
@@ -75,6 +77,7 @@ public class User {
     }
 
     public void addReview(Review review) {
+        if(CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
         this.reviews.add(review);
     }
 

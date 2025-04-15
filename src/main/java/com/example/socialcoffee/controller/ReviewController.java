@@ -8,6 +8,7 @@ import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -24,18 +25,17 @@ public class ReviewController {
 
     @PostMapping("coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
-                                                         @RequestPart(value = "rating") Integer rating,
-                                                         @RequestPart(value = "title", required = false) String title,
+                                                         @RequestPart(value = "rating") String rating,
                                                          @RequestPart(value = "content", required = false) String content,
-                                                         @RequestPart(value = "is_annonymous", required = false) Boolean isAnonymous,
-                                                         @RequestPart(value = "review_id", required = false) Long parentId,
+                                                         @RequestPart(value = "is_annonymous", required = false) String isAnonymous,
+                                                         @RequestPart(value = "review_id", required = false) String parentId,
                                                          @RequestPart(value = "resource", required = false) MultipartFile[] file) {
         content = StringUtils.trimToEmpty(content);
         List<MetaDTO> metaDTOList = validationService.validationCommentPost(content, file, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(metaDTOList)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList, null));
         }
-        return reviewService.uploadReview(shopId, rating, title, content, isAnonymous, file, parentId);
+        return reviewService.uploadReview(shopId, Integer.parseInt(rating), content, Boolean.parseBoolean(isAnonymous), file, NumberUtils.toLong(parentId));
     }
     @PutMapping("coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> editReview(@PathVariable("shop_id") Long shopId,
@@ -46,7 +46,11 @@ public class ReviewController {
     @GetMapping("coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> getReview(@PathVariable("shop_id") Long shopId,
                                                       PageDtoIn pageDtoIn) {
-        return reviewService.getReview(shopId, pageDtoIn);
+        return reviewService.getReviewByShopId(shopId, pageDtoIn);
+    }
+    @GetMapping("/reviews")
+    public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn) {
+        return reviewService.getReviews(pageDtoIn);
     }
     @DeleteMapping("coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
