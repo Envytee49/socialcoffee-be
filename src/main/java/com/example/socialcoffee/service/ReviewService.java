@@ -11,7 +11,6 @@ import com.example.socialcoffee.dto.response.ReviewVM;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.repository.*;
-import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReviewService {
+public class ReviewService extends BaseService {
     private final UserRepository userRepository;
     private final ImageService imageService;
     private final CoffeeShopRepository coffeeShopRepository;
@@ -39,23 +38,20 @@ public class ReviewService {
     private final ReviewReactionRepository reviewReactionRepository;
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> uploadReview(Long shopId,
+    public ResponseEntity<ResponseMetaData> uploadReview(User user, Long shopId,
                                                          String privacy,
                                                          Integer rating,
                                                          String content,
                                                          Boolean isAnonymous,
                                                          MultipartFile[] file,
                                                          Long parentId) {
-        Long userId = SecurityUtil.getUserId();
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
+        if (Objects.isNull(user)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
         if (Objects.isNull(coffeeShop)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        User user = optionalUser.get();
         List<Image> images = imageService.save(file);
         Review review = new Review(rating,
                                    privacy,
@@ -95,6 +91,9 @@ public class ReviewService {
         Page<Review> reviews = reviewRepository.findAllByCoffeeShopAndStatus(coffeeShop,
                                                                              Status.ACTIVE.getValue(),
                                                                              pageable);
+        List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+        Map<Long, Map<String, Long>> groupedReactions = groupedReactions(reviewIds);
+
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
                 .map(r -> new ReviewVM(r, groupedReactions.getOrDefault(r.getId(), null)))
@@ -153,12 +152,12 @@ public class ReviewService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> react(Long userId, Long reviewId, String reaction) {
+    public ResponseEntity<ResponseMetaData> react(User user, Long reviewId, String reaction) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, userId);
+        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, user.getId());
         Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
         if (optionalReviewReaction.isEmpty()) {
             ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId, reaction);

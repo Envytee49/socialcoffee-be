@@ -43,7 +43,7 @@ public class CoffeeShopService {
     private final DescriptionEmbeddingRepository descriptionEmbeddingRepository;
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> createCoffeeShop(CreateCoffeeShopRequest req) {
+    public ResponseEntity<ResponseMetaData> createCoffeeShop(User user, CreateCoffeeShopRequest req) {
         Address address = Address.builder()
                 .googleMapUrl(req.getGoogleMapUrl())
                 .addressDetail(req.getAddressDetail())
@@ -160,7 +160,7 @@ public class CoffeeShopService {
             coffeeShop.setStatus(Status.ACTIVE.getValue());
         } else {
             coffeeShop.setStatus(Status.PENDING.getValue());
-            coffeeShop.setCreatedBy(SecurityUtil.getUserId());
+            coffeeShop.setCreatedBy(user.getId());
         }
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
         generateEmbeddingDescription(saved);

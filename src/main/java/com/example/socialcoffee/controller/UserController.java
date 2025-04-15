@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CollectionRequest;
@@ -24,19 +25,21 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping
-public class UserController {
+public class UserController extends BaseController {
 
     private final UserService userService;
     private final ValidationService validationService;
 
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
-        // Get the current authenticated user's ID
-        Long userId = SecurityUtil.getUserId();
-        return userService.updateUserProfile(userId, userUpdateDTO);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.updateUserProfile(user, userUpdateDTO);
     }
 
     @GetMapping("/users/search")
@@ -61,20 +64,26 @@ public class UserController {
 //    }
     @GetMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> getProfile() {
-        Long userId = SecurityUtil.getUserId();
-        return userService.getProfile(userId);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.getProfile(user);
     }
 
     @PostMapping("/users/{followeeId}/follow")
     public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followeeId) {
-        Long followerId = SecurityUtil.getUserId();
-        return userService.followUser(followerId, followeeId);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.followUser(user, followeeId);
     }
 
     @PostMapping("/users/{followeeId}/unfollow")
     public ResponseEntity<ResponseMetaData> unfollowUser(@PathVariable Long followeeId) {
-        Long followerId = SecurityUtil.getUserId();
-        return userService.unfollowUser(followerId, followeeId);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.unfollowUser(user, followeeId);
     }
 
     @GetMapping("/users/{userId}/followers")
@@ -101,7 +110,10 @@ public class UserController {
 
     @GetMapping("/users/my-followers")
     public ResponseEntity<ResponseMetaData> getMyFollowers(PageDtoIn pageDtoIn) {
-        Page<UserDTO> followers = userService.getFollowers(SecurityUtil.getUserId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        Page<UserDTO> followers = userService.getFollowers(user.getId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
         PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
                 pageDtoIn.getSize(),
                 followers.getTotalElements(),
@@ -111,7 +123,10 @@ public class UserController {
 
     @GetMapping("/users/my-following")
     public ResponseEntity<ResponseMetaData> getMyFollowing(PageDtoIn pageDtoIn) {
-        Page<UserDTO> following = userService.getFollowing(SecurityUtil.getUserId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        Page<UserDTO> following = userService.getFollowing(user.getId(), PageRequest.of(pageDtoIn.getPage() - 1, pageDtoIn.getSize()));
         PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
                 pageDtoIn.getSize(),
                 following.getTotalElements(),
@@ -119,9 +134,38 @@ public class UserController {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), pageDtoOut));
     }
 
+    @GetMapping("/users/{userId}/collections")
+    public ResponseEntity<ResponseMetaData> getCollections(@PathVariable Long userId,
+                                                           PageDtoIn pageDtoIn) {
+        return userService.getCollections(userId, pageDtoIn);
+    }
+    @GetMapping("/users/{userId}/collections/{collectionId}")
+    public ResponseEntity<ResponseMetaData> getCollection(@PathVariable Long userId,
+                                                          @PathVariable Long collectionId) {
+        return userService.getCollectionById(userId, collectionId);
+    }
+
+    @GetMapping("/users/my-collections")
+    public ResponseEntity<ResponseMetaData> getCollections(PageDtoIn pageDtoIn) {
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.getCollections(user.getId(), pageDtoIn);
+    }
+    @GetMapping("/users/my-collections/{collectionId}")
+    public ResponseEntity<ResponseMetaData> getCollection(@PathVariable Long collectionId) {
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.getCollectionById(user.getId(), collectionId);
+    }
+
     @PostMapping("/users/collections")
     public ResponseEntity<ResponseMetaData> createNewCollection(@Valid @RequestBody CollectionRequest request) {
-        return userService.createNewCollection(request);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return userService.createNewCollection(user, request);
     }
 
     @PutMapping("/users/collections/{collectionId}")
