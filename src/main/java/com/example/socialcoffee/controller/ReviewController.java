@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.response.MetaDTO;
@@ -18,13 +19,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/")
 @Valid
 @Validated
-public class ReviewController {
+public class ReviewController extends BaseController {
     private final ReviewService reviewService;
     private final ValidationService validationService;
 
@@ -36,6 +38,9 @@ public class ReviewController {
                                                          @RequestPart(value = "is_annonymous", required = false) Boolean isAnonymous,
                                                          @RequestPart(value = "review_id", required = false) Long parentId,
                                                          @RequestPart(value = "resource", required = false) MultipartFile[] file) {
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
         content = StringUtils.trimToEmpty(content);
         List<MetaDTO> metaDTOList = validationService.validationCommentPost(privacy, content, file, Boolean.TRUE);
         if (!CollectionUtils.isEmpty(metaDTOList)) {
@@ -46,12 +51,14 @@ public class ReviewController {
 
     @PutMapping("/reviews/{reviewID}/react")
     public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") @NotBlank Long reviewId, String reaction) {
-        Long userId = SecurityUtil.getUserId();
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
         List<MetaDTO> metaDTOS = validationService.validateReviewReact(reaction);
         if(!CollectionUtils.isEmpty(metaDTOS)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
         }
-        return reviewService.react(userId, reviewId, reaction);
+        return reviewService.react(user, reviewId, reaction);
     }
 
     @PutMapping("coffee-shops/{shop_id}/review/{review_id}")

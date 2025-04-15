@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ReviewService extends BaseService {
+public class ReviewService {
     private final UserRepository userRepository;
     private final ImageService imageService;
     private final CoffeeShopRepository coffeeShopRepository;
@@ -35,9 +35,8 @@ public class ReviewService extends BaseService {
     private final ImageRepository imageRepository;
     private final ReviewReactionRepository reviewReactionRepository;
 
-    public ResponseEntity<ResponseMetaData> uploadReview(Long shopId, String privacy, Integer rating,
+    public ResponseEntity<ResponseMetaData> uploadReview(User user, Long shopId, String privacy, Integer rating,
                                                          String content, Boolean isAnonymous, MultipartFile[] file, Long parentId) {
-        User user = getCurrentUser();
         if (Objects.isNull(user)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
@@ -126,12 +125,12 @@ public class ReviewService extends BaseService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> react(Long userId, Long reviewId, String reaction) {
+    public ResponseEntity<ResponseMetaData> react(User user, Long reviewId, String reaction) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, userId);
+        ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId, user.getId());
         Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
         if (optionalReviewReaction.isEmpty()) {
             ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId, reaction);

@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
 import com.example.socialcoffee.dto.common.PageDtoIn;
@@ -13,11 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/")
 @RequiredArgsConstructor
 @Validated
-public class CoffeeShopController {
+public class CoffeeShopController extends BaseController{
 
     private final CoffeeShopService coffeeShopService;
 
@@ -28,7 +31,10 @@ public class CoffeeShopController {
 
     @PostMapping(value = "/coffee-shops", consumes = "multipart/form-data")
     public ResponseEntity<ResponseMetaData> createCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request) {
-        return coffeeShopService.createCoffeeShop(request);
+        User user = getCurrentUser();
+        if(Objects.isNull(user))
+            return ResponseEntity.status(401).build();
+        return coffeeShopService.createCoffeeShop(user, request);
     }
 
     @GetMapping("/coffee-shops/{id}")
