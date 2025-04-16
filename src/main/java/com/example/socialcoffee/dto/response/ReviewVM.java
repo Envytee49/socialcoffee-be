@@ -16,6 +16,7 @@ import java.util.Objects;
 public class ReviewVM {
     private Long id;
     private Integer rating;
+    private String privacy;
     private String content;
     private Boolean isAnnonymous;
     private List<Image> images;
@@ -34,6 +35,7 @@ public class ReviewVM {
                     UserReaction userReaction) {
         this.id = review.getId();
         this.rating = review.getRating();
+        this.privacy = review.getPrivacy();
         this.content = review.getComment();
         this.images = review.getImages();
         this.isAnnonymous = review.getIsAnonymous();

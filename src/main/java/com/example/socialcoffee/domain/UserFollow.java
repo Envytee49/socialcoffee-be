@@ -1,10 +1,7 @@
 package com.example.socialcoffee.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
@@ -18,7 +15,7 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_followee_id", columnList = "followeeId")
         }
 )
-@Setter
+@Data
 public class UserFollow {
 
     @EmbeddedId

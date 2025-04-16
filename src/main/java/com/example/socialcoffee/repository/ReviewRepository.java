@@ -21,4 +21,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findAllByCoffeeShopAndStatus(CoffeeShop coffeeShop,
                                               String status,
                                               Pageable pageable);
+
+    @Query(value = "SELECT r FROM Review r " +
+            "JOIN UserFollow uf ON uf.userFollowerId.followerId = r.user.id " +
+            "WHERE r.privacy in :privacy AND uf.userFollowerId.followeeId = :userId")
+    Page<Review> findAllByStatusAndRelation(List<String> privacy, Long userId, Pageable pageable);
 }
