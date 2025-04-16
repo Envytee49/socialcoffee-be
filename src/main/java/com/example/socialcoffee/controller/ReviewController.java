@@ -51,7 +51,7 @@ public class ReviewController extends BaseController {
     }
 
     @PutMapping("/reviews/{reviewID}/react")
-    public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") @NotBlank Long reviewId, String reaction) {
+    public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") Long reviewId, String reaction) {
         User user = getCurrentUser();
         if(Objects.isNull(user))
             return ResponseEntity.status(401).build();
@@ -71,11 +71,15 @@ public class ReviewController extends BaseController {
     @GetMapping("coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> getReview(@PathVariable("shop_id") Long shopId,
                                                       PageDtoIn pageDtoIn) {
-        return reviewService.getReviewByShopId(shopId, pageDtoIn);
+        User user = getCurrentUser();
+        if(Objects.isNull(user)) return ResponseEntity.status(401).build();
+        return reviewService.getReviewByShopId(user, shopId, pageDtoIn);
     }
     @GetMapping("/reviews")
     public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn) {
-        return reviewService.getReviews(pageDtoIn);
+        User user = getCurrentUser();
+        if(Objects.isNull(user)) return ResponseEntity.status(401).build();
+        return reviewService.getReviews(user, pageDtoIn);
     }
     @DeleteMapping("coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
