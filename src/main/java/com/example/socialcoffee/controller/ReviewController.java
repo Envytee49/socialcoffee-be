@@ -1,15 +1,13 @@
 package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.common.PageDtoIn;
+import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
-import com.example.socialcoffee.utils.SecurityUtil;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -31,7 +29,7 @@ public class ReviewController extends BaseController {
     private final ReviewService reviewService;
     private final ValidationService validationService;
 
-    @PostMapping("coffee-shops/{shop_id}/review")
+    @PostMapping("/coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
                                                          @RequestPart(value = "privacy", required = false) String privacy,
                                                          @RequestPart(value = "rating") String rating,
@@ -40,48 +38,81 @@ public class ReviewController extends BaseController {
                                                          @RequestPart(value = "review_id", required = false) String parentId,
                                                          @RequestPart(value = "resource", required = false) MultipartFile[] file) {
         User user = getCurrentUser();
-        if(Objects.isNull(user))
+        if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
         content = StringUtils.trimToEmpty(content);
-        List<MetaDTO> metaDTOList = validationService.validationCommentPost(privacy, content, file, Boolean.TRUE);
+        List<MetaDTO> metaDTOList = validationService.validationCommentPost(privacy,
+                                                                            content,
+                                                                            file,
+                                                                            Boolean.TRUE);
         if (!CollectionUtils.isEmpty(metaDTOList)) {
-            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList, null));
+            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList,
+                                                                         null));
         }
-        return reviewService.uploadReview(user, shopId, privacy, Integer.parseInt(rating), content, Boolean.parseBoolean(isAnonymous), file, NumberUtils.toLong(parentId));
+        return reviewService.uploadReview(user,
+                                          shopId,
+                                          privacy,
+                                          Integer.parseInt(rating),
+                                          content,
+                                          Boolean.parseBoolean(isAnonymous),
+                                          file,
+                                          NumberUtils.toLong(parentId));
     }
 
     @PutMapping("/reviews/{reviewID}/react")
-    public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") Long reviewId, String reaction) {
+    public ResponseEntity<ResponseMetaData> react(@PathVariable("reviewID") Long reviewId,
+                                                  String reaction) {
         User user = getCurrentUser();
-        if(Objects.isNull(user))
+        if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
         List<MetaDTO> metaDTOS = validationService.validateReviewReact(reaction);
-        if(!CollectionUtils.isEmpty(metaDTOS)) {
+        if (!CollectionUtils.isEmpty(metaDTOS)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
         }
-        return reviewService.react(user, reviewId, reaction);
+        return reviewService.react(user,
+                                   reviewId,
+                                   reaction);
     }
 
-    @PutMapping("coffee-shops/{shop_id}/review/{review_id}")
+    @PutMapping("/coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> editReview(@PathVariable("shop_id") Long shopId,
                                                        @PathVariable("review_id") Long reviewId,
                                                        @ModelAttribute @RequestPart EditReviewRequest editReviewRequest) {
-        return reviewService.editReview(shopId, reviewId, editReviewRequest);
+        return reviewService.editReview(shopId,
+                                        reviewId,
+                                        editReviewRequest);
     }
-    @GetMapping("coffee-shops/{shop_id}/review")
-    public ResponseEntity<ResponseMetaData> getReview(@PathVariable("shop_id") Long shopId,
-                                                      PageDtoIn pageDtoIn) {
+
+    @GetMapping("/coffee-shops/{shop_id}/review")
+    public ResponseEntity<ResponseMetaData> getReviewByShopId(@PathVariable("shop_id") Long shopId,
+                                                              PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
-        if(Objects.isNull(user)) return ResponseEntity.status(401).build();
-        return reviewService.getReviewByShopId(user, shopId, pageDtoIn);
+        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
+        return reviewService.getReviewByShopId(user,
+                                               shopId,
+                                               pageDtoIn);
     }
+
+    @GetMapping("/users/{displayName}/reviews")
+    public ResponseEntity<ResponseMetaData> getReviewByUserId(@PathVariable(value = "displayName") String displayName,
+                                                              PageDtoIn pageDtoIn) {
+        User user = getCurrentUser();
+        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
+        String destinationUser = Objects.isNull(displayName) ? user.getDisplayName() : displayName;
+        return reviewService.getReviewByUserId(user,
+                                               destinationUser,
+                                               pageDtoIn);
+    }
+
     @GetMapping("/reviews")
     public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
-        if(Objects.isNull(user)) return ResponseEntity.status(401).build();
-        return reviewService.getReviews(user, pageDtoIn);
+        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
+        return reviewService.getReviews(user,
+                                        pageDtoIn);
     }
-    @DeleteMapping("coffee-shops/{shop_id}/review/{review_id}")
+
+    @DeleteMapping("/coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
         return reviewService.deleteReview(reviewId);
     }

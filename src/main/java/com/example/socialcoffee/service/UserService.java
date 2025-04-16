@@ -87,8 +87,7 @@ public class UserService {
 //    }
     public ResponseEntity<ResponseMetaData> getProfile(User user) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user.getProfilePhoto(),
-                                                                             user.getUsername())));
+                                                             new UserProfile(user)));
     }
 
     @Transactional
@@ -264,4 +263,5 @@ public class UserService {
     public ResponseEntity<ResponseMetaData> getCollectionById(Long userId, Long collectionId) {
         return null;
     }
+
 }

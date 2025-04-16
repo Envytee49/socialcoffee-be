@@ -50,6 +50,7 @@ public class User {
     )
     private List<Role> roles;
     private String profilePhoto;
+    private String backgroundPhoto;
     @CreationTimestamp
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;

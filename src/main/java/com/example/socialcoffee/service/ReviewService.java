@@ -56,9 +56,7 @@ public class ReviewService {
         }
         List<Image> images = imageService.save(file);
         Review review = new Review(rating,
-                                   privacy,
                                    content,
-                                   isAnonymous,
                                    images,
                                    user,
                                    coffeeShop);
@@ -228,5 +226,37 @@ public class ReviewService {
                                                           reviewVMS);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              pageDtoOut));
+    }
+
+    public ResponseEntity<ResponseMetaData> getReviewByUserId(User user,
+                                                              String displayName,
+                                                              PageDtoIn pageDtoIn) {
+        Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
+                                           pageDtoIn.getSize(),
+                                           Sort.unsorted());
+        User viewingUser = userRepository.findByDisplayNameAndStatus(displayName, Status.ACTIVE.getValue());
+        if (Objects.isNull(viewingUser)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
+        }
+        Page<Review> reviews = reviewRepository.findAllByUserAndStatus(viewingUser,
+                                                                             Status.ACTIVE.getValue(),
+                                                                             pageable);
+        List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
+        Map<Long, UserReaction> groupedReactions = groupedReactions(reviewIds);
+
+        List<ReviewVM> reviewVMS = reviews.getContent()
+                .stream()
+                .map(r -> new ReviewVM(user.getId(),
+                                       r,
+                                       groupedReactions.getOrDefault(r.getId(),
+                                                                     null)))
+                .toList();
+        final long totalElements = reviews.getTotalElements();
+        PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
+                                                          pageable.getPageSize(),
+                                                          totalElements,
+                                                          reviewVMS);
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                      pageDtoOut));
     }
 }

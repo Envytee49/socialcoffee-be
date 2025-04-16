@@ -2,6 +2,7 @@ package com.example.socialcoffee.repository;
 
 import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.domain.Review;
+import com.example.socialcoffee.domain.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,9 +22,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findAllByCoffeeShopAndStatus(CoffeeShop coffeeShop,
                                               String status,
                                               Pageable pageable);
+//
+//    @Query(value = "SELECT r FROM Review r " +
+//            "JOIN UserFollow uf ON uf.userFollowerId.followerId = r.user.id " +
+//            "WHERE r.privacy in :privacy AND uf.userFollowerId.followeeId = :userId")
+//    Page<Review> findAllByStatusAndRelation(List<String> privacy, Long userId, Pageable pageable);
 
-    @Query(value = "SELECT r FROM Review r " +
-            "JOIN UserFollow uf ON uf.userFollowerId.followerId = r.user.id " +
-            "WHERE r.privacy in :privacy AND uf.userFollowerId.followeeId = :userId")
-    Page<Review> findAllByStatusAndRelation(List<String> privacy, Long userId, Pageable pageable);
+    Page<Review> findAllByUserAndStatus(User viewingUser, String value, Pageable pageable);
 }

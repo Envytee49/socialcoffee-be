@@ -5,7 +5,9 @@ import lombok.Getter;
 @Getter
 public enum MetaData {
     INTERNAL_SERVER_ERROR(500,
-                          "Interal Server Error"),
+                          "Internal Server Error"),
+    NO_RESOURCE_FOUND(404,
+                      "No Resource Found"),
     BAD_REQUEST(400,
                 "Bad Request"),
     SUCCESS(200,

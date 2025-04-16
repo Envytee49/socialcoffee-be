@@ -18,7 +18,6 @@ public class ReviewVM {
     private Integer rating;
     private String privacy;
     private String content;
-    private Boolean isAnnonymous;
     private List<Image> images;
     private Map<String, Long> reactions;
     private String createdDate;
@@ -35,10 +34,8 @@ public class ReviewVM {
                     UserReaction userReaction) {
         this.id = review.getId();
         this.rating = review.getRating();
-        this.privacy = review.getPrivacy();
         this.content = review.getComment();
         this.images = review.getImages();
-        this.isAnnonymous = review.getIsAnonymous();
         this.createdDate = DateTimeUtil.covertLocalDateToString(review.getCreatedAt().toLocalDate());
         this.timeAgo = DateTimeUtil.getTimeAgo(review.getCreatedAt());
         if (Objects.nonNull(userReaction)) {
@@ -47,9 +44,7 @@ public class ReviewVM {
             this.reactions = userReaction.getReactions();
             this.reaction = userReaction.getUserReactions().get(userId);
         }
-        if (!review.getIsAnonymous()) {
-            this.user = new UserDTO(review.getUser());
-        }
+        this.user = new UserDTO(review.getUser());
         this.coffeeShop = new CoffeeShopDTO(review.getCoffeeShop());
 
     }

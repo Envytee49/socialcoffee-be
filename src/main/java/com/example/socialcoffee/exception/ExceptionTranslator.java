@@ -20,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -35,8 +36,15 @@ public class ExceptionTranslator {
     @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleException(Exception ex) {
         log.warn("Error", ex);
-        return ResponseEntity.status(MetaData.INTERNAL_SERVER_ERROR.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INTERNAL_SERVER_ERROR), ""));
+        return ResponseEntity.status(MetaData.INTERNAL_SERVER_ERROR.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INTERNAL_SERVER_ERROR)));
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleNoResourceFoundException(NoResourceFoundException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.NO_RESOURCE_FOUND)));
+    }
+
     @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleInsufficientAuthenticationException(InsufficientAuthenticationException ex) {
         log.warn("Error", ex);
