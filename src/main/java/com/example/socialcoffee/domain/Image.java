@@ -21,4 +21,12 @@ public class Image {
     private double height;
     private double size;
     private String status = Status.ACTIVE.getValue();
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "url='" + url + '\'' +
+                ", thumbnailUrl='" + thumbnailUrl + '\'' +
+                '}';
+    }
 }

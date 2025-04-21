@@ -63,7 +63,6 @@ public class AuthService {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
                 }
                 User user = optionalUser.get();
-                user.setProfilePhoto(userInfo.getPicture());
                 user = userRepository.save(user);
                 String jwtToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
@@ -102,7 +101,6 @@ public class AuthService {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
             }
             User user = optionalUser.get();
-            user.setProfilePhoto(userInfo.getPictureUrl());
             user = userRepository.save(user);
             String jwtToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);

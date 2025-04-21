@@ -74,6 +74,22 @@ public class CoffeeShop {
     )
     private List<Category> categories;
 
+    @Override
+    public String toString() {
+        return "CoffeeShop{" +
+                "name='" + name + '\'' +
+                ", coverPhoto='" + coverPhoto + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", webAddress='" + webAddress + '\'' +
+                ", menuWebAddress='" + menuWebAddress + '\'' +
+                ", additionInfo='" + additionInfo + '\'' +
+                ", openHour=" + openHour +
+                ", closeHour=" + closeHour +
+                ", galleryPhotos=" + galleryPhotos +
+                ", address=" + address +
+                '}';
+    }
+
     @ManyToMany
     @JoinTable(
             name = "coffee_shop_dress_code",

@@ -73,7 +73,8 @@ public enum MetaData {
     INVALID_CREDENTIALS(4024,
                         "Invalid credentials"),
     USERNAME_MISSING(4025,
-                     "Username missing");
+                     "Username missing"), WRONG_DATE_TIME_FORMAT(4026,
+                                                                 "Wrong date time format");
 
 
     private final Integer metaCode;

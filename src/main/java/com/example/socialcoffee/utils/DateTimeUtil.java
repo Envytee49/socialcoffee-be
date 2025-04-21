@@ -2,12 +2,14 @@ package com.example.socialcoffee.utils;
 
 import com.example.socialcoffee.constants.DateTimeFormat;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
+import java.util.Objects;
 
 public class DateTimeUtil {
     public static LocalDate convertStringToLocalDate(String dateStr) {
@@ -17,8 +19,28 @@ public class DateTimeUtil {
     }
 
     public static String covertLocalDateToString(LocalDate localDate) {
+        if(Objects.isNull(localDate)) return StringUtils.EMPTY;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
         return localDate.format(formatter);
+    }
+
+    public static String covertLocalDateToYYYYMMDDString(LocalDate localDate) {
+        if(Objects.isNull(localDate)) return StringUtils.EMPTY;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateTimeFormat.YYYYMMDD_HYPHEN);
+        return localDate.format(formatter);
+    }
+    private static LocalDate convertMMMDYYYStrToLocalDate(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
+        return LocalDate.parse(dateStr, formatter);
+    }
+    public static LocalDate convertYYYYMMDDStrToLocalDate(String dateStr) {
+        if (StringUtils.isBlank(dateStr)) return null;
+        try {
+            return convertMMMDYYYStrToLocalDate(dateStr);
+        } catch (Exception e) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateTimeFormat.YYYYMMDD_HYPHEN);
+            return LocalDate.parse(dateStr, formatter);
+        }
     }
 
     public static String getTimeAgo(LocalDateTime createdAt) {
@@ -55,5 +77,10 @@ public class DateTimeUtil {
 
         long years = ChronoUnit.YEARS.between(createdAt, now);
         return years + "y";
+    }
+
+    public static String covertLocalDateToString(LocalDateTime createdAt) {
+        if(Objects.isNull(createdAt)) return StringUtils.EMPTY;
+        return covertLocalDateToString(createdAt.toLocalDate());
     }
 }

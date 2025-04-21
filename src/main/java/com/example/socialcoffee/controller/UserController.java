@@ -1,20 +1,25 @@
 package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CollectionRequest;
+import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.dto.response.UserDTO;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.Status;
+import com.example.socialcoffee.repository.UserFollowRepository;
 import com.example.socialcoffee.service.CloudinaryService;
 import com.example.socialcoffee.service.UserService;
 import com.example.socialcoffee.service.ValidationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,11 +38,20 @@ public class UserController extends BaseController {
     private final UserService userService;
     private final ValidationService validationService;
     private final CloudinaryService cloudinaryService;
+    private final UserFollowRepository userFollowRepository;
 
+    @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
+        user = (Objects.nonNull(userUpdateDTO.getUserId()) && !Objects.equals(user.getId(), userUpdateDTO.getUserId()))
+                ? userRepository.findByIdAndStatus(userUpdateDTO.getUserId(),
+                                                            Status.ACTIVE.getValue())
+                : user;
+        if(Objects.isNull(user))
+            return ResponseEntity.notFound().build();
+
         return userService.updateUserProfile(user,
                                              userUpdateDTO);
     }
@@ -60,7 +74,8 @@ public class UserController extends BaseController {
         final String upload = cloudinaryService.upload(file);
         user.setProfilePhoto(upload);
         userRepository.save(user);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), upload));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             upload));
     }
 
     @PatchMapping("/users/background-photo")
@@ -71,7 +86,8 @@ public class UserController extends BaseController {
         final String upload = cloudinaryService.upload(file);
         user.setBackgroundPhoto(upload);
         userRepository.save(user);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), upload));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             upload));
     }
 
     @GetMapping("/users/search")
@@ -99,11 +115,28 @@ public class UserController extends BaseController {
 //        return userService.updateNewPassword(updateNewPassword);
 //    }
     @GetMapping("/users/profile")
-    public ResponseEntity<ResponseMetaData> getProfile() {
+    public ResponseEntity<ResponseMetaData> getProfile(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
-        return userService.getProfile(user);
+        Long currentUserId = user.getId();
+        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
+                ? userRepository.findByDisplayNameAndStatus(displayName,
+                                                            Status.ACTIVE.getValue())
+                : user;
+        if(Objects.isNull(user)) {
+            return ResponseEntity.notFound().build();
+        }
+        Long viewingUserId = user.getId();
+        boolean  isFollowing;
+        if(currentUserId.equals(viewingUserId)) {
+            isFollowing = false;
+        } else {
+            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(currentUserId,
+                                                                                        viewingUserId));
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             new UserProfile(user, isFollowing)));
     }
 
     @PostMapping("/users/{followeeId}/follow")
@@ -125,13 +158,19 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/users/followers")
-    public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "userId", required = false) Long userId,
+    public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName,
                                                          PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
-        Long destinationUserId = Objects.isNull(userId) ? user.getId() : userId;
-        Page<UserDTO> followers = userService.getFollowers(destinationUserId,
+        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
+                ? userRepository.findByDisplayNameAndStatus(displayName,
+                                                            Status.ACTIVE.getValue())
+                : user;
+        if(Objects.isNull(user)) {
+            return ResponseEntity.notFound().build();
+        }
+        Page<UserDTO> followers = userService.getFollowers(user.getId(),
                                                            PageRequest.of(pageDtoIn.getPage() - 1,
                                                                           pageDtoIn.getSize()));
         PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
@@ -144,13 +183,19 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/users/following")
-    public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "userId", required = false) Long userId,
+    public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName,
                                                          PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
-        Long destinationUserId = Objects.isNull(userId) ? user.getId() : userId;
-        Page<UserDTO> following = userService.getFollowing(destinationUserId,
+        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
+                ? userRepository.findByDisplayNameAndStatus(displayName,
+                                                            Status.ACTIVE.getValue())
+                : user;
+        if(Objects.isNull(user)) {
+            return ResponseEntity.notFound().build();
+        }
+        Page<UserDTO> following = userService.getFollowing(user.getId(),
                                                            PageRequest.of(pageDtoIn.getPage() - 1,
                                                                           pageDtoIn.getSize()));
         PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),

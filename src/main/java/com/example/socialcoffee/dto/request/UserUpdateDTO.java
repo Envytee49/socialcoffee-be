@@ -9,19 +9,18 @@ import java.time.LocalDate;
 
 @Data
 public class UserUpdateDTO {
+    private Long userId;
+
     @Size(max = 100)
     private String displayName;
 
     @Size(max = 500)
     private String bio;
 
-    @Size(max = 100)
-    private String coffeePreference;
-
     @Pattern(regexp = "^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$")
     private String phone;
 
-    private LocalDate dob;
+    private String dob;
 
     @Size(max = 50)
     private String gender;

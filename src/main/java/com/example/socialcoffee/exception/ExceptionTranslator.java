@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 
@@ -43,6 +44,12 @@ public class ExceptionTranslator {
     public ResponseEntity<ResponseMetaData> handleNoResourceFoundException(NoResourceFoundException ex) {
         log.warn("Error", ex);
         return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.NO_RESOURCE_FOUND)));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleDateTimeParseException(DateTimeParseException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.WRONG_DATE_TIME_FORMAT)));
     }
 
     @ExceptionHandler

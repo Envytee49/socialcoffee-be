@@ -24,7 +24,7 @@ import java.util.List;
 @Slf4j
 public class ValidationService {
     private final ConfigResource configResource;
-    public List<MetaDTO> validationCommentPost(String privacy, String content, MultipartFile[] file, boolean isCreateComment) {
+    public List<MetaDTO> validationCommentPost(String content, MultipartFile[] file, boolean isCreateComment) {
         List<MetaDTO> metaDTOList = new ArrayList<>();
         content = StringUtils.trimToEmpty(content);
 
@@ -34,10 +34,6 @@ public class ValidationService {
         if (content.length() > configResource.getMaxLengthCommentPost()) {
             metaDTOList.add(new MetaDTO(MetaData.EXCEED_MAX_LENGTH_COMMENT_POST.getMetaCode(),
                     String.format(MetaData.EXCEED_MAX_LENGTH_COMMENT_POST.getMessage(), configResource.getMaxLengthCommentPost())));
-        }
-
-        if(!StringUtils.isNotBlank(privacy) && !Privacy.privacyExist(privacy)) {
-            metaDTOList.add(new MetaDTO(MetaData.INVALID_PRIVACY));
         }
 
         return metaDTOList;

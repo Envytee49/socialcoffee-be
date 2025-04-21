@@ -31,7 +31,6 @@ public class ReviewController extends BaseController {
 
     @PostMapping("/coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
-                                                         @RequestPart(value = "privacy", required = false) String privacy,
                                                          @RequestPart(value = "rating") String rating,
                                                          @RequestPart(value = "content", required = false) String content,
                                                          @RequestPart(value = "is_annonymous", required = false) String isAnonymous,
@@ -41,8 +40,7 @@ public class ReviewController extends BaseController {
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
         content = StringUtils.trimToEmpty(content);
-        List<MetaDTO> metaDTOList = validationService.validationCommentPost(privacy,
-                                                                            content,
+        List<MetaDTO> metaDTOList = validationService.validationCommentPost(content,
                                                                             file,
                                                                             Boolean.TRUE);
         if (!CollectionUtils.isEmpty(metaDTOList)) {
@@ -51,10 +49,8 @@ public class ReviewController extends BaseController {
         }
         return reviewService.uploadReview(user,
                                           shopId,
-                                          privacy,
                                           Integer.parseInt(rating),
                                           content,
-                                          Boolean.parseBoolean(isAnonymous),
                                           file,
                                           NumberUtils.toLong(parentId));
     }

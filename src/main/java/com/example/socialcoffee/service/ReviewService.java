@@ -41,10 +41,8 @@ public class ReviewService {
     @Transactional
     public ResponseEntity<ResponseMetaData> uploadReview(User user,
                                                          Long shopId,
-                                                         String privacy,
                                                          Integer rating,
                                                          String content,
-                                                         Boolean isAnonymous,
                                                          MultipartFile[] file,
                                                          Long parentId) {
         if (Objects.isNull(user)) {
@@ -246,10 +244,11 @@ public class ReviewService {
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
+                .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
                 .map(r -> new ReviewVM(user.getId(),
-                                       r,
-                                       groupedReactions.getOrDefault(r.getId(),
-                                                                     null)))
+                     r,
+                     groupedReactions.getOrDefault(r.getId(),
+        null)))
                 .toList();
         final long totalElements = reviews.getTotalElements();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),

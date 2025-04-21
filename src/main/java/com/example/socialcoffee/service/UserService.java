@@ -13,9 +13,11 @@ import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.dto.response.UserDTO;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.repository.*;
+import com.example.socialcoffee.utils.DateTimeUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -86,6 +88,13 @@ public class UserService {
 //        log.info("SUCCESS delete old token with userId = {}", userId);
 //    }
     public ResponseEntity<ResponseMetaData> getProfile(User user) {
+
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             new UserProfile(user)));
+    }
+
+    public ResponseEntity<ResponseMetaData> getProfileByName(User user) {
+
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              new UserProfile(user)));
     }
@@ -94,10 +103,6 @@ public class UserService {
     public ResponseEntity<ResponseMetaData> followUser(User follower,
                                                        Long followeeId) {
         // Check if users exist
-        Optional<User> optionalFollower = userRepository.findByUserId(follower.getId());
-        if (optionalFollower.isEmpty())
-            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
-
         Optional<User> optionalFollowee = userRepository.findById(followeeId);
         if (optionalFollowee.isEmpty())
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
@@ -163,46 +168,46 @@ public class UserService {
             user.setDisplayName(userUpdateDTO.getDisplayName());
         }
 
-        if (userUpdateDTO.getBio() != null) {
-            user.setBio(userUpdateDTO.getBio());
-        }
+//        if (userUpdateDTO.getBio() != null) {
+//            user.setBio(userUpdateDTO.getBio());
+//        }
 
-        if (userUpdateDTO.getCoffeePreference() != null) {
-            user.setCoffeePreference(userUpdateDTO.getCoffeePreference());
-        }
+//        if (userUpdateDTO.getCoffeePreference() != null) {
+//            user.setCoffeePreference(userUpdateDTO.getCoffeePreference());
+//        }
 
-        if (userUpdateDTO.getPhone() != null) {
+        if (StringUtils.isNotBlank(userUpdateDTO.getPhone())) {
             user.setPhone(userUpdateDTO.getPhone());
         }
 
-        if (userUpdateDTO.getDob() != null) {
-            user.setDob(userUpdateDTO.getDob());
+        if (StringUtils.isNotBlank(userUpdateDTO.getDob())) {
+            user.setDob(DateTimeUtil.convertYYYYMMDDStrToLocalDate(userUpdateDTO.getDob()));
         }
 
-        if (userUpdateDTO.getGender() != null) {
+        if (StringUtils.isNotBlank(userUpdateDTO.getGender())) {
             user.setGender(userUpdateDTO.getGender());
         }
 
         // For nested objects like address, you might want to handle them differently
-        if (userUpdateDTO.getAddress() != null) {
-            // Update address or create a new one if it doesn't exist
-            if (user.getAddress() == null) {
-                Address address = new Address();
-                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
-                                         address);
-                addressRepository.save(address);
-                user.setAddress(address);
-            } else {
-                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
-                                         user.getAddress());
-            }
-        }
+//        if (userUpdateDTO.getAddress() != null) {
+//            // Update address or create a new one if it doesn't exist
+//            if (user.getAddress() == null) {
+//                Address address = new Address();
+//                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
+//                                         address);
+//                addressRepository.save(address);
+//                user.setAddress(address);
+//            } else {
+//                BeanUtils.copyProperties(userUpdateDTO.getAddress(),
+//                                         user.getAddress());
+//            }
+//        }
 
         // Save the updated user
-        userRepository.save(user);
+        user = userRepository.save(user);
 
         // Convert to DTO and return
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), new UserProfile(user)));
     }
 
     public ResponseEntity<ResponseMetaData> getTopContributors(int limit) {

@@ -24,6 +24,19 @@ public class Address {
     private double longitude;
     private double latitude;
 
+    @Override
+    public String toString() {
+        return "Address{" +
+                "googleMapUrl='" + googleMapUrl + '\'' +
+                ", addressDetail='" + addressDetail + '\'' +
+                ", province='" + province + '\'' +
+                ", district='" + district + '\'' +
+                ", ward='" + ward + '\'' +
+                ", longitude=" + longitude +
+                ", latitude=" + latitude +
+                '}';
+    }
+
     public Address(final String googleMapUrl,
                    final String province,
                    final String district,
