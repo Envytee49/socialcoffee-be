@@ -8,9 +8,7 @@ import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
-import com.example.socialcoffee.dto.response.MetaDTO;
-import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.dto.response.UserDTO;
+import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.repository.UserFollowRepository;
@@ -45,11 +43,12 @@ public class UserController extends BaseController {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
-        user = (Objects.nonNull(userUpdateDTO.getUserId()) && !Objects.equals(user.getId(), userUpdateDTO.getUserId()))
+        user = (Objects.nonNull(userUpdateDTO.getUserId()) && !Objects.equals(user.getId(),
+                                                                              userUpdateDTO.getUserId()))
                 ? userRepository.findByIdAndStatus(userUpdateDTO.getUserId(),
-                                                            Status.ACTIVE.getValue())
+                                                   Status.ACTIVE.getValue())
                 : user;
-        if(Objects.isNull(user))
+        if (Objects.isNull(user))
             return ResponseEntity.notFound().build();
 
         return userService.updateUserProfile(user,
@@ -91,7 +90,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/users/search")
-    public ResponseEntity<ResponseMetaData> searchUser(UserSearchRequest request,
+    public ResponseEntity<ResponseMetaData> searchUser(@Valid UserSearchRequest request,
                                                        PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
                                            pageDtoIn.getSize(),
@@ -124,37 +123,38 @@ public class UserController extends BaseController {
                 ? userRepository.findByDisplayNameAndStatus(displayName,
                                                             Status.ACTIVE.getValue())
                 : user;
-        if(Objects.isNull(user)) {
+        if (Objects.isNull(user)) {
             return ResponseEntity.notFound().build();
         }
         Long viewingUserId = user.getId();
-        boolean  isFollowing;
-        if(currentUserId.equals(viewingUserId)) {
+        boolean isFollowing;
+        if (currentUserId.equals(viewingUserId)) {
             isFollowing = false;
         } else {
-            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(currentUserId,
-                                                                                        viewingUserId));
+            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(viewingUserId,
+                                                                                        currentUserId));
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user, isFollowing)));
+                                                             new UserProfile(user,
+                                                                             isFollowing)));
     }
 
-    @PostMapping("/users/{followeeId}/follow")
-    public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followeeId) {
+    @PostMapping("/users/{followingWhoId}/follow")
+    public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followingWhoId) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
         return userService.followUser(user,
-                                      followeeId);
+                                      followingWhoId);
     }
 
-    @PostMapping("/users/{followeeId}/unfollow")
-    public ResponseEntity<ResponseMetaData> unfollowUser(@PathVariable Long followeeId) {
+    @PostMapping("/users/{unfollowingWhoId}/unfollow")
+    public ResponseEntity<ResponseMetaData> unfollowUser(@PathVariable Long unfollowingWhoId) {
         User user = getCurrentUser();
         if (Objects.isNull(user))
             return ResponseEntity.status(401).build();
         return userService.unfollowUser(user,
-                                        followeeId);
+                                        unfollowingWhoId);
     }
 
     @GetMapping("/users/followers")
@@ -167,16 +167,16 @@ public class UserController extends BaseController {
                 ? userRepository.findByDisplayNameAndStatus(displayName,
                                                             Status.ACTIVE.getValue())
                 : user;
-        if(Objects.isNull(user)) {
+        if (Objects.isNull(user)) {
             return ResponseEntity.notFound().build();
         }
-        Page<UserDTO> followers = userService.getFollowers(user.getId(),
-                                                           PageRequest.of(pageDtoIn.getPage() - 1,
-                                                                          pageDtoIn.getSize()));
-        PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                         pageDtoIn.getSize(),
-                                                         followers.getTotalElements(),
-                                                         followers.getContent());
+        Page<FollowerDTO> followers = userService.getFollowers(user.getId(),
+                                                               PageRequest.of(pageDtoIn.getPage() - 1,
+                                                                              pageDtoIn.getSize()));
+        PageDtoOut<FollowerDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
+                                                             pageDtoIn.getSize(),
+                                                             followers.getTotalElements(),
+                                                             followers.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                       pageDtoOut));
 
@@ -192,16 +192,16 @@ public class UserController extends BaseController {
                 ? userRepository.findByDisplayNameAndStatus(displayName,
                                                             Status.ACTIVE.getValue())
                 : user;
-        if(Objects.isNull(user)) {
+        if (Objects.isNull(user)) {
             return ResponseEntity.notFound().build();
         }
-        Page<UserDTO> following = userService.getFollowing(user.getId(),
-                                                           PageRequest.of(pageDtoIn.getPage() - 1,
-                                                                          pageDtoIn.getSize()));
-        PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                         pageDtoIn.getSize(),
-                                                         following.getTotalElements(),
-                                                         following.getContent());
+        Page<FollowingDTO> following = userService.getFollowing(user.getId(),
+                                                                PageRequest.of(pageDtoIn.getPage() - 1,
+                                                                               pageDtoIn.getSize()));
+        PageDtoOut<FollowingDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
+                                                              pageDtoIn.getSize(),
+                                                              following.getTotalElements(),
+                                                              following.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                       pageDtoOut));
     }

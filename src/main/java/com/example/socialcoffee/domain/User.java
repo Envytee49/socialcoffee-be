@@ -1,5 +1,7 @@
 package com.example.socialcoffee.domain;
 
+import com.example.socialcoffee.dto.response.FollowerDTO;
+import com.example.socialcoffee.dto.response.FollowingDTO;
 import com.example.socialcoffee.dto.response.UserDTO;
 import com.example.socialcoffee.mapper.UserMapper;
 import com.example.socialcoffee.model.FacebookUserInfo;
@@ -84,5 +86,13 @@ public class User {
 
     public UserDTO toUserDTO() {
         return new UserDTO(this);
+    }
+
+    public FollowerDTO toFollowerDTO() {
+        return new FollowerDTO(this);
+    }
+
+    public FollowingDTO toFollowingDTO() {
+        return new FollowingDTO(this);
     }
 }

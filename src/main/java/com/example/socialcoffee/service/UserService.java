@@ -1,16 +1,16 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.configuration.AuthConfig;
-import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.Collection;
+import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
-import com.example.socialcoffee.dto.response.ContributorDTO;
-import com.example.socialcoffee.dto.response.MetaDTO;
-import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.dto.response.UserDTO;
+import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.repository.*;
 import com.example.socialcoffee.utils.DateTimeUtil;
@@ -18,17 +18,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -100,15 +97,15 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> followUser(User follower,
-                                                       Long followeeId) {
+    public ResponseEntity<ResponseMetaData> followUser(User user,
+                                                       Long followingWhoId) {
         // Check if users exist
-        Optional<User> optionalFollowee = userRepository.findById(followeeId);
+        Optional<User> optionalFollowee = userRepository.findById(followingWhoId);
         if (optionalFollowee.isEmpty())
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         // Check if already following
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(follower.getId(),
-                                                                     followeeId);
+        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followingWhoId,
+                                                                     user.getId());
         if (userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_FOLLOWING)));
         }
@@ -121,10 +118,10 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> unfollowUser(User follower,
-                                                         Long followeeId) {
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(follower.getId(),
-                                                                     followeeId);
+    public ResponseEntity<ResponseMetaData> unfollowUser(User user,
+                                                         Long unfollowingWhoId) {
+        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(unfollowingWhoId,
+                                                                     user.getId());
 
         if (!userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOLLOWING)));
@@ -134,20 +131,30 @@ public class UserService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public Page<UserDTO> getFollowers(Long userId,
-                                      Pageable pageable) {
+    public Page<FollowerDTO> getFollowers(Long userId,
+                                          Pageable pageable) {
         // Get users who follow the specified user
         Page<User> followers = userFollowRepository.findFollowersByFolloweeId(userId,
                                                                               pageable);
-        return followers.map(User::toUserDTO);
+        final Set<Long> relation = userFollowRepository.findRelationByIdIn(
+                followers
+                        .getContent()
+                        .stream()
+                        .map(u -> new UserFollow.UserFollowerId(u.getId(),
+                                                                userId))
+                        .toList());
+
+
+        return followers.map(u -> new FollowerDTO(u,
+                                                  relation.contains(u.getId())));
     }
 
-    public Page<UserDTO> getFollowing(Long userId,
-                                      Pageable pageable) {
+    public Page<FollowingDTO> getFollowing(Long userId,
+                                           Pageable pageable) {
         // Get users who the specified user follows
-        Page<User> following = userFollowRepository.findFolloweesByFollowerId(userId,
-                                                                              pageable);
-        return following.map(User::toUserDTO);
+        Page<User> following = userFollowRepository.findFollowingsByFollowerId(userId,
+                                                                               pageable);
+        return following.map(User::toFollowingDTO);
     }
 
     public Page<UserDTO> search(UserSearchRequest request,
@@ -207,7 +214,8 @@ public class UserService {
         user = userRepository.save(user);
 
         // Convert to DTO and return
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), new UserProfile(user)));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             new UserProfile(user)));
     }
 
     public ResponseEntity<ResponseMetaData> getTopContributors(int limit) {
@@ -235,7 +243,8 @@ public class UserService {
     }
 
 
-    public ResponseEntity<ResponseMetaData> createNewCollection(User user, CollectionRequest request) {
+    public ResponseEntity<ResponseMetaData> createNewCollection(User user,
+                                                                CollectionRequest request) {
         Collection collection = Collection.builder()
                 .description(request.getDescription())
                 .name(request.getName())
@@ -246,13 +255,14 @@ public class UserService {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(Long collectionId, Long shopId) {
+    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(Long collectionId,
+                                                                      Long shopId) {
         Optional<Collection> optionalCollection = collectionRepository.findById(collectionId);
         if (optionalCollection.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
-        if(Objects.isNull(coffeeShop)) {
+        if (Objects.isNull(coffeeShop)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Collection collection = optionalCollection.get();
@@ -261,11 +271,13 @@ public class UserService {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> getCollections(Long userId, PageDtoIn pageDtoIn) {
+    public ResponseEntity<ResponseMetaData> getCollections(Long userId,
+                                                           PageDtoIn pageDtoIn) {
         return null;
     }
 
-    public ResponseEntity<ResponseMetaData> getCollectionById(Long userId, Long collectionId) {
+    public ResponseEntity<ResponseMetaData> getCollectionById(Long userId,
+                                                              Long collectionId) {
         return null;
     }
 

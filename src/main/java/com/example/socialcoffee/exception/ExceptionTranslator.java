@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -44,6 +45,12 @@ public class ExceptionTranslator {
     public ResponseEntity<ResponseMetaData> handleNoResourceFoundException(NoResourceFoundException ex) {
         log.warn("Error", ex);
         return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.NO_RESOURCE_FOUND)));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_PARAMETERS)));
     }
 
     @ExceptionHandler
