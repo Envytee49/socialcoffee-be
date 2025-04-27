@@ -5,6 +5,7 @@ import com.example.socialcoffee.dto.response.CoffeeShopDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -225,4 +226,23 @@ public class CoffeeShop {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
+    @JsonIgnore
+    public String getOverviewAddress() {
+        final Address addr = this.address;
+        List<String> parts = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(addr.getProvince())) {
+            parts.add(addr.getProvince());
+        }
+        if (StringUtils.isNotBlank(addr.getDistrict())) {
+            parts.add(addr.getDistrict());
+        }
+        if (StringUtils.isNotBlank(addr.getWard())) {
+            parts.add(addr.getWard());
+        }
+
+        return String.join(", ", parts);
+    }
+
 }

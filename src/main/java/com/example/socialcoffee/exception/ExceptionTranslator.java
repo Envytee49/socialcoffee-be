@@ -48,6 +48,18 @@ public class ExceptionTranslator {
     }
 
     @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleNotFoundException(NotFoundException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.NO_RESOURCE_FOUND)));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ResponseMetaData> handleUnauthorizedException(UnauthorizedException ex) {
+        log.warn("Error", ex);
+        return ResponseEntity.status(MetaData.UNAUTHORIZED.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.UNAUTHORIZED)));
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         log.warn("Error", ex);
         return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_PARAMETERS)));

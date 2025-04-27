@@ -1,13 +1,13 @@
 package com.example.socialcoffee.dto.request;
 
-import com.example.socialcoffee.enums.Privacy;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
+@Setter
 public class CollectionRequest {
-    @NotBlank
     private String name;
     private String description;
-    private Privacy privacy;
+    private MultipartFile file;
 }

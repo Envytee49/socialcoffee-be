@@ -1,6 +1,7 @@
 package com.example.socialcoffee.dto.response;
 
 import com.example.socialcoffee.dto.common.PageDtoOut;
+import com.example.socialcoffee.utils.NumberUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.util.Pair;
@@ -38,7 +39,10 @@ public class ReviewResponse {
             this.fiveStarSummary = toSummary(reviewSummary,
                                              5,
                                              totalReviews);
-            this.overallRating = 1.0 * reviewSummary.stream().map(r -> ((Number) r[0]).intValue() * ((Number) r[1]).intValue()).reduce(0, Integer::sum) / totalReviews;
+            this.overallRating = 1.0 * reviewSummary.stream()
+                    .map(r -> ((Number) r[0]).intValue() * ((Number) r[1]).intValue()).reduce(0, Integer::sum) / totalReviews;
+            this.overallRating = NumberUtil.roundToTwoDecimals(this.overallRating,
+                                                               0.0);
         }
     }
 
@@ -48,8 +52,8 @@ public class ReviewResponse {
                 .filter(r -> ((Number) r[0]).intValue() == star)
                 .findFirst()
                 .map(r -> Pair.of(
-                        ((Number) r[0]).intValue(),                       // count
-                        ((Number) r[1]).longValue() * 100.0 / totalReviews // percent
+                        ((Number) r[0]).intValue(),// count
+                        NumberUtil.roundToTwoDecimals(((Number) r[1]).longValue() * 100.0 / totalReviews, 0.0)// percent
                 ))
                 .orElse(Pair.of(star, 0.0));
     }

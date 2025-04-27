@@ -48,4 +48,17 @@ public class ReviewVM {
         this.coffeeShop = new CoffeeShopDTO(review.getCoffeeShop());
 
     }
+
+    public ReviewVM(Long userId,
+                    Review review) {
+        this.id = review.getId();
+        this.rating = review.getRating();
+        this.content = review.getComment();
+        this.images = review.getImages();
+        this.createdDate = DateTimeUtil.covertLocalDateToString(review.getCreatedAt().toLocalDate());
+        this.timeAgo = DateTimeUtil.getTimeAgo(review.getCreatedAt());
+        this.user = new UserDTO(review.getUser());
+        this.coffeeShop = new CoffeeShopDTO(review.getCoffeeShop());
+
+    }
 }

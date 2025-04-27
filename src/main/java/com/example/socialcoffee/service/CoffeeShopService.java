@@ -11,7 +11,9 @@ import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.AddressRepository;
 import com.example.socialcoffee.repository.CoffeeShopRepository;
 import com.example.socialcoffee.repository.DescriptionEmbeddingRepository;
+import com.example.socialcoffee.repository.ReviewRepository;
 import com.example.socialcoffee.repository.specification.CoffeeShopSpecification;
+import com.example.socialcoffee.utils.CoffeeShopUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import com.example.socialcoffee.utils.StringAppUtils;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.util.Pair;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +44,7 @@ public class CoffeeShopService {
     private final ImageService imageService;
     private final ModelMapper modelMapper;
     private final DescriptionEmbeddingRepository descriptionEmbeddingRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public ResponseEntity<ResponseMetaData> createCoffeeShop(User user, CreateCoffeeShopRequest req) {
@@ -216,7 +220,11 @@ public class CoffeeShopService {
         Specification<CoffeeShop> spec = CoffeeShopSpecification.searchCoffeeShops(request);
         final Page<CoffeeShop> coffeeShops = coffeeShopRepository.findAll(spec,
                                                                           pageable);
-        List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(CoffeeShopVM::toVM).toList();
+        final List<Long> shopIds = coffeeShops.getContent().stream().map(CoffeeShop::getId).toList();
+        final List<Object[]> averageRatings = reviewRepository.getAverageRatingByCoffeeShopId(shopIds);
+        Map<Long, Pair<Double, Long>> ratingMap = CoffeeShopUtil.toRatingMap(averageRatings);
+        List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c, ratingMap))
+                .toList();
         PageDtoOut<CoffeeShopVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
                                                               pageable.getPageSize(),
                                                               coffeeShops.getTotalElements(),

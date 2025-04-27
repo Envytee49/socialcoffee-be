@@ -15,10 +15,19 @@ public class UserDTO {
     private String displayName;
     private String username;
     private String profilePhoto;
+    private Boolean isFollowing;
     public UserDTO(User user) {
         this.id = user.getId();
         this.displayName = user.getDisplayName();
         this.username = user.getUsername();
         this.profilePhoto = user.getProfilePhoto();
+    }
+
+    public UserDTO(User user, Boolean isFollowing) {
+        this.id = user.getId();
+        this.displayName = user.getDisplayName();
+        this.username = user.getUsername();
+        this.profilePhoto = user.getProfilePhoto();
+        this.isFollowing = isFollowing;
     }
 }

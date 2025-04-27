@@ -4,10 +4,7 @@ import com.example.socialcoffee.domain.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.EditReviewRequest;
-import com.example.socialcoffee.dto.response.MetaDTO;
-import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.dto.response.ReviewResponse;
-import com.example.socialcoffee.dto.response.ReviewVM;
+import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
@@ -37,6 +34,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ImageRepository imageRepository;
     private final ReviewReactionRepository reviewReactionRepository;
+    private final UserFollowRepository userFollowRepository;
 
     @Transactional
     public ResponseEntity<ResponseMetaData> uploadReview(User user,
@@ -195,6 +193,10 @@ public class ReviewService {
             reviewReactionRepository.save(reviewReaction);
         } else {
             ReviewReaction reviewReaction = optionalReviewReaction.get();
+            if(reviewReaction.getType().equalsIgnoreCase(reaction)) {
+                reviewReactionRepository.delete(reviewReaction);
+                return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+            }
             reviewReaction.setType(reaction);
             reviewReactionRepository.save(reviewReaction);
         }
@@ -240,15 +242,14 @@ public class ReviewService {
                                                                              Status.ACTIVE.getValue(),
                                                                              pageable);
         List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
-        Map<Long, UserReaction> groupedReactions = groupedReactions(reviewIds);
+        final Map<Long, UserReaction> userReactionMap = groupedReactions(reviewIds);
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
-                .sorted(Comparator.comparing(Review::getCreatedAt).reversed())
                 .map(r -> new ReviewVM(user.getId(),
-                     r,
-                     groupedReactions.getOrDefault(r.getId(),
-        null)))
+                                       r,
+                                       userReactionMap.getOrDefault(r.getId(),
+                                                                    null)))
                 .toList();
         final long totalElements = reviews.getTotalElements();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
@@ -257,5 +258,22 @@ public class ReviewService {
                                                           reviewVMS);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                       pageDtoOut));
+    }
+
+    public ResponseEntity<ResponseMetaData> getReviewReaction(final Long userId,
+                                                              String type,
+                                                              Long reviewId) {
+        final List<User> users = reviewReactionRepository.findByReviewIdAndType(reviewId,
+                                                                                type);
+        final Set<Long> relation = userFollowRepository.findRelationByIdIn(
+                users
+                        .stream()
+                        .map(u -> new UserFollow.UserFollowerId(u.getId(),
+                                                                userId))
+                        .toList());
+        final List<UserDTO> userDTOS = users.stream().map(u -> new UserDTO(u,
+                                                                           relation.contains(u.getId()))).toList();
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             userDTOS));
     }
 }

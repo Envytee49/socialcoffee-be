@@ -108,6 +108,16 @@ public class ReviewController extends BaseController {
                                         pageDtoIn);
     }
 
+    @GetMapping("/reviews/reaction")
+    public ResponseEntity<ResponseMetaData> getReviewReaction(@RequestParam(value = "type") String type,
+                                                              @RequestParam(value = "reviewId") Long reviewId) {
+        User user = getCurrentUser();
+        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
+        return reviewService.getReviewReaction(user.getId(),
+                                               type,
+                                               reviewId);
+    }
+
     @DeleteMapping("/coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
         return reviewService.deleteReview(reviewId);

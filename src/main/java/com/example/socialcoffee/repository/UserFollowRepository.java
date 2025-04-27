@@ -16,10 +16,16 @@ public interface UserFollowRepository extends JpaRepository<UserFollow, UserFoll
     Page<User> findFollowersByFolloweeId(@Param("userId") Long userId,
                                          Pageable pageable);
 
+    @Query("SELECT u FROM User u JOIN UserFollow uf ON u.id = uf.userFollowerId.followeeId WHERE uf.userFollowerId.followerId = :userId ORDER BY uf.createdAt DESC LIMIT 6")
+    List<User> findFollowersByFolloweeId(@Param("userId") Long userId);
+
     @Query("SELECT uf.userFollowerId.followerId FROM UserFollow uf WHERE uf.userFollowerId IN :ids")
     Set<Long> findRelationByIdIn(List<UserFollow.UserFollowerId> ids);
 
     @Query("SELECT u FROM User u JOIN UserFollow uf ON u.id = uf.userFollowerId.followerId WHERE uf.userFollowerId.followeeId = :userId")
     Page<User> findFollowingsByFollowerId(@Param("userId") Long userId,
                                           Pageable pageable);
+
+    @Query("SELECT u FROM User u JOIN UserFollow uf ON u.id = uf.userFollowerId.followerId WHERE uf.userFollowerId.followeeId = :userId ORDER BY uf.createdAt DESC LIMIT 6")
+    List<User> findFollowingsByFollowerId(@Param("userId") Long userId);
 }

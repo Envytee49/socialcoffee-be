@@ -6,6 +6,7 @@ import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
@@ -42,6 +43,29 @@ public class DateTimeUtil {
             return LocalDate.parse(dateStr, formatter);
         }
     }
+
+    public static String convertMinuteToHour(Integer minute) {
+        if (minute == null) return null;
+
+        int hour = minute / 60;
+        String period = hour < 12 ? "AM" : "PM";
+        int displayHour = hour % 12 == 0 ? 12 : hour % 12;
+
+        return displayHour + " " + period;
+    }
+
+    public static String checkCurrentOpenStatus(Integer open, Integer close) {
+        if (open == null || close == null) return null;
+
+        LocalTime now = LocalTime.now();
+        int currentMinutes = now.getHour() * 60 + now.getMinute();
+
+        if (open <= currentMinutes && currentMinutes < close) {
+            return "Open";
+        }
+        return "Closed";
+    }
+
 
     public static String getTimeAgo(LocalDateTime createdAt) {
         LocalDateTime now = LocalDateTime.now();

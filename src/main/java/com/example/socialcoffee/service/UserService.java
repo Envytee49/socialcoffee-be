@@ -1,10 +1,8 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.configuration.AuthConfig;
-import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.domain.Collection;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.UserFollow;
+import com.example.socialcoffee.domain.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.request.UserProfile;
@@ -25,7 +23,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +34,8 @@ public class UserService {
     private final AuthConfig authConfig;
     private final AddressRepository addressRepository;
     private final CoffeeShopRepository coffeeShopRepository;
-    private final CollectionRepository collectionRepository;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
     //    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
 //        Long userId = SecurityUtil.getUserId();
@@ -242,43 +239,27 @@ public class UserService {
                                                              contributors));
     }
 
-
-    public ResponseEntity<ResponseMetaData> createNewCollection(User user,
-                                                                CollectionRequest request) {
-        Collection collection = Collection.builder()
-                .description(request.getDescription())
-                .name(request.getName())
-                .privacy(request.getPrivacy().getValue())
-                .user(user)
-                .build();
-        collectionRepository.save(collection);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    public Page<Image> getPhotos(Long id,
+                                 Pageable pageRequest) {
+        return reviewRepository.findPhotosByUserId(id,
+                                                   pageRequest);
     }
 
-    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(Long collectionId,
-                                                                      Long shopId) {
-        Optional<Collection> optionalCollection = collectionRepository.findById(collectionId);
-        if (optionalCollection.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
-        }
-        CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
-        if (Objects.isNull(coffeeShop)) {
-            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
-        }
-        Collection collection = optionalCollection.get();
-        collection.addCoffeeShop(coffeeShop);
-        collectionRepository.save(collection);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    public ResponseEntity<ResponseMetaData> getRecentPhotos(Long userId) {
+        final List<Image> photosByUserId = reviewRepository.findPhotosByUserId(userId);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             photosByUserId));
     }
 
-    public ResponseEntity<ResponseMetaData> getCollections(Long userId,
-                                                           PageDtoIn pageDtoIn) {
-        return null;
+    public ResponseEntity<ResponseMetaData> getRecentFollowing(Long id) {
+        List<User> recentFollowing = userFollowRepository.findFollowingsByFollowerId(id);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             recentFollowing.stream().map(User::toUserDTO)));
     }
 
-    public ResponseEntity<ResponseMetaData> getCollectionById(Long userId,
-                                                              Long collectionId) {
-        return null;
+    public ResponseEntity<ResponseMetaData> getRecentFollowers(Long id) {
+        final List<User> recentFollowers = userFollowRepository.findFollowersByFolloweeId(id);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             recentFollowers.stream().map(User::toUserDTO)));
     }
-
 }

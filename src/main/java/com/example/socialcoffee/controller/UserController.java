@@ -1,5 +1,6 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.Image;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
@@ -40,26 +41,13 @@ public class UserController extends BaseController {
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        user = (Objects.nonNull(userUpdateDTO.getUserId()) && !Objects.equals(user.getId(),
-                                                                              userUpdateDTO.getUserId()))
-                ? userRepository.findByIdAndStatus(userUpdateDTO.getUserId(),
-                                                   Status.ACTIVE.getValue())
-                : user;
-        if (Objects.isNull(user))
-            return ResponseEntity.notFound().build();
-
-        return userService.updateUserProfile(user,
+        return userService.updateUserProfile(getCurrentUser(userUpdateDTO.getUserId()),
                                              userUpdateDTO);
     }
 
     @PatchMapping("/users/bio")
     public ResponseEntity<ResponseMetaData> updateBio(@RequestPart String bio) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         user.setBio(bio);
         userRepository.save(user);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
@@ -68,8 +56,6 @@ public class UserController extends BaseController {
     @PatchMapping("/users/profile-photo")
     public ResponseEntity<ResponseMetaData> updateProfilePhoto(@RequestPart MultipartFile file) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         final String upload = cloudinaryService.upload(file);
         user.setProfilePhoto(upload);
         userRepository.save(user);
@@ -80,8 +66,6 @@ public class UserController extends BaseController {
     @PatchMapping("/users/background-photo")
     public ResponseEntity<ResponseMetaData> updateBackgroundPhoto(@RequestPart MultipartFile file) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         final String upload = cloudinaryService.upload(file);
         user.setBackgroundPhoto(upload);
         userRepository.save(user);
@@ -113,6 +97,29 @@ public class UserController extends BaseController {
 //
 //        return userService.updateNewPassword(updateNewPassword);
 //    }
+    @GetMapping("/users/photos")
+    public ResponseEntity<ResponseMetaData> getUserPhotos(@RequestParam(value = "displayName") String displayName,
+                                                          PageDtoIn pageDtoIn) {
+        User user = getCurrentUser(displayName);
+        Long userId = user.getId();
+        Page<Image> followers = userService.getPhotos(userId,
+                                                      PageRequest.of(pageDtoIn.getPage() - 1,
+                                                                     pageDtoIn.getSize()));
+        PageDtoOut<Image> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
+                                                       pageDtoIn.getSize(),
+                                                       followers.getTotalElements(),
+                                                       followers.getContent());
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                      pageDtoOut));
+    }
+
+    @GetMapping("/users/recent-photos")
+    public ResponseEntity<ResponseMetaData> getUserPhotos(@RequestParam(value = "displayName") String displayName) {
+        User user = getCurrentUser(displayName);
+        Long userId = user.getId();
+        return userService.getRecentPhotos(userId);
+    }
+
     @GetMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> getProfile(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser();
@@ -142,8 +149,6 @@ public class UserController extends BaseController {
     @PostMapping("/users/{followingWhoId}/follow")
     public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followingWhoId) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         return userService.followUser(user,
                                       followingWhoId);
     }
@@ -151,8 +156,6 @@ public class UserController extends BaseController {
     @PostMapping("/users/{unfollowingWhoId}/unfollow")
     public ResponseEntity<ResponseMetaData> unfollowUser(@PathVariable Long unfollowingWhoId) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         return userService.unfollowUser(user,
                                         unfollowingWhoId);
     }
@@ -160,16 +163,7 @@ public class UserController extends BaseController {
     @GetMapping("/users/followers")
     public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName,
                                                          PageDtoIn pageDtoIn) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
-                ? userRepository.findByDisplayNameAndStatus(displayName,
-                                                            Status.ACTIVE.getValue())
-                : user;
-        if (Objects.isNull(user)) {
-            return ResponseEntity.notFound().build();
-        }
+        User user = getCurrentUser(displayName);
         Page<FollowerDTO> followers = userService.getFollowers(user.getId(),
                                                                PageRequest.of(pageDtoIn.getPage() - 1,
                                                                               pageDtoIn.getSize()));
@@ -182,19 +176,17 @@ public class UserController extends BaseController {
 
     }
 
+    @GetMapping("/users/recent-followers")
+    public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName) {
+        User user = getCurrentUser(displayName);
+        return userService.getRecentFollowers(user.getId());
+
+    }
+
     @GetMapping("/users/following")
     public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName,
                                                          PageDtoIn pageDtoIn) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
-                ? userRepository.findByDisplayNameAndStatus(displayName,
-                                                            Status.ACTIVE.getValue())
-                : user;
-        if (Objects.isNull(user)) {
-            return ResponseEntity.notFound().build();
-        }
+        User user = getCurrentUser(displayName);
         Page<FollowingDTO> following = userService.getFollowing(user.getId(),
                                                                 PageRequest.of(pageDtoIn.getPage() - 1,
                                                                                pageDtoIn.getSize()));
@@ -206,42 +198,10 @@ public class UserController extends BaseController {
                                                       pageDtoOut));
     }
 
-    @GetMapping("/users/{userId}/collections")
-    public ResponseEntity<ResponseMetaData> getCollections(@RequestParam(value = "user_id", required = false) Long userId,
-                                                           PageDtoIn pageDtoIn) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        Long destinationUserId = Objects.isNull(userId) ? user.getId() : userId;
-        return userService.getCollections(destinationUserId,
-                                          pageDtoIn);
-    }
-
-    @GetMapping("/users/collections/{collectionId}")
-    public ResponseEntity<ResponseMetaData> getCollection(@RequestParam(value = "user_id", required = false) Long userId,
-                                                          @PathVariable Long collectionId) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        Long destinationUserId = Objects.isNull(userId) ? user.getId() : userId;
-        return userService.getCollectionById(destinationUserId,
-                                             collectionId);
-    }
-
-    @PostMapping("/users/collections")
-    public ResponseEntity<ResponseMetaData> createNewCollection(@Valid @RequestBody CollectionRequest request) {
-        User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
-        return userService.createNewCollection(user,
-                                               request);
-    }
-
-    @PutMapping("/users/collections/{collectionId}")
-    public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(@PathVariable Long collectionId,
-                                                                      @RequestPart(value = "shopId") String shopId) {
-        return userService.addCoffeeShopToCollection(collectionId,
-                                                     Long.parseLong(shopId));
+    @GetMapping("/users/recent-following")
+    public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName) {
+        User user = getCurrentUser(displayName);
+        return userService.getRecentFollowing(user.getId());
     }
 
 //    public ResponseEntity<ResponseMetaData> getUserReview() {
