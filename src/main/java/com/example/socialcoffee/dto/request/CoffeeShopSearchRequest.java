@@ -2,6 +2,7 @@ package com.example.socialcoffee.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.List;
 
 @Getter
@@ -11,6 +12,10 @@ public class CoffeeShopSearchRequest {
     private String province;
     private String district;
     private String ward;
+    private Integer distance;
+    private Double longitude;
+    private Double latitude;
+    private String sort;
     private List<String> distances;
     private List<Long> ambiances;
     private List<Long> amenities;

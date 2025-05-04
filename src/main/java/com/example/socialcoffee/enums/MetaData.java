@@ -8,6 +8,7 @@ public enum MetaData {
                           "Internal Server Error"),
     NO_RESOURCE_FOUND(404,
                       "No Resource Found"),
+    NO_CONTENT(204, "No content" ),
     BAD_REQUEST(400,
                 "Bad Request"),
     SUCCESS(200,

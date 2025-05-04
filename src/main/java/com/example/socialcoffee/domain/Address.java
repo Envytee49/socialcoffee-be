@@ -1,10 +1,9 @@
 package com.example.socialcoffee.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.locationtech.jts.geom.Point;
 
 @Table(name = "address")
 @Entity
@@ -12,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Setter
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +23,9 @@ public class Address {
     private String ward;
     private double longitude;
     private double latitude;
+    @Column(columnDefinition = "geometry(Point,4326)")
+    @JsonIgnore
+    private Point location;
 
     @Override
     public String toString() {

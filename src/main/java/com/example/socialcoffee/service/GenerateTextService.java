@@ -20,14 +20,14 @@ public class GenerateTextService {
     private final RestTemplate restTemplate;
     private final OllamaConfig ollamaConfig;
     private final HttpHeaders defaultHeaders;
-    public String generateDescription(String features) {
+    public String generateCoffeeShopDescription(String features, String prompt) {
         try {
             if (StringAppUtils.isEmpty(features)) return null;
             log.info("Start generating description");
             GenerateRequest request = GenerateRequest
-                    .getDefaultMessage(ollamaConfig,"Generate description for a coffee shop with these features (limit 150 words):"
+                    .getDefaultMessage(ollamaConfig,prompt
                             + features);
-            String generatingUrl = ollamaConfig.getGeneratingUrl() + ollamaConfig.getGeneratingModel();
+            String generatingUrl = ollamaConfig.getGeneratingUrl();
             ResponseEntity<GenerateResponse> generatedResponse = restTemplate.exchange(generatingUrl,
                                                                                        HttpMethod.POST,
                                                                                        new HttpEntity<>(request,

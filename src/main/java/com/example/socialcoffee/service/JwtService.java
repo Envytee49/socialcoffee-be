@@ -2,7 +2,7 @@ package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.repository.UserRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -19,7 +19,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.example.socialcoffee.constants.CommonConstant.REFRESH_TOKEN_PREFIX;
 import static com.example.socialcoffee.constants.CommonConstant.TOKEN_PREFIX;

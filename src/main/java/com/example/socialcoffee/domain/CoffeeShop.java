@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.annotations.Formula;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.example.socialcoffee.utils.ObjectUtil.getNames;
 
 @Table(name = "coffee_shops")
 @Entity
@@ -39,6 +42,9 @@ public class CoffeeShop {
     private List<Image> galleryPhotos;
     @OneToOne
     private Address address;
+    @JsonIgnore
+    @OneToOne(fetch = FetchType.LAZY)
+    private DescriptionEmbedding embeddingDescription;
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     private String status;
@@ -74,22 +80,6 @@ public class CoffeeShop {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     private List<Category> categories;
-
-    @Override
-    public String toString() {
-        return "CoffeeShop{" +
-                "name='" + name + '\'' +
-                ", coverPhoto='" + coverPhoto + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", webAddress='" + webAddress + '\'' +
-                ", menuWebAddress='" + menuWebAddress + '\'' +
-                ", additionInfo='" + additionInfo + '\'' +
-                ", openHour=" + openHour +
-                ", closeHour=" + closeHour +
-                ", galleryPhotos=" + galleryPhotos +
-                ", address=" + address +
-                '}';
-    }
 
     @ManyToMany
     @JoinTable(
@@ -155,6 +145,12 @@ public class CoffeeShop {
     )
     private List<VisitTime> visitTimes;
 
+    @Formula("(select avg(r.rating) from reviews r where r.coffee_shop_id = id)")
+    private Double averageRating = 0.0;
+
+    @Formula("(select count(r.id) from reviews r where r.coffee_shop_id = id)")
+    private Long reviewCount = 0L;
+
     @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews;
@@ -167,47 +163,6 @@ public class CoffeeShop {
         this.galleryPhotos.addAll(0, galleryPhotos);
     }
 
-    public String featureToString() {
-        Map<String, List<String>> featureMap = new ConcurrentHashMap<>();
-        featureMap.put("ambiances", getNames(ambiances));
-        featureMap.put("amenities", getNames(amenities));
-        featureMap.put("capacities", getNames(capacities));
-        featureMap.put("categories", getNames(categories));
-        featureMap.put("dressCodes", getNames(dressCodes));
-        featureMap.put("entertainments", getNames(entertainments));
-        featureMap.put("parkings", getNames(parkings));
-        featureMap.put("prices", getNames(prices));
-        featureMap.put("serviceTypes", getNames(serviceTypes));
-        featureMap.put("spaces", getNames(spaces));
-        featureMap.put("specialties", getNames(specialties));
-        featureMap.put("visitTimes", getNames(visitTimes));
-        featureMap.forEach((key, value) -> {
-            if (value == null || value.isEmpty()) {
-                featureMap.remove(key);
-            }
-        });
-        StringBuilder sb = new StringBuilder();
-        featureMap.forEach((key, value) -> {
-            sb.append(key).append(": ").append(value).append("\n");
-        });
-        sb.append("name: ").append(name);
-        sb.append("additional information: ").append(additionInfo);
-        return sb.toString();
-    }
-
-    private <T> List<String> getNames(List<T> features) {
-        if (features == null) return List.of();
-        return features.stream()
-                .map(f -> {
-                    try {
-                        return (String) f.getClass().getMethod("getName").invoke(f);
-                    } catch (Exception e) {
-                        return "";
-                    }
-                })
-                .filter(name -> !name.isEmpty())
-                .toList();
-    }
 
     public CoffeeShopDTO toCoffeeShopDTO() {
         CoffeeShopDTO coffeeShopDTO  = new CoffeeShopDTO();
@@ -245,4 +200,47 @@ public class CoffeeShop {
         return String.join(", ", parts);
     }
 
+    @Override
+    public String toString() {
+        return "CoffeeShop{" +
+                "name='" + name + '\'' +
+                ", coverPhoto='" + coverPhoto + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", webAddress='" + webAddress + '\'' +
+                ", menuWebAddress='" + menuWebAddress + '\'' +
+                ", additionInfo='" + additionInfo + '\'' +
+                ", openHour=" + openHour +
+                ", closeHour=" + closeHour +
+                ", galleryPhotos=" + galleryPhotos +
+                ", address=" + address +
+                '}';
+    }
+
+    public String featureToString() {
+        Map<String, List<String>> featureMap = new ConcurrentHashMap<>();
+        featureMap.put("ambiances", getNames(ambiances));
+        featureMap.put("amenities", getNames(amenities));
+        featureMap.put("capacities", getNames(capacities));
+        featureMap.put("categories", getNames(categories));
+        featureMap.put("dressCodes", getNames(dressCodes));
+        featureMap.put("entertainments", getNames(entertainments));
+        featureMap.put("parkings", getNames(parkings));
+        featureMap.put("prices", getNames(prices));
+        featureMap.put("serviceTypes", getNames(serviceTypes));
+        featureMap.put("spaces", getNames(spaces));
+        featureMap.put("specialties", getNames(specialties));
+        featureMap.put("visitTimes", getNames(visitTimes));
+        featureMap.forEach((key, value) -> {
+            if (value == null || value.isEmpty()) {
+                featureMap.remove(key);
+            }
+        });
+        StringBuilder sb = new StringBuilder();
+        featureMap.forEach((key, value) -> {
+            sb.append(key).append(": ").append(value).append("\n");
+        });
+        sb.append("name: ").append(name);
+        sb.append("additional information: ").append(additionInfo);
+        return sb.toString();
+    }
 }

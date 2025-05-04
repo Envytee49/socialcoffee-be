@@ -12,12 +12,12 @@ import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.model.FacebookUserInfo;
 import com.example.socialcoffee.model.GoogleUserInfo;
-import com.example.socialcoffee.repository.UserAuthConnectionRepository;
-import com.example.socialcoffee.repository.UserRepository;
+import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.repository.postgres.UserAuthConnectionRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,6 +46,7 @@ public class AuthService {
     private final AuthConfig authConfig;
     private final GoogleService googleService;
     private final FacebookService facebookService;
+    private final RepoService repoService;
 
     public ResponseEntity<ResponseMetaData> authWithGoogle(String code,
                                                            String redirectUri,
@@ -77,7 +78,13 @@ public class AuthService {
                 Role role = cacheableService.findRole(RoleEnum.USER.getValue());
                 User user = new User(userInfo);
                 user.setRoles(List.of(role));
-                user = userRepository.save(user);
+                final User saved = userRepository.save(user);
+                NUser nUser = NUser.builder()
+                        .id(saved.getId())
+                        .displayName(user.getDisplayName())
+                        .profilePhoto(user.getProfilePhoto())
+                        .build();
+                repoService.saveNUser(nUser);
                 AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.GOOGLE.getValue());
                 UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
                                                                                authProvider.getId());
@@ -170,8 +177,13 @@ public class AuthService {
             user.setStatus(Status.ACTIVE.getValue());
             user.setRoles(List.of(role));
 
-            userRepository.save(user);
-
+            final User saved = userRepository.save(user);
+            NUser nUser = NUser.builder()
+                    .id(saved.getId())
+                    .displayName(user.getDisplayName())
+                    .profilePhoto(user.getProfilePhoto())
+                    .build();
+            repoService.saveNUser(nUser);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
         }
     }

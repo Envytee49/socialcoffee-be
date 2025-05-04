@@ -29,8 +29,10 @@ public class CollectionController extends BaseController {
     }
 
     @GetMapping("/collections/{collectionId}")
-    public ResponseEntity<ResponseMetaData> getCollection(@PathVariable Long collectionId) {
-        return collectionService.getCollectionById(collectionId);
+    public ResponseEntity<ResponseMetaData> getCollection(@PathVariable Long collectionId,
+                                                          @RequestParam(value = "lat", required = false) Double lat,
+                                                          @RequestParam(value = "lng", required = false) Double lng) {
+        return collectionService.getCollectionById(collectionId, lat, lng);
     }
 
     @PostMapping(value = "/collections", consumes = "multipart/form-data")

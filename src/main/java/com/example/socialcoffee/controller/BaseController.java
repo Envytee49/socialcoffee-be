@@ -4,7 +4,7 @@ import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.exception.UnauthorizedException;
-import com.example.socialcoffee.repository.UserRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.SecurityUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

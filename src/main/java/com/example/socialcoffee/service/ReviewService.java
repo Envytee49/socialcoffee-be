@@ -8,7 +8,7 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
-import com.example.socialcoffee.repository.*;
+import com.example.socialcoffee.repository.postgres.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

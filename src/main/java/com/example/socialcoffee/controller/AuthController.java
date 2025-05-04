@@ -8,7 +8,6 @@ import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.AuthAction;
 import com.example.socialcoffee.service.AuthService;
 import com.example.socialcoffee.service.UserService;
-import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

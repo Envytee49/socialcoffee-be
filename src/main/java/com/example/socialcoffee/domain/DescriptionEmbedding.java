@@ -17,8 +17,4 @@ public class DescriptionEmbedding {
     private Long id;
     @Column(name = "description_embedding", columnDefinition = "vector(384)")
     private Float[] descriptionEmbedding;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    private CoffeeShop coffeeShop;
-
 }

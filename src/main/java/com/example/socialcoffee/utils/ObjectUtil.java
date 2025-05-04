@@ -1,0 +1,41 @@
+package com.example.socialcoffee.utils;
+
+import lombok.experimental.UtilityClass;
+
+import java.util.List;
+
+@UtilityClass
+public class ObjectUtil {
+    public static <T> List<T> getPageResult(List<T> list, Integer page, Integer size) {
+        // Check for valid page and size values
+        if (list == null || page == null || size == null || size <= 0 || page < 0) {
+            throw new IllegalArgumentException("Invalid page or size value");
+        }
+
+        // Calculate the start and end indices for the sublist
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, list.size());
+
+        // If the start index is greater than the list size, return an empty list
+        if (startIndex >= list.size()) {
+            return List.of();
+        }
+
+        // Return the sublist
+        return list.subList(startIndex, endIndex);
+    }
+
+    public static <T> List<String> getNames(List<T> features) {
+        if (features == null) return List.of();
+        return features.stream()
+                .map(f -> {
+                    try {
+                        return (String) f.getClass().getMethod("getName").invoke(f);
+                    } catch (Exception e) {
+                        return "";
+                    }
+                })
+                .filter(name -> !name.isEmpty())
+                .toList();
+    }
+}

@@ -2,6 +2,7 @@ package com.example.socialcoffee.dto.response;
 
 import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.utils.DateTimeUtil;
+import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.NumberUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,29 +30,11 @@ public class CoffeeShopVM {
     private double longitude;
     @JsonProperty("lat")
     private double latitude;
-
-    public static CoffeeShopVM toVM(CoffeeShop coffeeShop) {
-        return CoffeeShopVM.builder()
-                .id(coffeeShop.getId())
-                .coverPhoto(coffeeShop.getCoverPhoto())
-                .detailAddress(coffeeShop.getAddress().getAddressDetail())
-                .overviewAddress(coffeeShop.getOverviewAddress())
-                .status(DateTimeUtil.checkCurrentOpenStatus(coffeeShop.getOpenHour(),
-                                                            coffeeShop.getCloseHour()))
-                .openHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getOpenHour()))
-                .closeHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getCloseHour()))
-                .longitude(coffeeShop.getAddress().getLongitude())
-                .latitude(coffeeShop.getAddress().getLatitude())
-                .name(coffeeShop.getName())
-                .build();
-    }
-
-    public static CoffeeShopVM toVM(CoffeeShop coffeeShop,
-                                    Map<Long, Pair<Double, Long>> reviewSummaries) {
-        final Pair<Double, Long> ratingAndReviewCount = reviewSummaries.getOrDefault(coffeeShop.getId(),
-                                                                       null);
-        Double averageRating = ratingAndReviewCount == null ? null : NumberUtil.roundToTwoDecimals(ratingAndReviewCount.getFirst());
-        Long reviewCounts = ratingAndReviewCount == null ? null : ratingAndReviewCount.getSecond();
+    private Double distance;
+    public static CoffeeShopVM toVM(CoffeeShop coffeeShop, Double userLat, Double userLng) {
+        Boolean isFalseLocation= coffeeShop.getAddress().getLatitude() > coffeeShop.getAddress().getLongitude();
+        Double longitude = isFalseLocation ? coffeeShop.getAddress().getLatitude() : coffeeShop.getAddress().getLongitude();
+        Double latitude = isFalseLocation ? coffeeShop.getAddress().getLongitude() : coffeeShop.getAddress().getLatitude();
 
         return CoffeeShopVM.builder()
                 .id(coffeeShop.getId())
@@ -62,10 +45,11 @@ public class CoffeeShopVM {
                                                             coffeeShop.getCloseHour()))
                 .openHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getOpenHour()))
                 .closeHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getCloseHour()))
-                .longitude(coffeeShop.getAddress().getLongitude())
-                .latitude(coffeeShop.getAddress().getLatitude())
-                .averageRating(averageRating)
-                .reviewCounts(reviewCounts)
+                .longitude(longitude)
+                .latitude(latitude)
+                .distance(GeometryUtil.calculateDistance(userLat, userLng, latitude, longitude))
+                .averageRating(NumberUtil.roundToTwoDecimals(coffeeShop.getAverageRating()))
+                .reviewCounts(coffeeShop.getReviewCount())
                 .name(coffeeShop.getName())
                 .build();
     }

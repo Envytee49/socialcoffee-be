@@ -34,7 +34,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
-//    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
+    implementation 'org.hibernate.orm:hibernate-spatial:6.6.8.Final'
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
     implementation "com.google.api-client:google-api-client:2.7.0"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:3.3.2"
     implementation "me.paulschwarz:spring-dotenv:4.0.0"

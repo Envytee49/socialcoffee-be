@@ -5,15 +5,17 @@ import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
-import com.example.socialcoffee.dto.request.CollectionRequest;
+import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
 import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Status;
-import com.example.socialcoffee.repository.UserFollowRepository;
+import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.service.CloudinaryService;
+import com.example.socialcoffee.service.RepoService;
 import com.example.socialcoffee.service.UserService;
 import com.example.socialcoffee.service.ValidationService;
 import jakarta.validation.Valid;
@@ -38,6 +40,7 @@ public class UserController extends BaseController {
     private final ValidationService validationService;
     private final CloudinaryService cloudinaryService;
     private final UserFollowRepository userFollowRepository;
+    private final RepoService repoService;
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
@@ -53,12 +56,27 @@ public class UserController extends BaseController {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
+    @GetMapping("/users/preference")
+    public ResponseEntity<ResponseMetaData> getCoffeeShopPreference(@RequestParam(value = "displayName", required = false) String displayName) {
+        User user = getCurrentUser(displayName);
+        return userService.getUserCoffeeShopPreference(user);
+    }
+
+    @PutMapping("/users/preference")
+    public ResponseEntity<ResponseMetaData> updateCoffeeShopPreference(@RequestBody UpdatePreferenceRequest request) {
+        return userService.updateCoffeeShopPreference(getCurrentUser(),
+                                                      request);
+    }
+
     @PatchMapping("/users/profile-photo")
     public ResponseEntity<ResponseMetaData> updateProfilePhoto(@RequestPart MultipartFile file) {
         User user = getCurrentUser();
         final String upload = cloudinaryService.upload(file);
         user.setProfilePhoto(upload);
         userRepository.save(user);
+        NUser nUser = repoService.findNUserById(user.getId());
+        nUser.setProfilePhoto(upload);
+        repoService.saveNUser(nUser);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              upload));
     }
@@ -202,6 +220,11 @@ public class UserController extends BaseController {
     public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser(displayName);
         return userService.getRecentFollowing(user.getId());
+    }
+
+    @PostMapping("/users/migrate/neo4j")
+    public ResponseEntity<ResponseMetaData> migrateUser() {
+        return userService.migrateUsers();
     }
 
 //    public ResponseEntity<ResponseMetaData> getUserReview() {

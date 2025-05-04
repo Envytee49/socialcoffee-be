@@ -21,7 +21,7 @@ public class GenerateRequest {
                            final Message message) {
         this.model = model;
         this.messages.add(message);
-        this.maxTokens = 500;
+        this.maxTokens = 512;
         this.stream = false;
     }
 

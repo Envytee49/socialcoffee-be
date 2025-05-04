@@ -5,7 +5,7 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.domain.feature.*;
-import com.example.socialcoffee.repository.feature.*;
+import com.example.socialcoffee.repository.postgres.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

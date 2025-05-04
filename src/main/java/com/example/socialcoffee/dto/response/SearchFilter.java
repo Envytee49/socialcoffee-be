@@ -30,7 +30,7 @@ public class SearchFilter {
     @AllArgsConstructor
     public static class DistanceDTO {
         private Long id;
-        private String value;
+        private Integer value;
     }
     @Setter
     @Getter
