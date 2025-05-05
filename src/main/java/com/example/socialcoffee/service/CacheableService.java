@@ -1,16 +1,25 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.domain.AuthProvider;
+import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.dto.response.CoffeeShopVM;
+import com.example.socialcoffee.neo4j.NCoffeeShop;
+import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.AuthProviderRepository;
+import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.RoleRepository;
-import com.example.socialcoffee.repository.postgres.feature.*;
 import com.example.socialcoffee.repository.postgres.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Service
@@ -31,11 +40,14 @@ public class CacheableService {
     private final PurposeRepository purposeRepository;
     private final AuthProviderRepository authProviderRepository;
     private final RoleRepository roleRepository;
+    private final NCoffeeShopRepository nCoffeeShopRepository;
+    private final CoffeeShopRepository coffeeShopRepository;
 
     @Cacheable(value = "ambiances")
     public List<Ambiance> findAmbiances() {
         return ambianceRepository.findAll();
     }
+
     @Cacheable(value = "amenities")
     public List<Amenity> findAmenities() {
         return amenityRepository.findAll();
@@ -104,5 +116,73 @@ public class CacheableService {
     @Cacheable(value = "role", key = "#role")
     public Role findRole(String role) {
         return roleRepository.findByName(role);
+    }
+
+    @Cacheable(value = "List<CoffeeShopVM>", key = "#userId")
+    public List<CoffeeShopVM> getRecommendationForYou(Long userId) {
+        final List<Long> ids = nCoffeeShopRepository.findRecommendedForYou(userId).stream().map(NCoffeeShop::getId).toList();
+        return coffeeShopRepository.findAllById(ids).stream().map(c -> CoffeeShopVM.toVM(c,
+                                                                                         null,
+                                                                                         null))
+                .toList();
+    }
+
+    @Cacheable(value = "List<CoffeeShopVM>", key = "'TOP_10_OF_ALL_TIME'")
+    public List<CoffeeShopVM> getTop1OfAllTime() {
+        final List<CoffeeShop> top10 = coffeeShopRepository.findTop10CoffeeShopsByWeightedRatingAndCollections(1.0,
+                                                                                                               2.0,
+                                                                                                               4.0,
+                                                                                                               8.0,
+                                                                                                               16.0);
+
+        return top10
+                .stream().map(c -> CoffeeShopVM.toVM(c,
+                                                     null,
+                                                     null))
+                .toList();
+    }
+
+    @Cacheable(value = "List<CoffeeShopVM>", key = "'TRENDING_THIS_WEEK'")
+    public List<CoffeeShopVM> getTrendingThisWeek() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        Pageable top10 = PageRequest.of(0,
+                                        10);
+        final List<CoffeeShop> trendingThisWeek = coffeeShopRepository.findTrendingCoffeeShops(1.0,
+                                                                                               2.0,
+                                                                                               4.0,
+                                                                                               8.0,
+                                                                                               16.0,
+                                                                                               startOfWeek,
+                                                                                               now,
+                                                                                               top10);
+
+        return trendingThisWeek
+                .stream().map(c -> CoffeeShopVM.toVM(c,
+                                                     null,
+                                                     null))
+                .toList();
+    }
+
+    @Cacheable(value = "List<CoffeeShopVM>", key = "'TRENDING_THIS_WEEK'")
+    public List<CoffeeShopVM> getTrendingThisMonth() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfMonth = now.withDayOfMonth(1);
+        Pageable top10 = PageRequest.of(0,
+                                        10);
+        final List<CoffeeShop> trendingThisWeek = coffeeShopRepository.findTrendingCoffeeShops(1.0,
+                                                                                               2.0,
+                                                                                               4.0,
+                                                                                               8.0,
+                                                                                               16.0,
+                                                                                               startOfMonth,
+                                                                                               now,
+                                                                                               top10);
+
+        return trendingThisWeek
+                .stream().map(c -> CoffeeShopVM.toVM(c,
+                                                     null,
+                                                     null))
+                .toList();
     }
 }

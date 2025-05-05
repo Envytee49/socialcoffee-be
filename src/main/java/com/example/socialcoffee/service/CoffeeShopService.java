@@ -21,6 +21,7 @@ import com.example.socialcoffee.utils.StringAppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -289,7 +290,7 @@ public class CoffeeShopService {
                                                              pageDtoOut));
     }
 
-
+    @Cacheable(value = "search_filter", key = "'SEARCH_FILTERS'")
     public ResponseEntity<ResponseMetaData> getSearchFilters() {
         SearchFilter searchFilter = new SearchFilter();
         searchFilter.setAmbiances(cacheableService.findAmbiances());

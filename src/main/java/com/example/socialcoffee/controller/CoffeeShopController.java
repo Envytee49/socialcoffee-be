@@ -38,8 +38,6 @@ public class CoffeeShopController extends BaseController{
     @PostMapping(value = "/coffee-shops", consumes = "multipart/form-data")
     public ResponseEntity<ResponseMetaData> createCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request) {
         User user = getCurrentUser();
-        if(Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         return coffeeShopService.createCoffeeShop(user, request);
     }
 

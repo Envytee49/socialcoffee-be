@@ -25,4 +25,19 @@ public class RecommendationController extends BaseController{
         User user = getCurrentUser();
         return recommendationService.getRecommendationForYou(user);
     }
+
+    @GetMapping("/top-10-of-all-time")
+    public ResponseEntity<ResponseMetaData> getTop1OfAllTime() {
+        return recommendationService.getTop1OfAllTime();
+    }
+
+    @GetMapping("/trending-this-week")
+    public ResponseEntity<ResponseMetaData> getTrendingThisWeek() {
+        return recommendationService.getTrendingThisWeek();
+    }
+
+    @GetMapping("/trending-this-month")
+    public ResponseEntity<ResponseMetaData> getTrendingThisMonth() {
+        return recommendationService.getTrendingThisMonth();
+    }
 }

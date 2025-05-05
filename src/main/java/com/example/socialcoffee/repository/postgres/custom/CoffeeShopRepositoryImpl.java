@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,6 +115,21 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
                     criteriaBuilder.lower(root.get("name")),
                     "%" + request.getName().toLowerCase() + "%"
             ));
+        }
+
+        if (BooleanUtils.isTrue(request.getIsOpening())) {
+            // Get current time in minutes since midnight
+            LocalTime now = LocalTime.now();
+            int currentMinutes = now.getHour() * 60 + now.getMinute();
+
+            // Create predicate to check if current time is between openHour and closeHour
+            Predicate isOpen = criteriaBuilder.and(
+                    criteriaBuilder.lessThanOrEqualTo(root.get("openHour"),
+                                                      currentMinutes),
+                    criteriaBuilder.greaterThanOrEqualTo(root.get("closeHour"),
+                                                         currentMinutes)
+            );
+            predicates.add(isOpen);
         }
 
         // Address filters

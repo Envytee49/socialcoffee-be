@@ -39,6 +39,7 @@ public class RepoService {
     private final NSpecialtyRepository nSpecialtyRepository;
     private final NVisitTimeRepository nVisitTimeRepository;
     private final NCategoryRepository nCategoryRepository;
+    private final NPurposeRepository nPurposeRepository;
 
     @Transactional(value = "postgresTransactionManager")
     public List<User> fetchUsersFromPostgres() {
@@ -279,5 +280,10 @@ public class RepoService {
     @Transactional("neo4jTransactionManager")
     public void saveNCoffeeShop(NCoffeeShop nCoffeeShop) {
         nCoffeeShopRepository.save(nCoffeeShop);
+    }
+
+    public NPurpose findNPurposeById(Long id) {
+        return nPurposeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Purpose" + id));
     }
 }

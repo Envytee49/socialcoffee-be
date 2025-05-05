@@ -12,6 +12,7 @@ public class CoffeeShopSearchRequest {
     private String province;
     private String district;
     private String ward;
+    private Boolean isOpening;
     private Integer distance;
     private Double longitude;
     private Double latitude;

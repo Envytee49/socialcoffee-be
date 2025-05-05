@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, JpaSpecificationExecutor<CoffeeShop>, CoffeeShopRepositoryCustom {
@@ -26,4 +27,46 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
 
     @Query("SELECT cs.createdBy, COUNT(cs) FROM CoffeeShop cs GROUP BY cs.createdBy ORDER BY COUNT(cs) DESC LIMIT :limit")
     List<Object[]> findTopContributors(@Param("limit") int limit);
+
+    @Query("SELECT cs " +
+            "FROM CoffeeShop cs " +
+            "LEFT JOIN cs.reviews r " +
+            "LEFT JOIN Collection c ON cs MEMBER OF c.coffeeShops " +
+            "GROUP BY cs " +
+            "ORDER BY (" +
+            ":a * SUM(CASE WHEN r.rating = 1 THEN 1 ELSE 0 END) + " +
+            ":b * SUM(CASE WHEN r.rating = 2 THEN 1 ELSE 0 END) + " +
+            ":c * SUM(CASE WHEN r.rating = 3 THEN 1 ELSE 0 END) + " +
+            ":d * SUM(CASE WHEN r.rating = 4 THEN 1 ELSE 0 END) + " +
+            ":e * SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END)) DESC, " +
+            "COUNT(DISTINCT c) DESC")
+    List<CoffeeShop> findTop10CoffeeShopsByWeightedRatingAndCollections(
+            @Param("a") double a,
+            @Param("b") double b,
+            @Param("c") double c,
+            @Param("d") double d,
+            @Param("e") double e);
+
+    @Query("SELECT cs " +
+            "FROM CoffeeShop cs " +
+            "LEFT JOIN cs.reviews r " +
+            "LEFT JOIN Collection c ON cs MEMBER OF c.coffeeShops " +
+            "WHERE r.createdAt BETWEEN :startDate AND :endDate OR r IS NULL " +
+            "GROUP BY cs " +
+            "ORDER BY (" +
+            ":a * SUM(CASE WHEN r.rating = 1 THEN 1 ELSE 0 END) + " +
+            ":b * SUM(CASE WHEN r.rating = 2 THEN 1 ELSE 0 END) + " +
+            ":c * SUM(CASE WHEN r.rating = 3 THEN 1 ELSE 0 END) + " +
+            ":d * SUM(CASE WHEN r.rating = 4 THEN 1 ELSE 0 END) + " +
+            ":e * SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END)) DESC, " +
+            "COUNT(DISTINCT c) DESC")
+    List<CoffeeShop> findTrendingCoffeeShops(
+            @Param("a") double a,
+            @Param("b") double b,
+            @Param("c") double c,
+            @Param("d") double d,
+            @Param("e") double e,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
 }

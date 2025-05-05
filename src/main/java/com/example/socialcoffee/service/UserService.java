@@ -141,6 +141,17 @@ public class UserService {
             featureObjectMap.put("amenities", amenities);
         }
 
+        if (req.getPurposes() != null && !req.getPurposes().isEmpty()) {
+            List<Purpose> purposes = cacheableService.findPurposes().stream()
+                    .filter(a -> req.getPurposes().contains(a.getId()))
+                    .toList();
+            for (final Purpose purpose : purposes) {
+                NPurpose nPurpose = repoService.findNPurposeById(purpose.getId());
+                prefers.add(Prefer.builder().feature(nPurpose).build());
+            }
+            featureObjectMap.put("purposes", purposes);
+        }
+
         if (req.getCapacities() != null && !req.getCapacities().isEmpty()) {
             List<Capacity> capacities = cacheableService.findCapacities().stream()
                     .filter(c -> req.getCapacities().contains(c.getId()))
