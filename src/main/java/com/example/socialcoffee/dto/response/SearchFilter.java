@@ -31,6 +31,7 @@ public class SearchFilter {
     public static class DistanceDTO {
         private Long id;
         private Integer value;
+
     }
     @Setter
     @Getter
@@ -38,5 +39,25 @@ public class SearchFilter {
     public static class SortDTO {
         private Long id;
         private String value;
+    }
+
+    @Override
+    public String toString() {
+        return "SearchFilter{" +
+                "distances=" + distances +
+                ", sorts=" + sorts +
+                ", ambiances=" + ambiances +
+                ", amenities=" + amenities +
+                ", capacities=" + capacities +
+                ", categories=" + categories +
+                ", entertainments=" + entertainments +
+                ", parkings=" + parkings +
+                ", prices=" + prices +
+                ", purposes=" + purposes +
+                ", serviceTypes=" + serviceTypes +
+                ", spaces=" + spaces +
+                ", specialties=" + specialties +
+                ", visitTimes=" + visitTimes +
+                '}';
     }
 }

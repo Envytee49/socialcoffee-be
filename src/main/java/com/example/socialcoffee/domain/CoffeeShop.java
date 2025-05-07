@@ -10,10 +10,7 @@ import org.hibernate.annotations.Formula;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.example.socialcoffee.utils.ObjectUtil.getNames;
@@ -42,9 +39,9 @@ public class CoffeeShop {
     private List<Image> galleryPhotos;
     @OneToOne
     private Address address;
+    @ManyToMany(mappedBy = "coffeeShops", fetch = FetchType.LAZY)
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY)
-    private DescriptionEmbedding embeddingDescription;
+    private Set<User> users;
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     private String status;
@@ -88,6 +85,14 @@ public class CoffeeShop {
             inverseJoinColumns = @JoinColumn(name = "dress_code_id")
     )
     private List<DressCode> dressCodes;
+
+//    @ManyToMany
+//    @JoinTable(
+//            name = "coffee_shop_purposes",
+//            joinColumns = @JoinColumn(name = "coffee_shop_id"),
+//            inverseJoinColumns = @JoinColumn(name = "purpose_id")
+//    )
+//    private List<Purpose> purposes;
 
     @ManyToMany
     @JoinTable(

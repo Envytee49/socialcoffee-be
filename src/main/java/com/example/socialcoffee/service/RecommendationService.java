@@ -1,16 +1,21 @@
 package com.example.socialcoffee.service;
 
 import com.cloudinary.utils.StringUtils;
-import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.dto.response.CoffeeShopVM;
+import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.neo4j.NCoffeeShop;
+import com.example.socialcoffee.model.CoffeeShopFilter;
+import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
+import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
+import com.example.socialcoffee.utils.StringAppUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,10 @@ public class RecommendationService {
     private final CoffeeShopRepository coffeeShopRepository;
     private final Neo4jClient neo4jClient;
     private final CacheableService cacheableService;
+    private final GenerateTextService generateTextService;
+    private final ObjectMapper objectMapper;
+    private final CoffeeShopService coffeeShopService;
+    private final NUserRepository nUserRepository;
 
     public ResponseEntity<ResponseMetaData> getRelatedCoffeeShop(Long coffeeShopId) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
@@ -38,6 +47,12 @@ public class RecommendationService {
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              cacheableService.getRecommendationForYou(user.getId())));
+    }
+
+    public ResponseEntity<ResponseMetaData> getPeopleWithSameTaste(User user) {
+        final List<NUser> similarUsersByLikesAndPreferences = nUserRepository.findSimilarUsersByLikesAndPreferences(user.getId());
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             similarUsersByLikesAndPreferences));
     }
 
     public ResponseEntity<ResponseMetaData> getTop1OfAllTime() {
@@ -55,19 +70,26 @@ public class RecommendationService {
                                                              cacheableService.getTrendingThisMonth()));
     }
 
-//    public ResponseEntity<ResponseMetaData> getRelatedUsers() {
-//
-//    }
-//
-//    public ResponseEntity<ResponseMetaData> getTop10() {
-//
-//    }
-//
-//    public ResponseEntity<ResponseMetaData> getTrendingThisWeek() {
-//
-//    }
-//
-//    public ResponseEntity<ResponseMetaData> getTrendingThisMonth() {
-//
-//    }
+    @SneakyThrows
+    public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
+        final String s = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
+        String json = generateTextService.parseFilterFromPrompt(s,
+                                                                CommonConstant.USER_PROMPT + prompt);
+        final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
+                                                                      CoffeeShopFilter.class);
+        final CoffeeShopSearchRequest searchRequest = filter.toSearchRequest(
+                cacheableService.findAmbiances(),
+                cacheableService.findAmenities(),
+                cacheableService.findCapacities(),
+                cacheableService.findCategories(),
+                cacheableService.findEntertainments(),
+                cacheableService.findParkings(),
+                cacheableService.findPrices(),
+                cacheableService.findServiceTypes(),
+                cacheableService.findSpaces(),
+                cacheableService.findSpecialties(),
+                cacheableService.findVisitTimes()
+        );
+        return coffeeShopService.search(searchRequest, 0, 5);
+    }
 }

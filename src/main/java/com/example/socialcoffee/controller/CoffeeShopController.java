@@ -2,13 +2,17 @@ package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.domain.Address;
 import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
-import com.example.socialcoffee.dto.common.PageDtoIn;
+import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
+import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.model.CoffeeShopFilter;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.service.CoffeeShopService;
+import com.example.socialcoffee.service.GenerateTextService;
 import com.example.socialcoffee.utils.GeometryUtil;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
@@ -18,7 +22,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/")
@@ -27,13 +30,7 @@ import java.util.Objects;
 public class CoffeeShopController extends BaseController{
 
     private final CoffeeShopService coffeeShopService;
-    private final CoffeeShopRepository coffeeShopRepository;
     private final AddressRepository addressRepository;
-
-    @GetMapping("/coffee-shops/recommendation")
-    public ResponseEntity<ResponseMetaData> getRecommendation(@RequestParam String prompt) {
-        return coffeeShopService.getRecommendation(prompt);
-    }
 
     @PostMapping(value = "/coffee-shops", consumes = "multipart/form-data")
     public ResponseEntity<ResponseMetaData> createCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request) {
@@ -58,7 +55,8 @@ public class CoffeeShopController extends BaseController{
 
     @GetMapping("/coffee-shops/search-filters")
     public ResponseEntity<ResponseMetaData> getSearchFilters() {
-        return coffeeShopService.getSearchFilters();
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             coffeeShopService.getSearchFilters()));
     }
 
     @GetMapping("/coffee-shops/search")
@@ -90,5 +88,22 @@ public class CoffeeShopController extends BaseController{
     @PostMapping("/coffee-shops/migrate/neo4j")
     public ResponseEntity<ResponseMetaData> migrateCoffeeShops() {
         return coffeeShopService.migrateRelationship();
+    }
+
+    @GetMapping("/test")
+    public CoffeeShopFilter test(@RequestParam String prompt) {
+        return coffeeShopService.test(prompt);
+    }
+
+    @PutMapping("/coffee-shops/{shopId}/like")
+    public ResponseEntity<ResponseMetaData> likeCoffeeShops(@PathVariable Long shopId) {
+        return coffeeShopService.likeCoffeeShop(shopId,
+                                                getCurrentUser());
+    }
+
+    @PutMapping("/coffee-shops/{shopId}/unlike")
+    public ResponseEntity<ResponseMetaData> unlikeCoffeeShops(@PathVariable Long shopId) {
+        return coffeeShopService.unlikeCoffeeShop(shopId,
+                                                getCurrentUser());
     }
 }

@@ -3,6 +3,7 @@ package com.example.socialcoffee.neo4j;
 import com.example.socialcoffee.neo4j.relationship.Follow;
 import com.example.socialcoffee.neo4j.relationship.Prefer;
 import com.example.socialcoffee.neo4j.relationship.Like;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,12 +26,15 @@ public class NUser {
     private String profilePhoto;
 
     @Relationship(type = "LIKE", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private Set<Like> likeCoffeeShops;
 
     @Relationship(type = "PREFER", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private Set<Prefer> preferCoffeeShops;
 
     @Relationship(type = "FOLLOW", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
     private Set<Follow> followUsers;
 
     public void addFollowing(NUser u2) {
@@ -49,5 +53,23 @@ public class NUser {
         this.followUsers.remove(Follow.builder()
                                      .user(u2)
                                      .build());
+    }
+
+    public void addLike(NCoffeeShop coffeeShop) {
+        if (CollectionUtils.isEmpty(this.likeCoffeeShops)) {
+            this.likeCoffeeShops = new HashSet<>();
+        }
+        this.likeCoffeeShops.add(Like.builder()
+                                     .coffeeShop(coffeeShop)
+                                     .build());
+    }
+
+    public void removeLike(NCoffeeShop coffeeShop) {
+        if (CollectionUtils.isEmpty(this.likeCoffeeShops)) {
+            return;
+        }
+        this.likeCoffeeShops.remove(Like.builder()
+                                        .coffeeShop(coffeeShop)
+                                        .build());
     }
 }

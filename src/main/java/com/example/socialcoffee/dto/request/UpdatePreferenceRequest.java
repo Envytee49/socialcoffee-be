@@ -10,7 +10,7 @@ import java.util.List;
 public class UpdatePreferenceRequest {
     private List<Long> ambiances;
     private List<Long> amenities;
-    private List<Long> purposes;
+//    private List<Long> purposes;
     private List<Long> capacities;
     private List<Long> categories;
     private List<Long> dressCodes;

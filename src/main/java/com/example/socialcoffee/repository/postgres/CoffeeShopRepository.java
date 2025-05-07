@@ -13,8 +13,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, JpaSpecificationExecutor<CoffeeShop>, CoffeeShopRepositoryCustom {
-    @Query(value = "SELECT id, description FROM coffee_shops ORDER BY description_embedding <# :embedding DESC LIMIT :limit", nativeQuery = true)
-    List<Object[]> findSimilarCoffeeShops(@Param("embedding") String embedding, @Param("limit") int limit);
+    @Query(value = "SELECT cs.id FROM coffee_shops cs " +
+            "JOIN description_embedding de ON cs.embedding_description_id = de.id " +
+            "ORDER BY de.description_embedding <=> CAST(:embedding AS VECTOR(384)) " +
+            "LIMIT :limit", nativeQuery = true)
+    List<Long> findSimilarCoffeeShops(@Param("embedding") String embedding, @Param("limit") int limit);
 
     @Query(value = "SELECT c FROM CoffeeShop c WHERE c.id = :shopId")
     CoffeeShop findByShopId(@Param("shopId") Long shopId);

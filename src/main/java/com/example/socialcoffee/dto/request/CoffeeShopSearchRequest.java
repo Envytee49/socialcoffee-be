@@ -1,5 +1,6 @@
 package com.example.socialcoffee.dto.request;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@Builder
 public class CoffeeShopSearchRequest {
     private String name;
     private String province;

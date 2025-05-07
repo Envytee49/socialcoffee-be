@@ -15,8 +15,4 @@ public abstract class Feature {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
     protected String value;
-    @JsonIgnore
-    public String getName() {
-        return value;
-    }
 }

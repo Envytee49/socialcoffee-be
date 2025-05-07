@@ -37,7 +37,7 @@ public class CacheableService {
     private final SpaceRepository spaceRepository;
     private final SpecialtyRepository specialtyRepository;
     private final VisitTimeRepository visitTimeRepository;
-    private final PurposeRepository purposeRepository;
+//    private final PurposeRepository purposeRepository;
     private final AuthProviderRepository authProviderRepository;
     private final RoleRepository roleRepository;
     private final NCoffeeShopRepository nCoffeeShopRepository;
@@ -103,10 +103,10 @@ public class CacheableService {
         return visitTimeRepository.findAll();
     }
 
-    @Cacheable(value = "purposes")
-    public List<Purpose> findPurposes() {
-        return purposeRepository.findAll();
-    }
+//    @Cacheable(value = "purposes")
+//    public List<Purpose> findPurposes() {
+//        return purposeRepository.findAll();
+//    }
 
     @Cacheable(value = "auth", key = "#authProvider")
     public AuthProvider findProvider(String authProvider) {

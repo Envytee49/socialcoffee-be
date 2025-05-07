@@ -12,6 +12,7 @@ import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @RelationshipProperties
 @Getter
@@ -27,5 +28,18 @@ public class Like {
     protected LocalDateTime updatedAt;
     @TargetNode
     private NCoffeeShop coffeeShop;
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof final Like like)) return false;
+        return Objects.equals(coffeeShop.getId(),
+                              like.coffeeShop.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(coffeeShop);
+    }
 }
 

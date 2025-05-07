@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/**").hasRole(RoleEnum.USER.getValue())
+                        .requestMatchers("/recommendation/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
                         .anyRequest().authenticated()
                 )

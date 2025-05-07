@@ -8,17 +8,20 @@ import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
+import com.example.socialcoffee.model.CoffeeShopFilter;
 import com.example.socialcoffee.neo4j.NCoffeeShop;
+import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.neo4j.feature.*;
-import com.example.socialcoffee.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
-import com.example.socialcoffee.repository.postgres.DescriptionEmbeddingRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import com.example.socialcoffee.utils.StringAppUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -37,13 +40,13 @@ import java.util.stream.Collectors;
 public class CoffeeShopService {
     private final CoffeeShopRepository coffeeShopRepository;
     private final GenerateTextService generateTextService;
-    private final SentenceTransformerService sentenceTransformerService;
     private final AddressRepository addressRepository;
     private final CacheableService cacheableService;
     private final CloudinaryService cloudinaryService;
     private final ImageService imageService;
-    private final DescriptionEmbeddingRepository descriptionEmbeddingRepository;
     private final RepoService repoService;
+    private final ObjectMapper jacksonObjectMapper;
+    private final UserRepository userRepository;
 
     @Transactional
     public ResponseEntity<ResponseMetaData> createCoffeeShop(User user,
@@ -194,10 +197,10 @@ public class CoffeeShopService {
                 hasFeatures.add(HasFeature.builder().feature(nVisitTime).build());
             }
         }
+
         coffeeShop.setGalleryPhotos(imageService.save(req.getGalleryPhotos()));
         coffeeShop.setCoverPhoto(cloudinaryService.upload(req.getCoverPhoto()));
-        coffeeShop.setDescription(generateTextService.generateCoffeeShopDescription(coffeeShop.featureToString(),
-                                                                                    CommonConstant.COFFEE_SHOP_DESCRIPTION_PROMPT));
+        coffeeShop.setDescription(req.getDescription());
         String userRole = SecurityUtil.getUserRole();
         if (RoleEnum.ADMIN.getValue().equalsIgnoreCase(userRole)) {
             coffeeShop.setCreatedBy(CommonConstant.ADMIN_INDEX);
@@ -206,8 +209,6 @@ public class CoffeeShopService {
             coffeeShop.setStatus(Status.PENDING.getValue());
             coffeeShop.setCreatedBy(user.getId());
         }
-        DescriptionEmbedding descriptionEmbedding = generateEmbeddingDescription(coffeeShop);
-        coffeeShop.setEmbeddingDescription(descriptionEmbedding);
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
         NCoffeeShop nCoffeeShop = NCoffeeShop.builder()
                 .id(saved.getId())
@@ -221,28 +222,6 @@ public class CoffeeShopService {
                  coffeeShop.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                       coffeeShop));
-    }
-
-    private DescriptionEmbedding generateEmbeddingDescription(CoffeeShop coffeeShop) {
-        try {
-            Float[] embeddingDescription = sentenceTransformerService.generateEmbeddingDescription(StringAppUtils.removeNewLineCharacter(coffeeShop.getDescription()));
-            DescriptionEmbedding descriptionEmbedding = DescriptionEmbedding.builder()
-                    .descriptionEmbedding(embeddingDescription)
-                    .build();
-            return descriptionEmbeddingRepository.save(descriptionEmbedding);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
-
-    public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
-//        coffeeShopRepository.findAllCoffeeShops();
-        Float[] embeddingPrompt = sentenceTransformerService.generateEmbeddingDescription(prompt);
-        List<Object[]> coffeeShops = coffeeShopRepository.findSimilarCoffeeShops(Arrays.toString(embeddingPrompt),
-                                                                                 5);
-        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      coffeeShops));
     }
 
     public ResponseEntity<ResponseMetaData> getAllCoffeeShop(final Double lat,
@@ -291,7 +270,7 @@ public class CoffeeShopService {
     }
 
     @Cacheable(value = "search_filter", key = "'SEARCH_FILTERS'")
-    public ResponseEntity<ResponseMetaData> getSearchFilters() {
+    public SearchFilter getSearchFilters() {
         SearchFilter searchFilter = new SearchFilter();
         searchFilter.setAmbiances(cacheableService.findAmbiances());
         searchFilter.setAmenities(cacheableService.findAmenities());
@@ -299,7 +278,7 @@ public class CoffeeShopService {
         searchFilter.setEntertainments(cacheableService.findEntertainments());
         searchFilter.setParkings(cacheableService.findParkings());
         searchFilter.setPrices(cacheableService.findPrices());
-        searchFilter.setPurposes(cacheableService.findPurposes());
+//        searchFilter.setPurposes(cacheableService.findPurposes());
         searchFilter.setServiceTypes(cacheableService.findServiceTypes());
         searchFilter.setSpaces(cacheableService.findSpaces());
         searchFilter.setSpecialties(cacheableService.findSpecialties());
@@ -308,8 +287,23 @@ public class CoffeeShopService {
                                                                                                          d.getValue())).collect(Collectors.toList()));
         searchFilter.setSorts(Arrays.stream(CoffeeShopSort.values()).map(s -> new SearchFilter.SortDTO((long) s.ordinal(),
                                                                                                        s.getValue())).collect(Collectors.toList()));
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             searchFilter));
+        return searchFilter;
+    }
+
+    public CoffeeShopFilter getCoffeeShopFilters() {
+        CoffeeShopFilter filter = new CoffeeShopFilter();
+        filter.setDistances(Arrays.stream(Distance.values()).map(d -> d.name()).toList());
+        filter.setAmbiances(cacheableService.findAmbiances().stream().map(e -> e.getValue()).toList());
+        filter.setAmenities(cacheableService.findAmenities().stream().map(e -> e.getValue()).toList());
+        filter.setCapacities(cacheableService.findCapacities().stream().map(e -> e.getValue()).toList());
+        filter.setParkings(cacheableService.findParkings().stream().map(e -> e.getValue()).toList());
+        filter.setPrices(cacheableService.findPrices().stream().map(e -> e.getValue()).toList());
+//        filter.setPurposes(cacheableService.findPurposes().stream().map(e -> e.getValue()).toList());
+        filter.setServiceTypes(cacheableService.findServiceTypes().stream().map(e -> e.getValue()).toList());
+        filter.setSpaces(cacheableService.findSpaces().stream().map(e -> e.getValue()).toList());
+        filter.setSpecialties(cacheableService.findSpecialties().stream().map(e -> e.getValue()).toList());
+        filter.setVisitTimes(cacheableService.findVisitTimes().stream().map(e -> e.getValue()).toList());
+        return filter;
     }
 
     @Transactional
@@ -354,9 +348,54 @@ public class CoffeeShopService {
     public ResponseEntity<ResponseMetaData> migrateRelationship() {
         final List<CoffeeShop> all = repoService.fetchCoffeeShopsFromPostgres();
         for (final CoffeeShop coffeeShop : all) {
-           repoService.migrateSingleCoffeeShop(coffeeShop);
+            repoService.migrateSingleCoffeeShop(coffeeShop);
         }
         return ResponseEntity.ok().build();
     }
 
+    @SneakyThrows
+    public CoffeeShopFilter test(String prompt) {
+        final String s = jacksonObjectMapper.writeValueAsString(getCoffeeShopFilters());
+        String json = generateTextService.parseFilterFromPrompt(s,
+                                                  CommonConstant.USER_PROMPT + prompt);
+        final CoffeeShopFilter filter = jacksonObjectMapper.readValue(StringAppUtils.getJson(json),
+                                                                      CoffeeShopFilter.class);
+        filter.toSearchRequest(
+                cacheableService.findAmbiances(),
+                cacheableService.findAmenities(),
+                cacheableService.findCapacities(),
+                cacheableService.findCategories(),
+                cacheableService.findEntertainments(),
+                cacheableService.findParkings(),
+                cacheableService.findPrices(),
+//                cacheableService.findPurposes(),
+                cacheableService.findServiceTypes(),
+                cacheableService.findSpaces(),
+                cacheableService.findSpecialties(),
+                cacheableService.findVisitTimes()
+        );
+        return filter;
+    }
+
+    public ResponseEntity<ResponseMetaData> likeCoffeeShop(Long shopId,
+                                                           User currentUser) {
+        NUser nUser = repoService.findNUserById(currentUser.getId());
+        nUser.addLike(repoService.findNCoffeeShopById(shopId));
+        repoService.saveNUser(nUser);
+        final CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
+        currentUser.addLike(coffeeShop);
+        userRepository.save(currentUser);
+        return ResponseEntity.ok().build();
+    }
+
+    public ResponseEntity<ResponseMetaData> unlikeCoffeeShop(Long shopId,
+                                                             User currentUser) {
+        NUser nUser = repoService.findNUserById(currentUser.getId());
+        nUser.removeLike(repoService.findNCoffeeShopById(shopId));
+        repoService.saveNUser(nUser);
+        final CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
+        currentUser.removeLike(coffeeShop);
+        userRepository.save(currentUser);
+        return ResponseEntity.ok().build();
+    }
 }

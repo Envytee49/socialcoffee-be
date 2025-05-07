@@ -75,7 +75,7 @@ public class RepoService {
             for (Ambiance ambiance : coffeeShop.getAmbiances()) {
                 NAmbiance nAmbiance = new NAmbiance();
                 nAmbiance.setId(ambiance.getId());
-                nAmbiance.setName(ambiance.getName());
+                nAmbiance.setName(ambiance.getValue());
                 nFeatureRepository.save(nAmbiance);
                 hasFeatures.add(HasFeature.builder().feature(nAmbiance).build());
             }
@@ -85,7 +85,7 @@ public class RepoService {
             for (Amenity amenity : coffeeShop.getAmenities()) {
                 NAmenity nAmenity = new NAmenity();
                 nAmenity.setId(amenity.getId());
-                nAmenity.setName(amenity.getName());
+                nAmenity.setName(amenity.getValue());
                 nFeatureRepository.save(nAmenity);
                 hasFeatures.add(HasFeature.builder().feature(nAmenity).build());
             }
@@ -95,7 +95,7 @@ public class RepoService {
             for (Capacity capacity : coffeeShop.getCapacities()) {
                 NCapacity nCapacity = new NCapacity();
                 nCapacity.setId(capacity.getId());
-                nCapacity.setName(capacity.getName());
+                nCapacity.setName(capacity.getValue());
                 nFeatureRepository.save(nCapacity);
                 hasFeatures.add(HasFeature.builder().feature(nCapacity).build());
             }
@@ -105,7 +105,7 @@ public class RepoService {
             for (Category category : coffeeShop.getCategories()) {
                 NCategory nCategory = new NCategory();
                 nCategory.setId(category.getId());
-                nCategory.setName(category.getName());
+                nCategory.setName(category.getValue());
                 nFeatureRepository.save(nCategory);
                 hasFeatures.add(HasFeature.builder().feature(nCategory).build());
             }
@@ -115,7 +115,7 @@ public class RepoService {
             for (DressCode dressCode : coffeeShop.getDressCodes()) {
                 NDressCode nDressCode = new NDressCode();
                 nDressCode.setId(dressCode.getId());
-                nDressCode.setName(dressCode.getName());
+                nDressCode.setName(dressCode.getValue());
                 nFeatureRepository.save(nDressCode);
                 hasFeatures.add(HasFeature.builder().feature(nDressCode).build());
             }
@@ -125,7 +125,7 @@ public class RepoService {
             for (Entertainment entertainment : coffeeShop.getEntertainments()) {
                 NEntertainment nEntertainment = new NEntertainment();
                 nEntertainment.setId(entertainment.getId());
-                nEntertainment.setName(entertainment.getName());
+                nEntertainment.setName(entertainment.getValue());
                 nFeatureRepository.save(nEntertainment);
                 hasFeatures.add(HasFeature.builder().feature(nEntertainment).build());
             }
@@ -135,7 +135,7 @@ public class RepoService {
             for (Parking parking : coffeeShop.getParkings()) {
                 NParking nParking = new NParking();
                 nParking.setId(parking.getId());
-                nParking.setName(parking.getName());
+                nParking.setName(parking.getValue());
                 nFeatureRepository.save(nParking);
                 hasFeatures.add(HasFeature.builder().feature(nParking).build());
             }
@@ -145,7 +145,7 @@ public class RepoService {
             for (Price price : coffeeShop.getPrices()) {
                 NPrice nPrice = new NPrice();
                 nPrice.setId(price.getId());
-                nPrice.setName(price.getName());
+                nPrice.setName(price.getValue());
                 nFeatureRepository.save(nPrice);
                 hasFeatures.add(HasFeature.builder().feature(nPrice).build());
             }
@@ -155,7 +155,7 @@ public class RepoService {
             for (ServiceType serviceType : coffeeShop.getServiceTypes()) {
                 NServiceType nServiceType = new NServiceType();
                 nServiceType.setId(serviceType.getId());
-                nServiceType.setName(serviceType.getName());
+                nServiceType.setName(serviceType.getValue());
                 nFeatureRepository.save(nServiceType);
                 hasFeatures.add(HasFeature.builder().feature(nServiceType).build());
             }
@@ -165,7 +165,7 @@ public class RepoService {
             for (Space space : coffeeShop.getSpaces()) {
                 NSpace nSpace = new NSpace();
                 nSpace.setId(space.getId());
-                nSpace.setName(space.getName());
+                nSpace.setName(space.getValue());
                 nFeatureRepository.save(nSpace);
                 hasFeatures.add(HasFeature.builder().feature(nSpace).build());
             }
@@ -175,7 +175,7 @@ public class RepoService {
             for (Specialty specialty : coffeeShop.getSpecialties()) {
                 NSpecialty nSpecialty = new NSpecialty();
                 nSpecialty.setId(specialty.getId());
-                nSpecialty.setName(specialty.getName());
+                nSpecialty.setName(specialty.getValue());
                 nFeatureRepository.save(nSpecialty);
                 hasFeatures.add(HasFeature.builder().feature(nSpecialty).build());
             }
@@ -185,7 +185,7 @@ public class RepoService {
             for (VisitTime visitTime : coffeeShop.getVisitTimes()) {
                 NVisitTime nVisitTime = new NVisitTime();
                 nVisitTime.setId(visitTime.getId());
-                nVisitTime.setName(visitTime.getName());
+                nVisitTime.setName(visitTime.getValue());
                 nFeatureRepository.save(nVisitTime);
                 hasFeatures.add(HasFeature.builder().feature(nVisitTime).build());
             }
@@ -285,5 +285,11 @@ public class RepoService {
     public NPurpose findNPurposeById(Long id) {
         return nPurposeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Purpose" + id));
+    }
+
+    public NCoffeeShop findNCoffeeShopById(Long shopId) {
+        return nCoffeeShopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Coffee Shop " +
+                                                                 shopId));
     }
 }

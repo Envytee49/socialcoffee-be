@@ -14,6 +14,7 @@ public class CreateCoffeeShopRequest {
     private MultipartFile coverPhoto;
     private MultipartFile[] galleryPhotos;
     private String phoneNumber;
+    private String description;
     private String webAddress;
     private String menuWebAddress;
     private String additionInfo;

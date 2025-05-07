@@ -18,7 +18,9 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -51,6 +53,15 @@ public class User {
                     name = "role_id", referencedColumnName = "id")
     )
     private List<Role> roles;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_likes",
+            joinColumns = @JoinColumn(
+                    name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "coffee_shop_id", referencedColumnName = "id")
+    )
+    private Set<CoffeeShop> coffeeShops;
     private String profilePhoto;
     private String backgroundPhoto;
     @CreationTimestamp
@@ -82,6 +93,15 @@ public class User {
     public void addReview(Review review) {
         if(CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
         this.reviews.add(review);
+    }
+
+    public void addLike(CoffeeShop coffeeShop) {
+        if(CollectionUtils.isEmpty(this.coffeeShops)) this.coffeeShops = new HashSet<>();
+        this.coffeeShops.add(coffeeShop);
+    }
+    public void removeLike(CoffeeShop coffeeShop) {
+        if(CollectionUtils.isEmpty(this.coffeeShops)) return;
+        this.coffeeShops.remove(coffeeShop);
     }
 
     public UserDTO toUserDTO() {
