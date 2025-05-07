@@ -4,17 +4,17 @@ import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/recommendation")
 @RequiredArgsConstructor
-public class RecommendationController extends BaseController{
+public class RecommendationController extends BaseController {
     private final RecommendationService recommendationService;
+
     @GetMapping("/coffee-shops/{id}/related")
     public ResponseEntity<ResponseMetaData> getRelatedCoffeeShops(@PathVariable Long id) {
         return recommendationService.getRelatedCoffeeShop(id);
