@@ -16,6 +16,7 @@ import com.example.socialcoffee.neo4j.NCoffeeShop;
 import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.neo4j.feature.*;
 import com.example.socialcoffee.neo4j.relationship.HasFeature;
+import com.example.socialcoffee.repository.postgres.CoffeeShopContributionRepository;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
@@ -49,6 +50,7 @@ public class CoffeeShopService {
     private final RepoService repoService;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
+    private final CoffeeShopContributionRepository coffeeShopContributionRepository;
 
     @Transactional
     public ResponseEntity<ResponseMetaData> createCoffeeShop(User user,
