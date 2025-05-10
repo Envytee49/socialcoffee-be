@@ -118,12 +118,12 @@ public class FeatureController {
                                                       data));
     }
 
-//    @GetMapping("/purpose")
-//    public ResponseEntity<ResponseMetaData> getPurposes() {
-//        List<Purpose> data = cacheableService.findPurposes();
-//        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-//                                                      data));
-//    }
+    @GetMapping("/purpose")
+    public ResponseEntity<ResponseMetaData> getPurposes() {
+        List<Purpose> data = cacheableService.findPurposes();
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                      data));
+    }
 
     // Ambiance Controller Methods
     @PostMapping("/ambiance")

@@ -86,13 +86,13 @@ public class CoffeeShop {
     )
     private List<DressCode> dressCodes;
 
-//    @ManyToMany
-//    @JoinTable(
-//            name = "coffee_shop_purposes",
-//            joinColumns = @JoinColumn(name = "coffee_shop_id"),
-//            inverseJoinColumns = @JoinColumn(name = "purpose_id")
-//    )
-//    private List<Purpose> purposes;
+    @ManyToMany
+    @JoinTable(
+            name = "coffee_shop_purposes",
+            joinColumns = @JoinColumn(name = "coffee_shop_id"),
+            inverseJoinColumns = @JoinColumn(name = "purpose_id")
+    )
+    private List<Purpose> purposes;
 
     @ManyToMany
     @JoinTable(

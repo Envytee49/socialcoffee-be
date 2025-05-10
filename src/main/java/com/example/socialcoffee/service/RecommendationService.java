@@ -3,7 +3,9 @@ package com.example.socialcoffee.service;
 import com.cloudinary.utils.StringUtils;
 import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
+import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
@@ -73,8 +75,7 @@ public class RecommendationService {
     @SneakyThrows
     public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
         final String s = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
-        String json = generateTextService.parseFilterFromPrompt(s,
-                                                                CommonConstant.USER_PROMPT + prompt);
+        String json = generateTextService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
         final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
                                                                       CoffeeShopFilter.class);
         final CoffeeShopSearchRequest searchRequest = filter.toSearchRequest(
@@ -85,11 +86,17 @@ public class RecommendationService {
                 cacheableService.findEntertainments(),
                 cacheableService.findParkings(),
                 cacheableService.findPrices(),
+                cacheableService.findPurposes(),
                 cacheableService.findServiceTypes(),
                 cacheableService.findSpaces(),
                 cacheableService.findSpecialties(),
                 cacheableService.findVisitTimes()
         );
-        return coffeeShopService.search(searchRequest, 0, 5);
+        final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(searchRequest,
+                                                                             0,
+                                                                             5);
+        pageDtoOut.setMetaData(searchRequest);
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                    pageDtoOut));
     }
 }

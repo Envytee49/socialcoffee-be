@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class GenerateTextService {
     private final ChatClient chatClient;
-    public String parseFilterFromPrompt(String features, String prompt) {
+    public String parseFilterFromPrompt(String prompt) {
         try {
-            if (StringAppUtils.isEmpty(features)) return null;
+            if (StringAppUtils.isEmpty(prompt)) return null;
             log.info("Start parseFilterFromPrompt");
-            final String res = chatClient.prompt().user(prompt + features).call().content();
+            final String res = chatClient.prompt().user(prompt).call().content();
             log.info("Finish parseFilterFromPrompt");
             return res;
         } catch (Exception e) {

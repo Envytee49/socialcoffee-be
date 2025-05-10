@@ -1,7 +1,10 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.constants.CommonConstant;
-import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.domain.Address;
+import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
@@ -18,10 +21,9 @@ import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
-import com.example.socialcoffee.utils.StringAppUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.Cacheable;
@@ -45,7 +47,7 @@ public class CoffeeShopService {
     private final CloudinaryService cloudinaryService;
     private final ImageService imageService;
     private final RepoService repoService;
-    private final ObjectMapper jacksonObjectMapper;
+    private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
 
     @Transactional
@@ -235,20 +237,38 @@ public class CoffeeShopService {
                                                       coffeeShopVMs));
     }
 
-    public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id) {
-        Optional<CoffeeShop> coffeeShopOptional = coffeeShopRepository.findById(id);
-        if (coffeeShopOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.BAD_REQUEST)));
+    public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id,
+                                                              User user,
+                                                              final CoffeeShopSearchRequest filter) {
+        try {
+            Optional<CoffeeShop> coffeeShopOptional = coffeeShopRepository.findById(id);
+            if (coffeeShopOptional.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.BAD_REQUEST)));
+            }
+            CoffeeShop coffeeShop = coffeeShopOptional.get();
+            coffeeShop.updateGalleryPhotos(Collections.singletonList(Image.builder().url(coffeeShop.getCoverPhoto()).build()));
+            CoffeeShopDetailVM coffeeShopDetailVM = new CoffeeShopDetailVM(coffeeShop);
+            if (Objects.nonNull(user)) {
+                SearchFilter preference = objectMapper.readValue(
+                        user.getCoffeePreference(),
+                        new TypeReference<>() {
+                        }
+                );
+                if (Objects.nonNull(preference))
+                    coffeeShopDetailVM.setFeatureDto(preference);
+                if (Objects.nonNull(filter))
+                    coffeeShopDetailVM.setFeatureDto(filter);
+            }
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                 coffeeShopDetailVM));
+        } catch (Exception exception) {
+            throw new RuntimeException(exception);
         }
-        CoffeeShop coffeeShop = coffeeShopOptional.get();
-        coffeeShop.updateGalleryPhotos(Collections.singletonList(Image.builder().url(coffeeShop.getCoverPhoto()).build()));
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             coffeeShop));
     }
 
-    public ResponseEntity<ResponseMetaData> search(CoffeeShopSearchRequest request,
-                                                   Integer page,
-                                                   Integer size) {
+    public PageDtoOut<CoffeeShopVM> search(CoffeeShopSearchRequest request,
+                                           Integer page,
+                                           Integer size) {
         Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request,
                                                                               page,
                                                                               size);
@@ -261,12 +281,11 @@ public class CoffeeShopService {
 //                                   request.getLatitude())) {
 //            coffeeShopVMs.sort(Comparator.comparing(CoffeeShopVM::getDistance));
 //        }
-        PageDtoOut<CoffeeShopVM> pageDtoOut = PageDtoOut.from(page,
-                                                              size,
-                                                              coffeeShops.getTotalElements(),
-                                                              coffeeShopVMs);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+        return PageDtoOut.from(page,
+                               size,
+                               coffeeShops.getTotalElements(),
+                               coffeeShopVMs);
+
     }
 
     @Cacheable(value = "search_filter", key = "'SEARCH_FILTERS'")
@@ -278,7 +297,7 @@ public class CoffeeShopService {
         searchFilter.setEntertainments(cacheableService.findEntertainments());
         searchFilter.setParkings(cacheableService.findParkings());
         searchFilter.setPrices(cacheableService.findPrices());
-//        searchFilter.setPurposes(cacheableService.findPurposes());
+        searchFilter.setPurposes(cacheableService.findPurposes());
         searchFilter.setServiceTypes(cacheableService.findServiceTypes());
         searchFilter.setSpaces(cacheableService.findSpaces());
         searchFilter.setSpecialties(cacheableService.findSpecialties());
@@ -298,8 +317,10 @@ public class CoffeeShopService {
         filter.setCapacities(cacheableService.findCapacities().stream().map(e -> e.getValue()).toList());
         filter.setParkings(cacheableService.findParkings().stream().map(e -> e.getValue()).toList());
         filter.setPrices(cacheableService.findPrices().stream().map(e -> e.getValue()).toList());
-//        filter.setPurposes(cacheableService.findPurposes().stream().map(e -> e.getValue()).toList());
+        filter.setPurposes(cacheableService.findPurposes().stream().map(e -> e.getValue()).toList());
         filter.setServiceTypes(cacheableService.findServiceTypes().stream().map(e -> e.getValue()).toList());
+        filter.setCategories(cacheableService.findCategories().stream().map(e -> e.getValue()).toList());
+        filter.setEntertainments(cacheableService.findEntertainments().stream().map(e -> e.getValue()).toList());
         filter.setSpaces(cacheableService.findSpaces().stream().map(e -> e.getValue()).toList());
         filter.setSpecialties(cacheableService.findSpecialties().stream().map(e -> e.getValue()).toList());
         filter.setVisitTimes(cacheableService.findVisitTimes().stream().map(e -> e.getValue()).toList());
@@ -351,30 +372,6 @@ public class CoffeeShopService {
             repoService.migrateSingleCoffeeShop(coffeeShop);
         }
         return ResponseEntity.ok().build();
-    }
-
-    @SneakyThrows
-    public CoffeeShopFilter test(String prompt) {
-        final String s = jacksonObjectMapper.writeValueAsString(getCoffeeShopFilters());
-        String json = generateTextService.parseFilterFromPrompt(s,
-                                                  CommonConstant.USER_PROMPT + prompt);
-        final CoffeeShopFilter filter = jacksonObjectMapper.readValue(StringAppUtils.getJson(json),
-                                                                      CoffeeShopFilter.class);
-        filter.toSearchRequest(
-                cacheableService.findAmbiances(),
-                cacheableService.findAmenities(),
-                cacheableService.findCapacities(),
-                cacheableService.findCategories(),
-                cacheableService.findEntertainments(),
-                cacheableService.findParkings(),
-                cacheableService.findPrices(),
-//                cacheableService.findPurposes(),
-                cacheableService.findServiceTypes(),
-                cacheableService.findSpaces(),
-                cacheableService.findSpecialties(),
-                cacheableService.findVisitTimes()
-        );
-        return filter;
     }
 
     public ResponseEntity<ResponseMetaData> likeCoffeeShop(Long shopId,

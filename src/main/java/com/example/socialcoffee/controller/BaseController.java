@@ -1,13 +1,18 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.exception.UnauthorizedException;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.SecurityUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -17,7 +22,6 @@ import java.util.Optional;
 public class BaseController {
     @Autowired
     protected UserRepository userRepository;
-
     public User getCurrentUser() {
         Long userId = SecurityUtil.getUserId();
         Optional<User> optionalUser = userRepository.findByUserId(userId);

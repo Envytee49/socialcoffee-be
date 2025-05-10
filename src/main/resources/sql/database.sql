@@ -140,6 +140,13 @@ CREATE TABLE IF NOT EXISTS coffee_shop_ambiance
     CONSTRAINT pk_coffee_shop_ambiance PRIMARY KEY (ambiance_id, coffee_shop_id)
 );
 
+CREATE TABLE IF NOT EXISTS coffee_shop_purpose
+(
+    purpose_id    BIGINT NOT NULL,
+    coffee_shop_id BIGINT NOT NULL,
+    CONSTRAINT pk_coffee_shop_purpose PRIMARY KEY (purpose_id, coffee_shop_id)
+);
+
 CREATE TABLE IF NOT EXISTS coffee_shop_amenity
 (
     amenity_id     BIGINT NOT NULL,

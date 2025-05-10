@@ -9,5 +9,6 @@ public interface CommonConstant {
     String CONTENT_TYPE = "application/json";
     String AT_SIGN = "@";
     Long ADMIN_INDEX = NumberUtils.LONG_ZERO;
-    String USER_PROMPT = "Extract matching filters from the prompt and return only a valid JSON object. Do not include any additional text, characters or explanation. Return the JSON only: ";
+    String USER_PROMPT = "These are the system filters: %s, extract matching filters from the prompt and return only a valid JSON object. Do not include any additional text, characters or explanation. Return the JSON only: ";
+    String USER_ID = "User-Id";
 }

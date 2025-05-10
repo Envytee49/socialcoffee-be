@@ -2,6 +2,7 @@ package com.example.socialcoffee.utils;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -14,7 +15,7 @@ public class SecurityUtil {
     }
 
     public Long getUserId() {
-        return Long.parseLong(extractPrincipal().getClaimAsString("userId"));
+        return NumberUtils.toLong(extractPrincipal().getClaimAsString("userId"), NumberUtils.LONG_ZERO);
     }
 
     public String getUserRole() {
@@ -25,6 +26,10 @@ public class SecurityUtil {
     // since to get to this method authentication must have been set
     private Jwt extractPrincipal() {
         return ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
+    public boolean isAuthenticated() {
+        return !(SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof String);
     }
 
 }

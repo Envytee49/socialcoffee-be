@@ -124,6 +124,7 @@ public class CoffeeShopFilter {
                                                    List<Entertainment> entertainments,
                                                    List<Parking> parkings,
                                                    List<Price> prices,
+                                                   List<Purpose> purposes,
                                                    List<ServiceType> serviceTypes,
                                                    List<Space> spaces,
                                                    List<Specialty> specialties,
@@ -137,6 +138,7 @@ public class CoffeeShopFilter {
                 .entertainments(getEntertainmentValues(entertainments))
                 .parkings(getParkingValues(parkings))
                 .prices(getPriceValues(prices))
+                .purposes(getPurposeValues(purposes))
                 .serviceTypes(getServiceTypeValues(serviceTypes))
                 .spaces(getSpaceValues(spaces))
                 .specialties(getSpecialtyValues(specialties))
