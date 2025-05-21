@@ -10,10 +10,7 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalTime;
@@ -29,9 +26,11 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
     @Override
     public Page<CoffeeShop> searchCoffeeShops(CoffeeShopSearchRequest request,
                                               Integer page,
-                                              Integer size) {
+                                              Integer size,
+                                              Sort sort) {
         Pageable pageable = PageRequest.of(page,
-                                           size);
+                                           size,
+                                           sort);
 
         Long totalCount = getTotalCount(request);
 
@@ -73,6 +72,18 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
                                              criteriaBuilder,
                                              root);
         criteriaQuery.where(predicate);
+        Sort sort = pageable.getSort();
+        List<Order> orders = new ArrayList<>();
+
+        for (Sort.Order sortOrder : sort) {
+            if (sortOrder.isAscending()) {
+                orders.add(criteriaBuilder.asc(root.get(sortOrder.getProperty())));
+            } else {
+                orders.add(criteriaBuilder.desc(root.get(sortOrder.getProperty())));
+            }
+        }
+
+        criteriaQuery.orderBy(orders);
 
         // Apply sorting
         if (request.getSort() != null) {

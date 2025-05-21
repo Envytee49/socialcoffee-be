@@ -41,7 +41,7 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
             ":b * SUM(CASE WHEN r.rating = 2 THEN 1 ELSE 0 END) + " +
             ":c * SUM(CASE WHEN r.rating = 3 THEN 1 ELSE 0 END) + " +
             ":d * SUM(CASE WHEN r.rating = 4 THEN 1 ELSE 0 END) + " +
-            ":e * SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END)) DESC, " +
+            ":e * SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END)) DESC, cs.reviewCount DESC, " +
             "COUNT(DISTINCT c) DESC")
     List<CoffeeShop> findTop10CoffeeShopsByWeightedRatingAndCollections(
             @Param("a") double a,
@@ -72,4 +72,13 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
+
+    Long countByStatus(String value);
+
+    long countByIsSponsored(Boolean sponsored);
+
+    @Query(value = "SELECT c.id FROM CoffeeShop c WHERE c.isSponsored = :isSponsor")
+    List<Long> findIdByIsSponsored(@Param(value = "isSponsor") Boolean isSponsor);
+
+    List<CoffeeShop> findByIsSponsored(boolean b);
 }

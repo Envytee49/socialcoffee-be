@@ -78,7 +78,8 @@ public enum MetaData {
     WRONG_DATE_TIME_FORMAT(4026,
                            "Wrong date time format"),
     INVALID_PARAMETERS(4027,
-                       "Invalid parameters");
+                       "Invalid parameters: %s"),
+    EXCEED_MAX_SPONSORED_SHOP(4028, "Max sponsored shop can only be %s");
 
 
     private final Integer metaCode;

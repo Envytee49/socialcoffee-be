@@ -44,6 +44,8 @@ public class User {
     private String bio;
     private String coffeePreference;
     private String status = Status.ACTIVE.getValue();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notification> notifications;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -71,6 +73,8 @@ public class User {
     private List<Review> reviews;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Collection> collections;
+    @OneToMany(mappedBy = "submittedBy", cascade = CascadeType.ALL)
+    private List<CoffeeShopContribution> contributions;
 
     public User(GoogleUserInfo info) {
         this.displayName = info.getName();
@@ -114,5 +118,16 @@ public class User {
 
     public FollowingDTO toFollowingDTO() {
         return new FollowingDTO(this);
+    }
+    public void addNotification(String title, String type, String status, String message, String meta) {
+        Notification notification = Notification.builder()
+                .title(title)
+                .message(message)
+                .type(type)
+                .status(status)
+                .meta(meta)
+                .user(this)
+                .build();
+        this.notifications.add(notification);
     }
 }

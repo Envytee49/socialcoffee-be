@@ -18,6 +18,8 @@ import com.example.socialcoffee.utils.StringAppUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class RecommendationService {
@@ -76,6 +79,7 @@ public class RecommendationService {
     public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
         final String s = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
         String json = generateTextService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
+        log.info("Returned json: {}, given feature: {}", json, s);
         final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
                                                                       CoffeeShopFilter.class);
         final CoffeeShopSearchRequest searchRequest = filter.toSearchRequest(
@@ -94,7 +98,8 @@ public class RecommendationService {
         );
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(searchRequest,
                                                                              0,
-                                                                             5);
+                                                                             5,
+                                                                             Sort.unsorted());
         pageDtoOut.setMetaData(searchRequest);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                                     pageDtoOut));

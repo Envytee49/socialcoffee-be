@@ -1,10 +1,14 @@
 package com.example.socialcoffee.utils;
 
+import com.example.socialcoffee.domain.Role;
+import com.example.socialcoffee.enums.RoleEnum;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+
+import java.util.List;
 
 @UtilityClass
 @Slf4j
@@ -18,8 +22,8 @@ public class SecurityUtil {
         return NumberUtils.toLong(extractPrincipal().getClaimAsString("userId"), NumberUtils.LONG_ZERO);
     }
 
-    public String getUserRole() {
-        return extractPrincipal().getClaimAsString("role");
+    public List<String> getUserRole() {
+        return extractPrincipal().getClaimAsStringList("scope");
     }
 
     // SecurityContextHolder.getContext().getAuthentication() could not be null
@@ -32,4 +36,7 @@ public class SecurityUtil {
         return !(SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof String);
     }
 
+    public static boolean isAdmin() {
+        return getUserRole().contains(RoleEnum.ADMIN.getValue());
+    }
 }

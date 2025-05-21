@@ -6,6 +6,10 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.neo4j.feature.NPurpose;
+import com.example.socialcoffee.neo4j.feature.NSpace;
+import com.example.socialcoffee.neo4j.relationship.HasFeature;
+import com.example.socialcoffee.repository.neo4j.NPurposeRepository;
 import com.example.socialcoffee.service.CacheableService;
 import com.example.socialcoffee.service.FeatureService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,18 @@ public class FeatureController {
     private final FeatureService featureService;
 
     private final CacheableService cacheableService;
+    private final NPurposeRepository nPurposeRepository;
+
+    @PostMapping("/migrate")
+    public ResponseEntity<ResponseMetaData> migrateFeature() {
+        for (Purpose purpose : cacheableService.findPurposes()) {
+            NPurpose nPurpose = new NPurpose();
+            nPurpose.setId(purpose.getId());
+            nPurpose.setName(purpose.getValue());
+            nPurposeRepository.save(nPurpose);
+        }
+        return ResponseEntity.ok().build();
+    }
 
     // Ambiance GET
     @GetMapping("/ambiance")

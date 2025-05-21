@@ -6,6 +6,7 @@ import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
 import com.example.socialcoffee.repository.postgres.*;
@@ -123,7 +124,18 @@ public class ReviewService {
                                                          UserReaction ur = new UserReaction();
 
                                                          // Count total reactions
-                                                         ur.setTotalReactions((long) reactionsForReview.size());
+                                                         long upvote = 0;
+                                                         long downvote = 0;
+
+                                                         for (ReviewReaction r : reactionsForReview) {
+                                                             if (ReviewVote.UPVOTE.getValue().equalsIgnoreCase(r.getType())) {
+                                                                 upvote++;
+                                                             } else if (ReviewVote.DOWNVOTE.getValue().equalsIgnoreCase(r.getType())) {
+                                                                 downvote++;
+                                                             }
+                                                         }
+
+                                                         ur.setTotalReactions(upvote - downvote);
 
                                                          // Count each reaction type
                                                          Map<String, Long> reactionsCount = reactionsForReview.stream()
@@ -202,14 +214,21 @@ public class ReviewService {
         }
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
-
+    public Page<Review> getSortedReviews(String reviewOrder, Pageable pageable) {
+        return switch (reviewOrder) {
+            case "trending" -> reviewRepository.findAllOrderByTrending(pageable);
+            case "date_modified" -> reviewRepository.findAllByOrderByUpdatedAtDesc(pageable);
+            case "date_created" -> reviewRepository.findAllByOrderByCreatedAtAsc(pageable);
+            default -> reviewRepository.findAllOrderByScoreDesc(pageable);
+        };
+    }
     public ResponseEntity<ResponseMetaData> getReviews(final User user,
-                                                       PageDtoIn pageDtoIn) {
+                                                       PageDtoIn pageDtoIn,
+                                                       final String sortBy) {
         PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage(),
-                                                 pageDtoIn.getSize(),
-                                                 Sort.by(Sort.Direction.DESC,
-                                                         "createdAt"));
-        final Page<Review> reviews = reviewRepository.findAll(pageRequest);
+                                                 pageDtoIn.getSize());
+
+        final Page<Review> reviews = getSortedReviews(sortBy, pageRequest);
         List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
         final Map<Long, UserReaction> userReactionMap = groupedReactions(reviewIds);
 
@@ -233,7 +252,7 @@ public class ReviewService {
                                                               PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
                                            pageDtoIn.getSize(),
-                                           Sort.unsorted());
+                                           Sort.by(Sort.Direction.DESC, "createdAt"));
         User viewingUser = userRepository.findByDisplayNameAndStatus(displayName, Status.ACTIVE.getValue());
         if (Objects.isNull(viewingUser)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));

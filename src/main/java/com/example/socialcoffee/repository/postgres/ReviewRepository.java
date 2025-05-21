@@ -39,4 +39,40 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query(value = "SELECT r.coffeeShop.id, AVG(r.rating), COUNT(r) FROM Review r WHERE r.coffeeShop.id IN :shopIds GROUP BY r.coffeeShop.id")
     List<Object[]> getAverageRatingByCoffeeShopId(List<Long> shopIds);
+
+    @Query(value = """
+        SELECT r.* FROM reviews r
+        LEFT JOIN review_reactions rr ON r.id = rr.review_id
+        GROUP BY r.id
+        ORDER BY SUM(
+            CASE rr.type
+                WHEN 'upvote' THEN 1
+                WHEN 'downvote' THEN -1
+                ELSE 0
+            END
+        ) DESC
+    """, nativeQuery = true)
+    Page<Review> findAllOrderByScoreDesc(Pageable pageable);
+
+    @Query(value = """
+                SELECT r.* FROM reviews r
+                      LEFT JOIN review_reactions rr ON r.id = rr.review_id
+                      GROUP BY r.id
+                      ORDER BY SUM(
+                          CASE rr.type
+                              WHEN 'upvote' THEN
+                                  CASE
+                                      WHEN rr.created_at >= CURRENT_TIMESTAMP - INTERVAL '3 days' THEN 2
+                                      ELSE 1
+                                  END
+                              WHEN 'downvote' THEN -1
+                              ELSE 0
+                          END
+                      ) DESC;
+            """, nativeQuery = true)
+    Page<Review> findAllOrderByTrending(Pageable pageable);
+
+    Page<Review> findAllByOrderByUpdatedAtDesc(Pageable pageable);
+
+    Page<Review> findAllByOrderByCreatedAtAsc(Pageable pageable);
 }

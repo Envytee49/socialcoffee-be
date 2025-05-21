@@ -62,7 +62,7 @@ public class ExceptionTranslator {
     @ExceptionHandler
     public ResponseEntity<ResponseMetaData> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         log.warn("Error", ex);
-        return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_PARAMETERS)));
+        return ResponseEntity.status(MetaData.NO_RESOURCE_FOUND.getMetaCode()).body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_PARAMETERS, ex.getFieldError().getDefaultMessage())));
     }
 
     @ExceptionHandler

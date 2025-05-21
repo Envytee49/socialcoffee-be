@@ -33,6 +33,7 @@ public class CoffeeShop {
     private String webAddress;
     private String menuWebAddress;
     private String additionInfo;
+    private Boolean isSponsored = Boolean.FALSE;
     private Integer openHour;
     private Integer closeHour;
     @OneToMany(fetch = FetchType.EAGER)

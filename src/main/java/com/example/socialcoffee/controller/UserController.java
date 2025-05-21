@@ -1,6 +1,7 @@
 package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.Notification;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
@@ -10,25 +11,36 @@ import com.example.socialcoffee.dto.request.UserProfile;
 import com.example.socialcoffee.dto.request.UserSearchRequest;
 import com.example.socialcoffee.dto.request.UserUpdateDTO;
 import com.example.socialcoffee.dto.response.*;
+import com.example.socialcoffee.enums.ContributionType;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.Status;
+import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
-import com.example.socialcoffee.service.CloudinaryService;
-import com.example.socialcoffee.service.RepoService;
-import com.example.socialcoffee.service.UserService;
-import com.example.socialcoffee.service.ValidationService;
+import com.example.socialcoffee.service.*;
+import com.example.socialcoffee.utils.DateTimeUtil;
+import com.example.socialcoffee.utils.ObjectUtil;
+import com.example.socialcoffee.utils.SecurityUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -41,6 +53,9 @@ public class UserController extends BaseController {
     private final CloudinaryService cloudinaryService;
     private final UserFollowRepository userFollowRepository;
     private final RepoService repoService;
+    private final ContributionService contributionService;
+    private final NotificationRepository notificationRepository;
+    private final ObjectMapper objectMapper;
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
@@ -227,11 +242,83 @@ public class UserController extends BaseController {
         return userService.migrateUsers();
     }
 
-//    public ResponseEntity<ResponseMetaData> getUserReview() {
-//
-//    }
-//
-//    public ResponseEntity<ResponseMetaData> reactUserReview() {
-//
-//    }
+    @GetMapping("/users/contributions")
+    public ResponseEntity<ResponseMetaData> getContribution(@RequestParam(value = "name", required = false) String name,
+                                                            @RequestParam(value = "status", required = false) String status,
+                                                            @RequestParam(value = "type") String type,
+                                                            PageDtoIn pageDtoIn) {
+        User user = getCurrentUser();
+        return userService.getContributions(user, name, status, type, pageDtoIn);
+    }
+
+    @GetMapping("/users/requests")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ResponseMetaData> getRequests(
+            @RequestParam(required = false) String name,
+            @RequestParam String status,
+            @RequestParam ContributionType type,
+            PageDtoIn pageDtoIn) {
+        PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage() - 1,
+                                                 pageDtoIn.getSize());
+        return contributionService.getContributions(SecurityUtil.getUserId(),
+                                                    name,
+                                                    status,
+                                                    type.getValue(),
+                                                    pageRequest);
+    }
+
+    @PutMapping("/users/notifications/{id}")
+    public ResponseEntity<ResponseMetaData> markAsRead(@PathVariable Long id) {
+        Notification notification = notificationRepository.findById(id).orElseThrow(NotFoundException::new);
+        notification.setStatus(NotificationStatus.READ.getValue());
+        notificationRepository.save(notification);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/notifications/mark-all-as-read")
+    public ResponseEntity<ResponseMetaData> markAsRead() {
+        final User currentUser = getCurrentUser();
+        currentUser.getNotifications().forEach(
+                n -> n.setStatus(NotificationStatus.READ.getValue())
+        );
+        userRepository.save(currentUser);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @GetMapping("/users/notifications/unread")
+    public ResponseEntity<Long> userUnreadCount() {
+        final User currentUser = getCurrentUser();
+        Long count = NumberUtils.LONG_ZERO;
+        final List<Notification> notifications = currentUser.getNotifications();
+        if(CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(count);
+        for (final Notification notification : notifications) {
+            if(notification.getStatus().equalsIgnoreCase(NotificationStatus.UNREAD.getValue())) count++;
+        }
+        return ResponseEntity.ok().body(count);
+    }
+
+    @GetMapping("/users/notifications/notis")
+    public ResponseEntity<ResponseMetaData> userNotifications() {
+        final User currentUser = getCurrentUser();
+        Long count = NumberUtils.LONG_ZERO;
+        final List<Notification> notifications = currentUser.getNotifications();
+        if(CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                                                        Collections.emptyList()));
+        List<NotificationDTO> notificationDTOS = new ArrayList<>();
+        for (final Notification notification : notifications) {
+            Object meta = ObjectUtil.stringToObject(objectMapper, notification.getMeta());
+            NotificationDTO notificationDTO = NotificationDTO.builder()
+                    .id(notification.getId())
+                    .title(notification.getTitle())
+                    .message(notification.getMessage())
+                    .createdAt(DateTimeUtil.covertLocalDateToString(notification.getCreatedAt()))
+                    .type(notification.getType())
+                    .status(notification.getStatus())
+                    .meta(meta)
+                    .build();
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             notificationDTOS));
+    }
 }

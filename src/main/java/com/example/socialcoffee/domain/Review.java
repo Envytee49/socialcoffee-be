@@ -1,12 +1,10 @@
 package com.example.socialcoffee.domain;
 
-import com.example.socialcoffee.enums.Privacy;
 import com.example.socialcoffee.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 

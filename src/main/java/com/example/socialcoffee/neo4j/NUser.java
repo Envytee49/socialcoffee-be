@@ -36,7 +36,11 @@ public class NUser {
     @Relationship(type = "FOLLOW", direction = Relationship.Direction.OUTGOING)
     @JsonIgnore
     private Set<Follow> followUsers;
-
+    public void clearAllPreferences() {
+        if (!CollectionUtils.isEmpty(this.preferCoffeeShops)) {
+            this.preferCoffeeShops.clear();
+        }
+    }
     public void addFollowing(NUser u2) {
         if (CollectionUtils.isEmpty(this.followUsers)) {
             this.followUsers = new HashSet<>();

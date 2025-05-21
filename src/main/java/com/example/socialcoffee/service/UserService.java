@@ -1,23 +1,25 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.domain.CoffeeShopContribution;
 import com.example.socialcoffee.domain.Image;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserFollow;
 import com.example.socialcoffee.domain.feature.*;
-import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
-import com.example.socialcoffee.dto.request.UserProfile;
-import com.example.socialcoffee.dto.request.UserSearchRequest;
-import com.example.socialcoffee.dto.request.UserUpdateDTO;
+import com.example.socialcoffee.dto.common.PageDtoIn;
+import com.example.socialcoffee.dto.common.PageDtoOut;
+import com.example.socialcoffee.dto.request.*;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.neo4j.feature.*;
 import com.example.socialcoffee.neo4j.relationship.Prefer;
+import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.ReviewRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.DateTimeUtil;
+import com.example.socialcoffee.utils.ObjectUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,11 +34,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
+    private final NUserRepository nUserRepository;
     private final UserFollowRepository userFollowRepository;
     private final CoffeeShopRepository coffeeShopRepository;
     private final UserRepository userRepository;
@@ -108,11 +112,13 @@ public class UserService {
                     new TypeReference<>() {
                     }
             );
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), preference));
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                 preference));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
+
     @Transactional
     public ResponseEntity<ResponseMetaData> updateCoffeeShopPreference(User user,
                                                                        UpdatePreferenceRequest req) {
@@ -124,10 +130,11 @@ public class UserService {
                     .filter(a -> req.getAmbiances().contains(a.getId()))
                     .toList();
             for (final Ambiance ambiance : ambiances) {
-                NAmbiance nAmbiance = repoService.findNAmbianceById(ambiance.getId());
+                NAmbiance nAmbiance = repoService.findNAmbianceById(ambiance);
                 prefers.add(Prefer.builder().feature(nAmbiance).build());
             }
-            featureObjectMap.put("ambiances", ambiances);
+            featureObjectMap.put("ambiances",
+                                 ambiances);
         }
 
         if (req.getAmenities() != null && !req.getAmenities().isEmpty()) {
@@ -135,10 +142,11 @@ public class UserService {
                     .filter(a -> req.getAmenities().contains(a.getId()))
                     .toList();
             for (final Amenity amenity : amenities) {
-                NAmenity nAmenity = repoService.findNAmenityById(amenity.getId());
+                NAmenity nAmenity = repoService.findNAmenityById(amenity);
                 prefers.add(Prefer.builder().feature(nAmenity).build());
             }
-            featureObjectMap.put("amenities", amenities);
+            featureObjectMap.put("amenities",
+                                 amenities);
         }
 
         if (req.getPurposes() != null && !req.getPurposes().isEmpty()) {
@@ -146,10 +154,11 @@ public class UserService {
                     .filter(a -> req.getPurposes().contains(a.getId()))
                     .toList();
             for (final Purpose purpose : purposes) {
-                NPurpose nPurpose = repoService.findNPurposeById(purpose.getId());
+                NPurpose nPurpose = repoService.findNPurposeById(purpose);
                 prefers.add(Prefer.builder().feature(nPurpose).build());
             }
-            featureObjectMap.put("purposes", purposes);
+            featureObjectMap.put("purposes",
+                                 purposes);
         }
 
         if (req.getCapacities() != null && !req.getCapacities().isEmpty()) {
@@ -157,10 +166,11 @@ public class UserService {
                     .filter(c -> req.getCapacities().contains(c.getId()))
                     .toList();
             for (final Capacity capacity : capacities) {
-                NCapacity nCapacity = repoService.findNCapacityById(capacity.getId());
+                NCapacity nCapacity = repoService.findNCapacityById(capacity);
                 prefers.add(Prefer.builder().feature(nCapacity).build());
             }
-            featureObjectMap.put("capacities", capacities);
+            featureObjectMap.put("capacities",
+                                 capacities);
         }
 
         if (req.getCategories() != null && !req.getCategories().isEmpty()) {
@@ -168,10 +178,11 @@ public class UserService {
                     .filter(c -> req.getCategories().contains(c.getId()))
                     .toList();
             for (final Category category : categories) {
-                NCategory nCategory = repoService.findNCategoryById(category.getId());
+                NCategory nCategory = repoService.findNCategoryById(category);
                 prefers.add(Prefer.builder().feature(nCategory).build());
             }
-            featureObjectMap.put("categories", categories);
+            featureObjectMap.put("categories",
+                                 categories);
         }
 
         if (req.getDressCodes() != null && !req.getDressCodes().isEmpty()) {
@@ -179,10 +190,11 @@ public class UserService {
                     .filter(d -> req.getDressCodes().contains(d.getId()))
                     .toList();
             for (final DressCode dressCode : dressCodes) {
-                NDressCode nDressCode = repoService.findNDressCodeById(dressCode.getId());
+                NDressCode nDressCode = repoService.findNDressCodeById(dressCode);
                 prefers.add(Prefer.builder().feature(nDressCode).build());
             }
-            featureObjectMap.put("dressCodes", dressCodes);
+            featureObjectMap.put("dressCodes",
+                                 dressCodes);
         }
 
         if (req.getEntertainments() != null && !req.getEntertainments().isEmpty()) {
@@ -190,10 +202,11 @@ public class UserService {
                     .filter(e -> req.getEntertainments().contains(e.getId()))
                     .toList();
             for (final Entertainment entertainment : entertainments) {
-                NEntertainment nEntertainment = repoService.findNEntertainmentById(entertainment.getId());
+                NEntertainment nEntertainment = repoService.findNEntertainmentById(entertainment);
                 prefers.add(Prefer.builder().feature(nEntertainment).build());
             }
-            featureObjectMap.put("entertainments", entertainments);
+            featureObjectMap.put("entertainments",
+                                 entertainments);
         }
 
         if (req.getParkings() != null && !req.getParkings().isEmpty()) {
@@ -201,10 +214,11 @@ public class UserService {
                     .filter(p -> req.getParkings().contains(p.getId()))
                     .toList();
             for (final Parking parking : parkings) {
-                NParking nParking = repoService.findNParkingById(parking.getId());
+                NParking nParking = repoService.findNParkingById(parking);
                 prefers.add(Prefer.builder().feature(nParking).build());
             }
-            featureObjectMap.put("parkings", parkings);
+            featureObjectMap.put("parkings",
+                                 parkings);
         }
 
         if (req.getPrices() != null && !req.getPrices().isEmpty()) {
@@ -212,10 +226,11 @@ public class UserService {
                     .filter(p -> req.getPrices().contains(p.getId()))
                     .toList();
             for (final Price price : prices) {
-                NPrice nPrice = repoService.findNPriceById(price.getId());
+                NPrice nPrice = repoService.findNPriceById(price);
                 prefers.add(Prefer.builder().feature(nPrice).build());
             }
-            featureObjectMap.put("prices", prices);
+            featureObjectMap.put("prices",
+                                 prices);
         }
 
         if (req.getServiceTypes() != null && !req.getServiceTypes().isEmpty()) {
@@ -223,10 +238,11 @@ public class UserService {
                     .filter(s -> req.getServiceTypes().contains(s.getId()))
                     .toList();
             for (final ServiceType serviceType : serviceTypes) {
-                NServiceType nServiceType = repoService.findNServiceTypeById(serviceType.getId());
+                NServiceType nServiceType = repoService.findNServiceTypeById(serviceType);
                 prefers.add(Prefer.builder().feature(nServiceType).build());
             }
-            featureObjectMap.put("serviceTypes", serviceTypes);
+            featureObjectMap.put("serviceTypes",
+                                 serviceTypes);
         }
 
         if (req.getSpaces() != null && !req.getSpaces().isEmpty()) {
@@ -234,10 +250,11 @@ public class UserService {
                     .filter(s -> req.getSpaces().contains(s.getId()))
                     .toList();
             for (final Space space : spaces) {
-                NSpace nSpace = repoService.findNSpaceById(space.getId());
+                NSpace nSpace = repoService.findNSpaceById(space);
                 prefers.add(Prefer.builder().feature(nSpace).build());
             }
-            featureObjectMap.put("spaces", spaces);
+            featureObjectMap.put("spaces",
+                                 spaces);
         }
 
         if (req.getSpecialties() != null && !req.getSpecialties().isEmpty()) {
@@ -245,10 +262,11 @@ public class UserService {
                     .filter(s -> req.getSpecialties().contains(s.getId()))
                     .toList();
             for (final Specialty specialty : specialties) {
-                NSpecialty nSpecialty = repoService.findNSpecialtyById(specialty.getId());
+                NSpecialty nSpecialty = repoService.findNSpecialtyById(specialty);
                 prefers.add(Prefer.builder().feature(nSpecialty).build());
             }
-            featureObjectMap.put("specialties", specialties);
+            featureObjectMap.put("specialties",
+                                 specialties);
         }
 
         if (req.getVisitTimes() != null && !req.getVisitTimes().isEmpty()) {
@@ -256,16 +274,17 @@ public class UserService {
                     .filter(v -> req.getVisitTimes().contains(v.getId()))
                     .toList();
             for (final VisitTime visitTime : visitTimes) {
-                NVisitTime nVisitTime = repoService.findNVisitTimeById(visitTime.getId());
+                NVisitTime nVisitTime = repoService.findNVisitTimeById(visitTime);
                 prefers.add(Prefer.builder().feature(nVisitTime).build());
             }
-            featureObjectMap.put("visitTimes", visitTimes);
+            featureObjectMap.put("visitTimes",
+                                 visitTimes);
         }
-
+        nUserRepository.clearAllPreferences(user.getId());
         nUser.setPreferCoffeeShops(prefers);
         repoService.saveNUser(nUser);
         featureObjectMap.forEach((key, value) -> {
-            if(value == null || value.isEmpty())
+            if (value == null || value.isEmpty())
                 featureObjectMap.remove(key);
         });
         String preferenceString = null;
@@ -276,6 +295,7 @@ public class UserService {
         }
         user.setCoffeePreference(preferenceString);
         userRepository.save(user);
+        cacheableService.clearRecommendation(user.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
@@ -364,6 +384,7 @@ public class UserService {
         // Update only the fields that are provided in the DTO
         if (userUpdateDTO.getDisplayName() != null) {
             user.setDisplayName(userUpdateDTO.getDisplayName());
+
             NUser u1 = repoService.findNUserById(user.getId());
             u1.setDisplayName(userUpdateDTO.getDisplayName());
             repoService.saveNUser(u1);
@@ -475,4 +496,42 @@ public class UserService {
         return ResponseEntity.ok().build();
     }
 
+    public ResponseEntity<ResponseMetaData> getContributions(User user,
+                                                             String name,
+                                                             String status,
+                                                             final String type,
+                                                             PageDtoIn pageDtoIn) {
+        List<CoffeeShopContribution> contributions = user.getContributions().stream().filter(c -> c.getType().equalsIgnoreCase(type))
+                .collect(Collectors.toList());
+
+        if (StringUtils.isNotBlank(name))
+            contributions = contributions.stream().filter(c -> c.getName().contentEquals(name)).collect(Collectors.toList());
+        if (StringUtils.isNotBlank(status))
+            contributions = contributions.stream().filter(c -> c.getStatus().equalsIgnoreCase(status)).collect(Collectors.toList());
+        List<ContributionVM> contributionVMS = contributions.stream().map(c -> {
+            ContributionVM contributionVM = new ContributionVM();
+            contributionVM.setCreatedAt(c.getCreatedAt());
+            contributionVM.setUpdatedAt(c.getUpdatedAt());
+            contributionVM.setStatus(c.getStatus());
+            contributionVM.setComment(c.getReviewComments());
+            try {
+                contributionVM.setData(objectMapper.readValue(c.getContribution(),
+                                                              ContributionRequest.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            return contributionVM;
+        }).toList();
+        final List<ContributionVM> res = ObjectUtil.getPageResult(contributionVMS,
+                                                                  pageDtoIn.getPage() - 1,
+                                                                  pageDtoIn.getSize());
+        PageDtoOut<ContributionVM> pageDtoOut = PageDtoOut.from(
+                pageDtoIn.getPage(),
+                pageDtoIn.getSize(),
+                contributions.size(),
+                res
+        );
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             pageDtoOut));
+    }
 }

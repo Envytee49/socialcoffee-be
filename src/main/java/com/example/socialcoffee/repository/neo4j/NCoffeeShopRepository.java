@@ -62,4 +62,7 @@ public interface NCoffeeShopRepository extends Neo4jRepository<NCoffeeShop, Long
         LIMIT 10
         """)
     List<NCoffeeShop> findRecommendedForYou(@Param("userId") Long userId);
+
+    @Query("MATCH (u1:CoffeeShop {id: $coffeeShopId})-[p:HAS_FEATURE]->(f) DELETE p")
+    void clearAllFeatures(@Param("coffeeShopId") Long coffeeShopId);
 }

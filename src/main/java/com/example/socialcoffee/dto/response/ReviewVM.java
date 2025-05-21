@@ -25,9 +25,8 @@ public class ReviewVM {
     private CoffeeShopDTO coffeeShop;
     private String timeAgo;
     private Long totalReactions = 0L;
-    private Long totalComments = 0L;
     private String reaction;
-    private Map<Long, String> userReactions;
+//    private Map<Long, String> userReactions;
 
     public ReviewVM(Long userId,
                     Review review,
@@ -40,7 +39,7 @@ public class ReviewVM {
         this.timeAgo = DateTimeUtil.getTimeAgo(review.getCreatedAt());
         if (Objects.nonNull(userReaction)) {
             this.totalReactions = userReaction.getTotalReactions();
-            this.userReactions = userReaction.getUserReactions();
+//            this.userReactions = userReaction.getUserReactions();
             this.reactions = userReaction.getReactions();
             this.reaction = userReaction.getUserReactions().get(userId);
         }

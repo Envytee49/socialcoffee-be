@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,7 @@ public class AuthService {
     private final GoogleService googleService;
     private final FacebookService facebookService;
     private final RepoService repoService;
+    private final NotificationService notificationService;
 
     public ResponseEntity<ResponseMetaData> authWithGoogle(String code,
                                                            String redirectUri,
@@ -89,6 +92,7 @@ public class AuthService {
                 UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
                                                                                authProvider.getId());
                 userAuthConnectionRepository.save(userAuthConnection);
+                CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenSuccessRegister(saved));
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
             }
         } catch (IOException e) {
@@ -173,6 +177,7 @@ public class AuthService {
             Role role = cacheableService.findRole(RoleEnum.USER.getValue());
             User user = new User();
             user.setUsername(username);
+            user.setDisplayName(username);
             user.setPassword(passwordEncoder.encode(password));
             user.setStatus(Status.ACTIVE.getValue());
             user.setRoles(List.of(role));
@@ -184,6 +189,7 @@ public class AuthService {
                     .profilePhoto(user.getProfilePhoto())
                     .build();
             repoService.saveNUser(nUser);
+            CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenSuccessRegister(saved));
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
         }
     }

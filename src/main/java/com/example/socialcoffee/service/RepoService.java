@@ -206,75 +206,120 @@ public class RepoService {
     }
 
     @Transactional("neo4jTransactionManager")
-    public NAmbiance findNAmbianceById(Long id) {
-        return nAmbianceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ambiance " + id));
+    public NAmbiance findNAmbianceById(Ambiance ambiance) {
+        NAmbiance nAmbiance = new NAmbiance();
+        nAmbiance.setId(ambiance.getId());
+        nAmbiance.setName(ambiance.getValue());
+        return nAmbianceRepository.findById(ambiance.getId())
+                .orElse(nAmbianceRepository.save(nAmbiance));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NCategory findNCategoryById(Long id) {
-        return nCategoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Ambiance " + id));
+    public NCategory findNCategoryById(Category category) {
+        NCategory nCategory = new NCategory();
+        nCategory.setId(category.getId());
+        nCategory.setName(category.getValue());
+        return nCategoryRepository.findById(category.getId())
+                .orElse(nCategoryRepository.save(nCategory));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NAmenity findNAmenityById(Long id) {
-        return nAmenityRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Amenity" + id));
+    public NAmenity findNAmenityById(Amenity amenity) {
+        NAmenity nAmenity = new NAmenity();
+        nAmenity.setId(amenity.getId());
+        nAmenity.setName(amenity.getValue());
+        return nAmenityRepository.findById(amenity.getId())
+                .orElse(nAmenityRepository.save(nAmenity));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NCapacity findNCapacityById(Long id) {
-        return nCapacityRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Capacity" + id));
+    public NCapacity findNCapacityById(Capacity capacity) {
+        NCapacity nCapacity = new NCapacity();
+        nCapacity.setId(capacity.getId());
+        nCapacity.setName(capacity.getValue());
+        return nCapacityRepository.findById(capacity.getId())
+                .orElse(nCapacityRepository.save(nCapacity));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NDressCode findNDressCodeById(Long id) {
-        return nDressCodeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("DressCode" + id));
+    public NDressCode findNDressCodeById(DressCode dressCode) {
+        NDressCode nDressCode = new NDressCode();
+        nDressCode.setId(dressCode.getId());
+        nDressCode.setName(dressCode.getValue());
+        return nDressCodeRepository.findById(dressCode.getId())
+                .orElse(nDressCodeRepository.save(nDressCode));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NEntertainment findNEntertainmentById(Long id) {
-        return nEntertainmentRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Entertainment" + id));
+    public NEntertainment findNEntertainmentById(Entertainment entertainment) {
+        NEntertainment nEntertainment = new NEntertainment();
+        nEntertainment.setId(entertainment.getId());
+        nEntertainment.setName(entertainment.getValue());
+        return nEntertainmentRepository.findById(entertainment.getId())
+                .orElse(nEntertainmentRepository.save(nEntertainment));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NParking findNParkingById(Long id) {
-        return nParkingRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Parking" + id));
+    public NParking findNParkingById(Parking parking) {
+        NParking nParking = new NParking();
+        nParking.setId(parking.getId());
+        nParking.setName(parking.getValue());
+        return nParkingRepository.findById(parking.getId())
+                .orElse(nParkingRepository.save(nParking));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NPrice findNPriceById(Long id) {
-        return nPriceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Price" + id));
+    public NPrice findNPriceById(Price price) {
+        NPrice nPrice = new NPrice();
+        nPrice.setId(price.getId());
+        nPrice.setName(price.getValue());
+        return nPriceRepository.findById(price.getId())
+                .orElse(nPriceRepository.save(nPrice));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NServiceType findNServiceTypeById(Long id) {
-        return nServiceTypeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("ServiceType" + id));
+    public NServiceType findNServiceTypeById(ServiceType serviceType) {
+        NServiceType nServiceType = new NServiceType();
+        nServiceType.setId(serviceType.getId());
+        nServiceType.setName(serviceType.getValue());
+        return nServiceTypeRepository.findById(serviceType.getId())
+                .orElse(nServiceTypeRepository.save(nServiceType));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NSpace findNSpaceById(Long id) {
-        return nSpaceRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Space" + id));
+    public NSpace findNSpaceById(Space space) {
+        NSpace nSpace = new NSpace();
+        nSpace.setId(space.getId());
+        nSpace.setName(space.getValue());
+        return nSpaceRepository.findById(space.getId())
+                .orElse(nSpaceRepository.save(nSpace));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NSpecialty findNSpecialtyById(Long id) {
-        return nSpecialtyRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Specialty" + id));
+    public NSpecialty findNSpecialtyById(Specialty specialty) {
+        NSpecialty nSpecialty = new NSpecialty();
+        nSpecialty.setId(specialty.getId());
+        nSpecialty.setName(specialty.getValue());
+        return nSpecialtyRepository.findById(specialty.getId())
+                .orElse(nSpecialtyRepository.save(nSpecialty));
     }
 
     @Transactional("neo4jTransactionManager")
-    public NVisitTime findNVisitTimeById(Long id) {
-        return nVisitTimeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("VisitTime" + id));
+    public NVisitTime findNVisitTimeById(VisitTime visitTime) {
+        NVisitTime nVisitTime = new NVisitTime();
+        nVisitTime.setId(visitTime.getId());
+        nVisitTime.setName(visitTime.getValue());
+        return nVisitTimeRepository.findById(visitTime.getId())
+                .orElse(nVisitTimeRepository.save(nVisitTime));
+    }
+
+    @Transactional("neo4jTransactionManager")
+    public NPurpose findNPurposeById(Purpose purpose) {
+        NPurpose nPurpose = new NPurpose();
+        nPurpose.setId(purpose.getId());
+        nPurpose.setName(purpose.getValue());
+        return nPurposeRepository.findById(purpose.getId())
+                .orElse(nPurposeRepository.save(nPurpose));
     }
 
     @Transactional("neo4jTransactionManager")
@@ -282,10 +327,6 @@ public class RepoService {
         nCoffeeShopRepository.save(nCoffeeShop);
     }
 
-    public NPurpose findNPurposeById(Long id) {
-        return nPurposeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Purpose" + id));
-    }
 
     public NCoffeeShop findNCoffeeShopById(Long shopId) {
         return nCoffeeShopRepository.findById(shopId)

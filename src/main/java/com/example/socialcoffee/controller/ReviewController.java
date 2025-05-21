@@ -101,11 +101,11 @@ public class ReviewController extends BaseController {
     }
 
     @GetMapping("/reviews")
-    public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn) {
+    public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn, @RequestParam(defaultValue = "highest_score") String sortBy) {
         User user = getCurrentUser();
         if (Objects.isNull(user)) return ResponseEntity.status(401).build();
         return reviewService.getReviews(user,
-                                        pageDtoIn);
+                                        pageDtoIn, sortBy);
     }
 
     @GetMapping("/reviews/reaction")

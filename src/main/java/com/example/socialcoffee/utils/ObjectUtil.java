@@ -1,6 +1,9 @@
 package com.example.socialcoffee.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -37,5 +40,22 @@ public class ObjectUtil {
                 })
                 .filter(name -> !name.isEmpty())
                 .toList();
+    }
+
+    public static String objectToString(ObjectMapper objectMapper, Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Object stringToObject(ObjectMapper objectMapper, String string) {
+        try {
+            if(StringUtils.isBlank(string)) return null;
+            return objectMapper.readValue(string, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

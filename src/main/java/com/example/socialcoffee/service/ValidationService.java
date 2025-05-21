@@ -6,8 +6,7 @@ import com.example.socialcoffee.dto.request.UpdateNewPassword;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.enums.AuthAction;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.enums.Privacy;
-import com.example.socialcoffee.enums.ReviewReaction;
+import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.utils.PasswordUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,7 +98,7 @@ public class ValidationService {
 
     public List<MetaDTO> validateReviewReact(String reaction) {
         List<MetaDTO> metaList = new ArrayList<>();
-        if(!ReviewReaction.reactionIsExist(reaction)) {
+        if(!ReviewVote.reactionIsExist(reaction)) {
             metaList.add(new MetaDTO(MetaData.INVALID_REACTION));
         }
         return metaList;

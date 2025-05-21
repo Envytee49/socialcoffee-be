@@ -29,7 +29,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/**").hasRole(RoleEnum.USER.getValue())
+                        .requestMatchers("/users/**").hasAnyRole(RoleEnum.USER.getValue(), RoleEnum.ADMIN.getValue())
+                        .requestMatchers("/admin/**").hasRole(RoleEnum.ADMIN.getValue())
                         .requestMatchers("/recommendation/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
                         .anyRequest().authenticated()

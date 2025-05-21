@@ -29,5 +29,6 @@ public class CloudinaryService {
             throw new RuntimeException("Image upload fail");
         }
     }
+
 }
 

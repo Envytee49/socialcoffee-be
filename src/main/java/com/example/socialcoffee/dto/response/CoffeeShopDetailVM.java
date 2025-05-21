@@ -29,8 +29,11 @@ public class CoffeeShopDetailVM {
     private String additionInfo;
     private String openHour;
     private String closeHour;
+    private String open;
+    private String close;
     private String isOpen;
     private String status;
+    private Boolean isSponsored;
     private List<Image> galleryPhotos;
     private Address address;
     private String description;
@@ -60,11 +63,14 @@ public class CoffeeShopDetailVM {
         this.additionInfo = coffeeShop.getAdditionInfo();
         this.openHour = DateTimeUtil.convertMinuteToHour(coffeeShop.getOpenHour());
         this.closeHour = DateTimeUtil.convertMinuteToHour(coffeeShop.getCloseHour());
+        this.open = DateTimeUtil.convertIntegerToString(coffeeShop.getOpenHour());
+        this.close = DateTimeUtil.convertIntegerToString(coffeeShop.getCloseHour());
         this.galleryPhotos = coffeeShop.getGalleryPhotos();
         this.address = coffeeShop.getAddress();
         this.status = DateTimeUtil.checkCurrentOpenStatus(coffeeShop.getOpenHour(),
                                                           coffeeShop.getCloseHour());
         this.averageRating = NumberUtil.roundToTwoDecimals(coffeeShop.getAverageRating());
+        this.isSponsored = coffeeShop.getIsSponsored();
         this.reviewCounts = coffeeShop.getReviewCount();
         this.description = coffeeShop.getDescription();
         mapFeaturesFromEntity(coffeeShop);

@@ -3,15 +3,19 @@ package com.example.socialcoffee.service;
 import com.example.socialcoffee.domain.AuthProvider;
 import com.example.socialcoffee.domain.CoffeeShop;
 import com.example.socialcoffee.domain.Role;
+import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
+import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.neo4j.NCoffeeShop;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.AuthProviderRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.RoleRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.repository.postgres.feature.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +46,7 @@ public class CacheableService {
     private final RoleRepository roleRepository;
     private final NCoffeeShopRepository nCoffeeShopRepository;
     private final CoffeeShopRepository coffeeShopRepository;
+    private final UserRepository userRepository;
 
     @Cacheable(value = "ambiances")
     public List<Ambiance> findAmbiances() {
@@ -118,6 +123,10 @@ public class CacheableService {
         return roleRepository.findByName(role);
     }
 
+    @CacheEvict(value = "List<CoffeeShopVM>", key = "#userId")
+    public void clearRecommendation(Long userId) {
+    }
+
     @Cacheable(value = "List<CoffeeShopVM>", key = "#userId")
     public List<CoffeeShopVM> getRecommendationForYou(Long userId) {
         final List<Long> ids = nCoffeeShopRepository.findRecommendedForYou(userId).stream().map(NCoffeeShop::getId).toList();
@@ -184,5 +193,10 @@ public class CacheableService {
                                                      null,
                                                      null))
                 .toList();
+    }
+
+    @Cacheable(value = "List<User>", key = "'ACTIVE_USER'")
+    public List<User> getActiveUsers() {
+        return userRepository.findByStatus(Status.ACTIVE.getValue());
     }
 }

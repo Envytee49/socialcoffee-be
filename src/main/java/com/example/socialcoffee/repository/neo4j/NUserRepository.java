@@ -30,4 +30,7 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
             "RETURN u2 " +
             "ORDER BY (0.3 * jaccardLike + 0.7 * jaccardPrefer) DESC")
     List<NUser> findSimilarUsersByLikesAndPreferences(@Param("userId") Long userId);
+
+    @Query("MATCH (u1:User {id: $userId})-[p:PREFER]->(f) DELETE p")
+    void clearAllPreferences(@Param("userId") Long userId);
 }

@@ -31,6 +31,8 @@ public class CoffeeShopVM {
     @JsonProperty("lat")
     private double latitude;
     private Double distance;
+    @JsonProperty("is_sponsored")
+    private Boolean isSponsored;
     public static CoffeeShopVM toVM(CoffeeShop coffeeShop, Double userLat, Double userLng) {
         Boolean isFalseLocation= coffeeShop.getAddress().getLatitude() > coffeeShop.getAddress().getLongitude();
         Double longitude = isFalseLocation ? coffeeShop.getAddress().getLatitude() : coffeeShop.getAddress().getLongitude();
@@ -46,6 +48,7 @@ public class CoffeeShopVM {
                 .openHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getOpenHour()))
                 .closeHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getCloseHour()))
                 .longitude(longitude)
+                .isSponsored(coffeeShop.getIsSponsored())
                 .latitude(latitude)
                 .distance(GeometryUtil.calculateDistance(userLat, userLng, latitude, longitude))
                 .averageRating(NumberUtil.roundToTwoDecimals(coffeeShop.getAverageRating()))
