@@ -21,7 +21,9 @@ import static com.example.socialcoffee.utils.ObjectUtil.objectToString;
 @Slf4j
 public class NotificationService {
     private final UserRepository userRepository;
+
     private final ObjectMapper objectMapper;
+
     private final CacheableService cacheableService;
 
     public void pushNotiToUsersWhenFinishCreatingShop(String id,
@@ -30,21 +32,20 @@ public class NotificationService {
         List<User> activeUsers = cacheableService.getActiveUsers();
         Map<String, String> meta = new HashMap<>();
         meta.put("id",
-                 id);
+                id);
         meta.put("name",
-                 name);
+                name);
         meta.put("path",
-                 path);
+                path);
         for (final User activeUser : activeUsers) {
             activeUser.addNotification("New coffee shop",
-                                       NotificationType.COFFEE_SHOP.getValue(),
-                                       NotificationStatus.UNREAD.getValue(),
-                                       "A new cofee shop is inserted! Check it out",
-                                       objectToString(objectMapper, meta));
+                    NotificationType.COFFEE_SHOP.getValue(),
+                    NotificationStatus.UNREAD.getValue(),
+                    "A new cofee shop is inserted! Check it out",
+                    objectToString(objectMapper, meta));
         }
         userRepository.saveAll(activeUsers);
     }
-
 
 
     public void pushNotiToUsersWhenFinishUpdatingShop(String id,
@@ -53,19 +54,19 @@ public class NotificationService {
         List<User> activeUsers = cacheableService.getActiveUsers();
         Map<String, String> meta = new HashMap<>();
         meta.put("id",
-                 id);
+                id);
         meta.put("name",
-                 name);
+                name);
         meta.put("path",
-                 path);
+                path);
         String message = String.format("%s was edited! Check the change",
-                                       name);
+                name);
         for (final User activeUser : activeUsers) {
             activeUser.addNotification("Coffee shop edit",
-                                       NotificationType.COFFEE_SHOP.getValue(),
-                                       NotificationStatus.UNREAD.getValue(),
-                                       message,
-                                       objectToString(objectMapper, meta));
+                    NotificationType.COFFEE_SHOP.getValue(),
+                    NotificationStatus.UNREAD.getValue(),
+                    message,
+                    objectToString(objectMapper, meta));
         }
         userRepository.saveAll(activeUsers);
     }
@@ -73,42 +74,42 @@ public class NotificationService {
     public void pushNotiToUsersWhenSuccessRegister(User saved) {
         Map<String, String> meta = new HashMap<>();
         meta.put("id",
-                 saved.getId().toString());
+                saved.getId().toString());
         meta.put("name",
-                 saved.getDisplayName());
+                saved.getDisplayName());
         String message = String.format("Hi %s! Welcome to the system!",
-                                       saved.getDisplayName());
+                saved.getDisplayName());
         saved.addNotification("New comer",
-                              NotificationType.USER.getValue(),
-                              NotificationStatus.UNREAD.getValue(),
-                              message,
-                              objectToString(objectMapper, meta));
+                NotificationType.USER.getValue(),
+                NotificationStatus.UNREAD.getValue(),
+                message,
+                objectToString(objectMapper, meta));
         userRepository.save(saved);
     }
 
     public void pushNotiToUsersWhenApproveContribution(User user,
                                                        final String name) {
         String message = String.format("Hi %s! Your contribution for coffee shop %s was approved! Thank you for your contribution",
-                                       user.getDisplayName(),
-                                       name);
+                user.getDisplayName(),
+                name);
         user.addNotification("Contribution approved",
-                             NotificationType.USER.getValue(),
-                             NotificationStatus.UNREAD.getValue(),
-                             message,
-                             null);
+                NotificationType.USER.getValue(),
+                NotificationStatus.UNREAD.getValue(),
+                message,
+                null);
         userRepository.save(user);
     }
 
     public void pushNotiToUsersWhenRejectContribution(User user,
                                                       final String name) {
         String message = String.format("Hi %s! Your contribution for coffee shop %s was rejected! Please check admin comment",
-                                       user.getDisplayName(),
-                                       name);
+                user.getDisplayName(),
+                name);
         user.addNotification("Contribution rejected",
-                             NotificationType.USER.getValue(),
-                             NotificationStatus.UNREAD.getValue(),
-                             message,
-                             null);
+                NotificationType.USER.getValue(),
+                NotificationStatus.UNREAD.getValue(),
+                message,
+                null);
         userRepository.save(user);
     }
 }

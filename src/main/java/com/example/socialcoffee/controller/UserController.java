@@ -276,7 +276,7 @@ public class UserController extends BaseController {
     }
 
     @PutMapping("/users/notifications/mark-all-as-read")
-    public ResponseEntity<ResponseMetaData> markAsRead() {
+    public ResponseEntity<ResponseMetaData> markAllAsRead() {
         final User currentUser = getCurrentUser();
         currentUser.getNotifications().forEach(
                 n -> n.setStatus(NotificationStatus.READ.getValue())
@@ -299,14 +299,14 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/users/notifications/notis")
-    public ResponseEntity<ResponseMetaData> userNotifications() {
+    public ResponseEntity<ResponseMetaData> userNotifications(@Valid PageDtoIn pageDtoIn) {
         final User currentUser = getCurrentUser();
-        Long count = NumberUtils.LONG_ZERO;
         final List<Notification> notifications = currentUser.getNotifications();
         if(CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                                                                         Collections.emptyList()));
+        List<Notification> pageResult = ObjectUtil.getPageResult(notifications, pageDtoIn.getPage(), pageDtoIn.getSize());
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
-        for (final Notification notification : notifications) {
+        for (final Notification notification : pageResult) {
             Object meta = ObjectUtil.stringToObject(objectMapper, notification.getMeta());
             NotificationDTO notificationDTO = NotificationDTO.builder()
                     .id(notification.getId())
@@ -317,6 +317,7 @@ public class UserController extends BaseController {
                     .status(notification.getStatus())
                     .meta(meta)
                     .build();
+            notificationDTOS.add(notificationDTO);
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              notificationDTOS));
