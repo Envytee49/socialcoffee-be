@@ -12,6 +12,7 @@ import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.repository.postgres.CoffeeShopContributionRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
+import com.example.socialcoffee.utils.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -71,8 +72,9 @@ public class ContributionService {
         List<ContributionVM> contributionVMS = contributions.getContent().stream().map(c -> {
             ContributionVM contributionVM = new ContributionVM();
             contributionVM.setId(c.getId());
-            contributionVM.setCreatedAt(c.getCreatedAt());
-            contributionVM.setUpdatedAt(c.getUpdatedAt());
+            contributionVM.setCreatedAt(DateTimeUtil.covertLocalDateToString(c.getCreatedAt()));
+            contributionVM.setUpdatedAt(DateTimeUtil.covertLocalDateToString(c.getUpdatedAt()));
+            contributionVM.setSubmittedBy(c.getSubmittedBy().getDisplayName());
             contributionVM.setStatus(c.getStatus());
             contributionVM.setComment(c.getReviewComments());
             try {

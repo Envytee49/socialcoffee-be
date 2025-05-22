@@ -1,1 +1,1 @@
-select * from users order by id desc;
+select * from user_settings;

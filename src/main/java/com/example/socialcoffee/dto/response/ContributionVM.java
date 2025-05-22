@@ -15,7 +15,8 @@ public class ContributionVM {
     private ContributionRequest data;
     private String status;
     private String comment;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String submittedBy;
+    private String createdAt;
+    private String updatedAt;
 
 }

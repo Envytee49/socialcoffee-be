@@ -19,12 +19,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,13 +67,16 @@ public class AuthService {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
                 }
                 User user = optionalUser.get();
+                boolean isLoginFirstTime = Objects.isNull(user.getLastLogin());
+                user.setLastLogin(LocalDateTime.now());
                 user = userRepository.save(user);
                 String jwtToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                                      new LoginResponse(user.getRoles().getFirst().getName(),
                                                                                        jwtToken,
-                                                                                       refreshToken)));
+                                                                                       refreshToken,
+                                                                                       isLoginFirstTime)));
             } else {
                 if (optionalUser.isPresent()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
@@ -139,9 +142,11 @@ public class AuthService {
                                                       String authAction) {
         String username = request.getUsername();
         String password = request.getPassword();
+        String displayName = request.getDisplayName();
+        String fullName = request.getFullName();
         final List<MetaDTO> metaDTOS = validationService.validateBasicAuthRequest(request,
                                                                                   authAction);
-        if(!CollectionUtils.isEmpty(metaDTOS)) {
+        if (!CollectionUtils.isEmpty(metaDTOS)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
         }
 
@@ -160,14 +165,15 @@ public class AuthService {
                                          user.getPassword())) {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_CREDENTIALS)));
             }
-
+            boolean isLoginFirstTime = Objects.isNull(user.getLastLogin());
             String jwtToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                                  new LoginResponse(user.getRoles().getFirst().getName(),
                                                                                    jwtToken,
-                                                                                   refreshToken)));
+                                                                                   refreshToken,
+                                                                                   isLoginFirstTime)));
         } else {
             // Register logic
             if (optionalUser.isPresent()) {
@@ -177,7 +183,8 @@ public class AuthService {
             Role role = cacheableService.findRole(RoleEnum.USER.getValue());
             User user = new User();
             user.setUsername(username);
-            user.setDisplayName(username);
+            user.setDisplayName(displayName);
+            user.setName(fullName);
             user.setPassword(passwordEncoder.encode(password));
             user.setStatus(Status.ACTIVE.getValue());
             user.setRoles(List.of(role));

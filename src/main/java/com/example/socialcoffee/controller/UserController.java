@@ -1,9 +1,6 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.Image;
-import com.example.socialcoffee.domain.Notification;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.UserFollow;
+import com.example.socialcoffee.domain.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
@@ -16,7 +13,9 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
+import com.example.socialcoffee.model.UserSettingModel;
 import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.service.*;
@@ -38,10 +37,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -56,6 +52,7 @@ public class UserController extends BaseController {
     private final ContributionService contributionService;
     private final NotificationRepository notificationRepository;
     private final ObjectMapper objectMapper;
+    private final UserSettingRepository userSettingRepository;
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
@@ -248,7 +245,11 @@ public class UserController extends BaseController {
                                                             @RequestParam(value = "type") String type,
                                                             PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
-        return userService.getContributions(user, name, status, type, pageDtoIn);
+        return userService.getContributions(user,
+                                            name,
+                                            status,
+                                            type,
+                                            pageDtoIn);
     }
 
     @GetMapping("/users/requests")
@@ -291,9 +292,9 @@ public class UserController extends BaseController {
         final User currentUser = getCurrentUser();
         Long count = NumberUtils.LONG_ZERO;
         final List<Notification> notifications = currentUser.getNotifications();
-        if(CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(count);
+        if (CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(count);
         for (final Notification notification : notifications) {
-            if(notification.getStatus().equalsIgnoreCase(NotificationStatus.UNREAD.getValue())) count++;
+            if (notification.getStatus().equalsIgnoreCase(NotificationStatus.UNREAD.getValue())) count++;
         }
         return ResponseEntity.ok().body(count);
     }
@@ -302,12 +303,17 @@ public class UserController extends BaseController {
     public ResponseEntity<ResponseMetaData> userNotifications(@Valid PageDtoIn pageDtoIn) {
         final User currentUser = getCurrentUser();
         final List<Notification> notifications = currentUser.getNotifications();
-        if(CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                                                        Collections.emptyList()));
-        List<Notification> pageResult = ObjectUtil.getPageResult(notifications, pageDtoIn.getPage(), pageDtoIn.getSize());
+        if (CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                                                                         Collections.emptyList()));
+        notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
+        List<Notification> pageResult = ObjectUtil.getPageResult(notifications,
+                                                                 pageDtoIn.getPage() - 1,
+                                                                 pageDtoIn.getSize());
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
         for (final Notification notification : pageResult) {
-            Object meta = ObjectUtil.stringToObject(objectMapper, notification.getMeta());
+            Object meta = ObjectUtil.stringToObject(objectMapper,
+                                                    notification.getMeta(),
+                                                    Object.class);
             NotificationDTO notificationDTO = NotificationDTO.builder()
                     .id(notification.getId())
                     .title(notification.getTitle())
@@ -321,5 +327,39 @@ public class UserController extends BaseController {
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                                                              notificationDTOS));
+    }
+
+    @GetMapping("/users/setting")
+    public ResponseEntity<ResponseMetaData> getUserSetting() {
+        User user = getCurrentUser();
+        Optional<UserSetting> optionalUserSetting = userSettingRepository.findById(user.getId());
+        UserSettingModel userSettingModel;
+        if (optionalUserSetting.isEmpty()) {
+            UserSetting userSetting = new UserSetting();
+            userSetting.setId(user.getId());
+            userSettingModel = new UserSettingModel();
+            String setting = ObjectUtil.objectToString(objectMapper,
+                                                       userSettingModel);
+            userSetting.setSetting(setting);
+            userSettingRepository.save(userSetting);
+        } else {
+            userSettingModel = ObjectUtil.stringToObject(objectMapper,
+                                                         optionalUserSetting.get().getSetting(), UserSettingModel.class);
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             userSettingModel));
+    }
+
+    @PutMapping("/users/setting")
+    public ResponseEntity<ResponseMetaData> updateUserSetting(@RequestBody UserSettingModel userSettingModel) {
+        User user = getCurrentUser();
+        UserSetting userSetting = userSettingRepository.findById(user.getId()).get();
+        String setting = ObjectUtil.objectToString(objectMapper, userSettingModel);
+        userSetting.setSetting(setting);
+        userSettingRepository.save(userSetting);
+        return ResponseEntity.ok().body(new ResponseMetaData(
+                new MetaDTO(MetaData.SUCCESS),
+                userSettingModel
+        ));
     }
 }

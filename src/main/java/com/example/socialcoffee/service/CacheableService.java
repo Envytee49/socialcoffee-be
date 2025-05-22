@@ -197,6 +197,6 @@ public class CacheableService {
 
     @Cacheable(value = "List<User>", key = "'ACTIVE_USER'")
     public List<User> getActiveUsers() {
-        return userRepository.findByStatus(Status.ACTIVE.getValue());
+        return userRepository.findByStatus(Status.ACTIVE.getValue()).stream().filter(u -> u.getId() != 0).toList();
     }
 }

@@ -51,24 +51,31 @@ public class NotificationService {
     public void pushNotiToUsersWhenFinishUpdatingShop(String id,
                                                       String name,
                                                       String path) {
-        List<User> activeUsers = cacheableService.getActiveUsers();
-        Map<String, String> meta = new HashMap<>();
-        meta.put("id",
-                id);
-        meta.put("name",
-                name);
-        meta.put("path",
-                path);
-        String message = String.format("%s was edited! Check the change",
-                name);
-        for (final User activeUser : activeUsers) {
-            activeUser.addNotification("Coffee shop edit",
-                    NotificationType.COFFEE_SHOP.getValue(),
-                    NotificationStatus.UNREAD.getValue(),
-                    message,
-                    objectToString(objectMapper, meta));
+        try {
+            log.info("Start adding new notification for users");
+            List<User> activeUsers = cacheableService.getActiveUsers();
+            Map<String, String> meta = new HashMap<>();
+            meta.put("id",
+                     id);
+            meta.put("name",
+                     name);
+            meta.put("path",
+                     path);
+            String message = String.format("%s was edited! Check the change",
+                                           name);
+            for (final User activeUser : activeUsers) {
+                activeUser.addNotification("Coffee shop edit",
+                                           NotificationType.COFFEE_SHOP.getValue(),
+                                           NotificationStatus.UNREAD.getValue(),
+                                           message,
+                                           objectToString(objectMapper, meta));
+            }
+            userRepository.saveAll(activeUsers);
+            log.info("Finish adding new notification for users");
+        } catch (Exception e) {
+            log.error("Error: {}", e.getMessage());
         }
-        userRepository.saveAll(activeUsers);
+
     }
 
     public void pushNotiToUsersWhenSuccessRegister(User saved) {
@@ -111,5 +118,32 @@ public class NotificationService {
                 message,
                 null);
         userRepository.save(user);
+    }
+
+    public void pushNotiToAdminWhenContribute(String username, String cfName) {
+        String message = String.format("%s contributed a new coffee shop: %s",
+                                       username,
+                                       cfName);
+        User admin = userRepository.findByUserId(0L).get();
+        admin.addNotification("New contribution",
+                             NotificationType.USER.getValue(),
+                             NotificationStatus.UNREAD.getValue(),
+                             message,
+                             null);
+        userRepository.save(admin);
+    }
+
+    public void pushNotiToAdminWhenSuggestAnEdit(String displayName,
+                                                 String name) {
+        String message = String.format("%s suggested an edit for coffee shop: %s",
+                                       displayName,
+                                       name);
+        User admin = userRepository.findByUserId(0L).get();
+        admin.addNotification("Edit suggestion",
+                              NotificationType.USER.getValue(),
+                              NotificationStatus.UNREAD.getValue(),
+                              message,
+                              null);
+        userRepository.save(admin);
     }
 }

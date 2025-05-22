@@ -3,15 +3,15 @@ package com.example.socialcoffee.domain;
 import com.example.socialcoffee.dto.response.FollowerDTO;
 import com.example.socialcoffee.dto.response.FollowingDTO;
 import com.example.socialcoffee.dto.response.UserDTO;
-import com.example.socialcoffee.mapper.UserMapper;
+import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.FacebookUserInfo;
 import com.example.socialcoffee.model.GoogleUserInfo;
-import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.util.CollectionUtils;
 
@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Entity
 @Table(name = "users")
 @Getter
@@ -44,7 +45,7 @@ public class User {
     private String bio;
     private String coffeePreference;
     private String status = Status.ACTIVE.getValue();
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Notification> notifications;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -95,16 +96,17 @@ public class User {
     }
 
     public void addReview(Review review) {
-        if(CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
+        if (CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
         this.reviews.add(review);
     }
 
     public void addLike(CoffeeShop coffeeShop) {
-        if(CollectionUtils.isEmpty(this.coffeeShops)) this.coffeeShops = new HashSet<>();
+        if (CollectionUtils.isEmpty(this.coffeeShops)) this.coffeeShops = new HashSet<>();
         this.coffeeShops.add(coffeeShop);
     }
+
     public void removeLike(CoffeeShop coffeeShop) {
-        if(CollectionUtils.isEmpty(this.coffeeShops)) return;
+        if (CollectionUtils.isEmpty(this.coffeeShops)) return;
         this.coffeeShops.remove(coffeeShop);
     }
 
@@ -119,7 +121,14 @@ public class User {
     public FollowingDTO toFollowingDTO() {
         return new FollowingDTO(this);
     }
-    public void addNotification(String title, String type, String status, String message, String meta) {
+
+    public void addNotification(String title,
+                                String type,
+                                String status,
+                                String message,
+                                String meta) {
+        if (CollectionUtils.isEmpty(this.notifications)) this.notifications = new ArrayList<>();
+        log.info("adding new notification");
         Notification notification = Notification.builder()
                 .title(title)
                 .message(message)
