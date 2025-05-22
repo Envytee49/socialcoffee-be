@@ -1,8 +1,10 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.Review;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.neo4j.NCoffeeShop;
 import com.example.socialcoffee.neo4j.NUser;
@@ -10,17 +12,20 @@ import com.example.socialcoffee.neo4j.feature.*;
 import com.example.socialcoffee.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.neo4j.*;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
+import com.example.socialcoffee.repository.postgres.ReviewRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class RepoService {
     private final UserRepository userRepository;
     private final NUserRepository nUserRepository;
@@ -40,6 +45,8 @@ public class RepoService {
     private final NVisitTimeRepository nVisitTimeRepository;
     private final NCategoryRepository nCategoryRepository;
     private final NPurposeRepository nPurposeRepository;
+
+    private final ReviewRepository reviewRepository;
 
     @Transactional(value = "postgresTransactionManager")
     public List<User> fetchUsersFromPostgres() {
@@ -332,5 +339,64 @@ public class RepoService {
         return nCoffeeShopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Coffee Shop " +
                                                                  shopId));
+    }
+
+    @Transactional
+    public void migrateReviews() {
+        log.info("Starting review migration from PostgreSQL to Neo4j");
+
+        int page = 0;
+        int BATCH_SIZE = 100;
+        Page<Review> reviewPage;
+        long totalMigrated = 0;
+        long totalSkipped = 0;
+
+        do {
+            reviewPage = reviewRepository.findByStatus(Status.ACTIVE.getValue(), PageRequest.of(page, BATCH_SIZE));
+            log.info("Processing batch {} with {} reviews", page, reviewPage.getNumberOfElements());
+
+            for (Review pgReview : reviewPage.getContent()) {
+                try {
+                    // Verify NUser and NCoffeeShop exist in Neo4j
+                    Long userId = pgReview.getUser().getId();
+                    Long coffeeShopId = pgReview.getCoffeeShop().getId();
+
+                    if (!nUserRepository.existsById(userId)) {
+                        log.warn("Skipping review {}: NUser with id {} not found in Neo4j", pgReview.getId(), userId);
+                        totalSkipped++;
+                        continue;
+                    }
+
+                    if (!nCoffeeShopRepository.existsById(coffeeShopId)) {
+                        log.warn("Skipping review {}: NCoffeeShop with id {} not found in Neo4j", pgReview.getId(), coffeeShopId);
+                        totalSkipped++;
+                        continue;
+                    }
+
+                    // Create REVIEW relationship in Neo4j
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("userId", userId);
+                    params.put("coffeeShopId", coffeeShopId);
+                    params.put("reviewId", pgReview.getId().toString());
+                    params.put("rating", pgReview.getRating());
+                    params.put("createdAt", pgReview.getCreatedAt());
+                    params.put("updatedAt", pgReview.getUpdatedAt());
+
+                    neo4jClient.query(
+                            "MATCH (u:NUser {id: $userId}), (cs:NCoffeeShop {id: $coffeeShopId}) " +
+                                    "MERGE (u)-[r:REVIEW {id: $reviewId, rating: $rating, createdAt: $createdAt, updatedAt: $updatedAt}]->(cs)"
+                    ).bindAll(params).run();
+
+                    totalMigrated++;
+                } catch (Exception e) {
+                    log.error("Failed to migrate review {}: {}", pgReview.getId(), e.getMessage());
+                    totalSkipped++;
+                }
+            }
+
+            page++;
+        } while (reviewPage.hasNext());
+
+        log.info("Migration completed: {} reviews migrated, {} reviews skipped", totalMigrated, totalSkipped);
     }
 }

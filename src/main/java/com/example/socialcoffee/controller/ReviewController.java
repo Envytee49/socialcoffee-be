@@ -5,6 +5,8 @@ import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
+import com.example.socialcoffee.neo4j.relationship.Review;
+import com.example.socialcoffee.service.RepoService;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
 import jakarta.validation.Valid;
@@ -28,6 +30,8 @@ import java.util.Objects;
 public class ReviewController extends BaseController {
     private final ReviewService reviewService;
     private final ValidationService validationService;
+
+    private final RepoService repoService;
 
     @PostMapping("/coffee-shops/{shop_id}/review")
     public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
@@ -121,6 +125,12 @@ public class ReviewController extends BaseController {
     @DeleteMapping("/coffee-shops/{shop_id}/review/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
         return reviewService.deleteReview(reviewId);
+    }
+
+    @PostMapping("/migrate/reviews")
+    public ResponseEntity<ResponseMetaData> migrateReviews(@RequestBody List<Review> reviews) {
+        repoService.migrateReviews();
+        return ResponseEntity.ok().build();
     }
 
 

@@ -3,6 +3,7 @@ package com.example.socialcoffee.neo4j;
 import com.example.socialcoffee.neo4j.relationship.Follow;
 import com.example.socialcoffee.neo4j.relationship.Prefer;
 import com.example.socialcoffee.neo4j.relationship.Like;
+import com.example.socialcoffee.neo4j.relationship.Review;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,6 +37,10 @@ public class NUser {
     @Relationship(type = "FOLLOW", direction = Relationship.Direction.OUTGOING)
     @JsonIgnore
     private Set<Follow> followUsers;
+
+    @Relationship(type = "REVIEW", direction = Relationship.Direction.OUTGOING)
+    @JsonIgnore
+    private Set<Review> reviewCoffeeShops;
     public void clearAllPreferences() {
         if (!CollectionUtils.isEmpty(this.preferCoffeeShops)) {
             this.preferCoffeeShops.clear();

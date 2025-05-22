@@ -1,6 +1,7 @@
 package com.example.socialcoffee.repository.postgres;
 
 import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.model.CoffeeShopMoodCountDTO;
 import com.example.socialcoffee.repository.postgres.custom.CoffeeShopRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -81,4 +82,20 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
     List<Long> findIdByIsSponsored(@Param(value = "isSponsor") Boolean isSponsor);
 
     List<CoffeeShop> findByIsSponsored(boolean b);
+
+    @Query(value = "SELECT cs.id AS shopId, cs.name AS shopName, cs.cover_photo AS coverPhoto, " +
+            "cs.phone_number AS phoneNumber, cs.web_address AS webAddress, cs.open_hour AS openHour, " +
+            "cs.close_hour AS closeHour, a.province, a.district, a.ward, a.address_detail AS addressDetail, " +
+            "a.latitude, a.longitude, csm.mood, COUNT(csm.id) AS moodCount, " +
+            "(SELECT AVG(r.rating) FROM reviews r WHERE r.coffee_shop_id = cs.id) AS averageRating, " +
+            "(SELECT COUNT(r.id) FROM reviews r WHERE r.coffee_shop_id = cs.id) AS reviewCount " +
+            "FROM coffee_shops cs " +
+            "JOIN address a ON cs.address_id = a.id " +
+            "JOIN coffee_shop_mood csm ON cs.id = csm.shop_id " +
+            "WHERE csm.mood = :mood " +
+            "GROUP BY cs.id, cs.name, cs.cover_photo, cs.phone_number, cs.web_address, cs.open_hour, " +
+            "cs.close_hour, a.province, a.district, a.ward, a.address_detail, a.latitude, a.longitude, csm.mood " +
+            "ORDER BY COUNT(csm.id) DESC",
+            nativeQuery = true)
+    Page<CoffeeShopMoodCountDTO> findTopCoffeeShopByMood(@Param("mood") String mood, Pageable pageable);
 }

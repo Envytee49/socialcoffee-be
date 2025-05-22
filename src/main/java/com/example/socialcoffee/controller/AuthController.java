@@ -77,9 +77,4 @@ public class AuthController extends BaseController {
 //        return authService.refreshToken(request);
 //    }
 //
-//    @PreAuthorize("hasRole('USER')")
-//    @PutMapping("/logout")
-//    public void logOut() {
-//        authService.logOut();
-//    }
 }

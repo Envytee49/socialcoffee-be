@@ -5,6 +5,7 @@ import com.example.socialcoffee.domain.Image;
 import com.example.socialcoffee.domain.Review;
 import com.example.socialcoffee.domain.User;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -75,4 +76,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findAllByOrderByUpdatedAtDesc(Pageable pageable);
 
     Page<Review> findAllByOrderByCreatedAtAsc(Pageable pageable);
+
+    Page<Review> findByStatus(String value, Pageable of);
 }

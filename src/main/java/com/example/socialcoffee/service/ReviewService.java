@@ -9,6 +9,8 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
+import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
+import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,11 +32,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReviewService {
     private final UserRepository userRepository;
+
     private final ImageService imageService;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final ReviewRepository reviewRepository;
+
     private final ImageRepository imageRepository;
+
     private final ReviewReactionRepository reviewReactionRepository;
+
     private final UserFollowRepository userFollowRepository;
 
     @Transactional
@@ -53,10 +61,10 @@ public class ReviewService {
         }
         List<Image> images = imageService.save(file);
         Review review = new Review(rating,
-                                   content,
-                                   images,
-                                   user,
-                                   coffeeShop);
+                content,
+                images,
+                user,
+                coffeeShop);
         review = reviewRepository.save(review);
         coffeeShop.addReview(review);
         coffeeShopRepository.save(coffeeShop);
@@ -80,38 +88,38 @@ public class ReviewService {
                                                               Long shopId,
                                                               PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
-                                           pageDtoIn.getSize(),
-                                           Sort.unsorted());
+                pageDtoIn.getSize(),
+                Sort.unsorted());
         CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
         if (Objects.isNull(coffeeShop)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Page<Review> reviews = reviewRepository.findAllByCoffeeShopAndStatus(coffeeShop,
-                                                                             Status.ACTIVE.getValue(),
-                                                                             pageable);
+                Status.ACTIVE.getValue(),
+                pageable);
         List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
         Map<Long, UserReaction> groupedReactions = groupedReactions(reviewIds);
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
                 .map(r -> new ReviewVM(user.getId(),
-                                       r,
-                                       groupedReactions.getOrDefault(r.getId(),
-                                                                     null)))
+                        r,
+                        groupedReactions.getOrDefault(r.getId(),
+                                null)))
                 .toList();
         final long totalElements = reviews.getTotalElements();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
-                                                          pageable.getPageSize(),
-                                                          totalElements,
-                                                          reviewVMS);
+                pageable.getPageSize(),
+                totalElements,
+                reviewVMS);
         List<Object[]> reviewSummary = reviewRepository.getReviewSummary(coffeeShop);
 
         ReviewResponse reviewResponse = new ReviewResponse(pageDtoOut,
-                                                           reviewSummary,
-                                                           totalElements);
+                reviewSummary,
+                totalElements);
 
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      reviewResponse));
+                reviewResponse));
     }
 
     private Map<Long, UserReaction> groupedReactions(List<Long> reviewIds) {
@@ -120,41 +128,41 @@ public class ReviewService {
                 .collect(Collectors.groupingBy(
                         rr -> rr.getId().getReviewId(),
                         Collectors.collectingAndThen(Collectors.toList(),
-                                                     reactionsForReview -> {
-                                                         UserReaction ur = new UserReaction();
+                                reactionsForReview -> {
+                                    UserReaction ur = new UserReaction();
 
-                                                         // Count total reactions
-                                                         long upvote = 0;
-                                                         long downvote = 0;
+                                    // Count total reactions
+                                    long upvote = 0;
+                                    long downvote = 0;
 
-                                                         for (ReviewReaction r : reactionsForReview) {
-                                                             if (ReviewVote.UPVOTE.getValue().equalsIgnoreCase(r.getType())) {
-                                                                 upvote++;
-                                                             } else if (ReviewVote.DOWNVOTE.getValue().equalsIgnoreCase(r.getType())) {
-                                                                 downvote++;
-                                                             }
-                                                         }
+                                    for (ReviewReaction r : reactionsForReview) {
+                                        if (ReviewVote.UPVOTE.getValue().equalsIgnoreCase(r.getType())) {
+                                            upvote++;
+                                        } else if (ReviewVote.DOWNVOTE.getValue().equalsIgnoreCase(r.getType())) {
+                                            downvote++;
+                                        }
+                                    }
 
-                                                         ur.setTotalReactions(upvote - downvote);
+                                    ur.setTotalReactions(upvote - downvote);
 
-                                                         // Count each reaction type
-                                                         Map<String, Long> reactionsCount = reactionsForReview.stream()
-                                                                 .collect(Collectors.groupingBy(
-                                                                         ReviewReaction::getType,
-                                                                         Collectors.counting()
-                                                                 ));
-                                                         ur.setReactions(reactionsCount);
+                                    // Count each reaction type
+                                    Map<String, Long> reactionsCount = reactionsForReview.stream()
+                                            .collect(Collectors.groupingBy(
+                                                    ReviewReaction::getType,
+                                                    Collectors.counting()
+                                            ));
+                                    ur.setReactions(reactionsCount);
 
-                                                         // Count user reactions by reactionType (assuming it's per-user per-reaction type)
-                                                         Map<Long, String> userReactionCount = reactionsForReview.stream()
-                                                                 .collect(Collectors.toMap(
-                                                                         rr -> rr.getId().getUserId(),
-                                                                         ReviewReaction::getType
-                                                                 ));
-                                                         ur.setUserReactions(userReactionCount);
+                                    // Count user reactions by reactionType (assuming it's per-user per-reaction type)
+                                    Map<Long, String> userReactionCount = reactionsForReview.stream()
+                                            .collect(Collectors.toMap(
+                                                    rr -> rr.getId().getUserId(),
+                                                    ReviewReaction::getType
+                                            ));
+                                    ur.setUserReactions(userReactionCount);
 
-                                                         return ur;
-                                                     })
+                                    return ur;
+                                })
                 ));
     }
 
@@ -162,8 +170,8 @@ public class ReviewService {
                                                        Long reviewId,
                                                        EditReviewRequest editReviewRequest) {
         Review review = reviewRepository.findByIdAndCoffeeShopIdAndStatus(reviewId,
-                                                                          shopId,
-                                                                          Status.ACTIVE.getValue());
+                shopId,
+                Status.ACTIVE.getValue());
         if (Objects.isNull(review)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
@@ -197,15 +205,15 @@ public class ReviewService {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId,
-                                                                                               user.getId());
+                user.getId());
         Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
         if (optionalReviewReaction.isEmpty()) {
             ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId,
-                                                               reaction);
+                    reaction);
             reviewReactionRepository.save(reviewReaction);
         } else {
             ReviewReaction reviewReaction = optionalReviewReaction.get();
-            if(reviewReaction.getType().equalsIgnoreCase(reaction)) {
+            if (reviewReaction.getType().equalsIgnoreCase(reaction)) {
                 reviewReactionRepository.delete(reviewReaction);
                 return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
             }
@@ -214,19 +222,12 @@ public class ReviewService {
         }
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
-    public Page<Review> getSortedReviews(String reviewOrder, Pageable pageable) {
-        return switch (reviewOrder) {
-            case "trending" -> reviewRepository.findAllOrderByTrending(pageable);
-            case "date_modified" -> reviewRepository.findAllByOrderByUpdatedAtDesc(pageable);
-            case "date_created" -> reviewRepository.findAllByOrderByCreatedAtAsc(pageable);
-            default -> reviewRepository.findAllOrderByScoreDesc(pageable);
-        };
-    }
+
     public ResponseEntity<ResponseMetaData> getReviews(final User user,
                                                        PageDtoIn pageDtoIn,
                                                        final String sortBy) {
         PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage(),
-                                                 pageDtoIn.getSize());
+                pageDtoIn.getSize());
 
         final Page<Review> reviews = getSortedReviews(sortBy, pageRequest);
         List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
@@ -235,64 +236,75 @@ public class ReviewService {
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
                 .map(r -> new ReviewVM(user.getId(),
-                                       r,
-                                       userReactionMap.getOrDefault(r.getId(),
-                                                                    null)))
+                        r,
+                        userReactionMap.getOrDefault(r.getId(),
+                                null)))
                 .toList();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                          pageDtoIn.getSize(),
-                                                          reviews.getTotalElements(),
-                                                          reviewVMS);
+                pageDtoIn.getSize(),
+                reviews.getTotalElements(),
+                reviewVMS);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+                pageDtoOut));
+    }
+
+    public Page<Review> getSortedReviews(String reviewOrder, Pageable pageable) {
+        return switch (reviewOrder) {
+            case "trending" -> reviewRepository.findAllOrderByTrending(pageable);
+            case "date_modified" -> reviewRepository.findAllByOrderByUpdatedAtDesc(pageable);
+            case "date_created" -> reviewRepository.findAllByOrderByCreatedAtAsc(pageable);
+            default -> reviewRepository.findAllOrderByScoreDesc(pageable);
+        };
     }
 
     public ResponseEntity<ResponseMetaData> getReviewByUserId(User user,
                                                               String displayName,
                                                               PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
-                                           pageDtoIn.getSize(),
-                                           Sort.by(Sort.Direction.DESC, "createdAt"));
+                pageDtoIn.getSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
         User viewingUser = userRepository.findByDisplayNameAndStatus(displayName, Status.ACTIVE.getValue());
         if (Objects.isNull(viewingUser)) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Page<Review> reviews = reviewRepository.findAllByUserAndStatus(viewingUser,
-                                                                             Status.ACTIVE.getValue(),
-                                                                             pageable);
+                Status.ACTIVE.getValue(),
+                pageable);
         List<Long> reviewIds = reviews.getContent().stream().map(Review::getId).toList();
         final Map<Long, UserReaction> userReactionMap = groupedReactions(reviewIds);
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
                 .map(r -> new ReviewVM(user.getId(),
-                                       r,
-                                       userReactionMap.getOrDefault(r.getId(),
-                                                                    null)))
+                        r,
+                        userReactionMap.getOrDefault(r.getId(),
+                                null)))
                 .toList();
         final long totalElements = reviews.getTotalElements();
         PageDtoOut<ReviewVM> pageDtoOut = PageDtoOut.from(pageable.getPageNumber(),
-                                                          pageable.getPageSize(),
-                                                          totalElements,
-                                                          reviewVMS);
+                pageable.getPageSize(),
+                totalElements,
+                reviewVMS);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      pageDtoOut));
+                pageDtoOut));
     }
 
     public ResponseEntity<ResponseMetaData> getReviewReaction(final Long userId,
                                                               String type,
                                                               Long reviewId) {
         final List<User> users = reviewReactionRepository.findByReviewIdAndType(reviewId,
-                                                                                type);
+                type);
         final Set<Long> relation = userFollowRepository.findRelationByIdIn(
                 users
                         .stream()
                         .map(u -> new UserFollow.UserFollowerId(u.getId(),
-                                                                userId))
+                                userId))
                         .toList());
         final List<UserDTO> userDTOS = users.stream().map(u -> new UserDTO(u,
-                                                                           relation.contains(u.getId()))).toList();
+                relation.contains(u.getId()))).toList();
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             userDTOS));
+                userDTOS));
     }
+
+
 }

@@ -11,6 +11,7 @@ import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.Mood;
 import com.example.socialcoffee.exception.UnauthorizedException;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.service.CoffeeShopService;
@@ -20,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.locationtech.jts.geom.Point;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -137,6 +139,19 @@ public class CoffeeShopController extends BaseController {
                                                              pageDtoOut));
     }
 
+    @GetMapping("/coffee-shops/search")
+    public ResponseEntity<ResponseMetaData> searchCoffeeShop(Mood mood,
+                                                             PageDtoIn pageDtoIn) {
+        final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.searchByMood(
+                mood,
+                getLatitude(),
+                getLongitude(),
+                PageRequest.of(pageDtoIn.getPage() - 1,
+                        pageDtoIn.getSize()));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                pageDtoOut));
+    }
+
     @GetMapping("/add-location")
     public ResponseEntity<ResponseMetaData> addLocation() {
         final List<Address> all = addressRepository.findAll();
@@ -175,14 +190,13 @@ public class CoffeeShopController extends BaseController {
                                                   getCurrentUser());
     }
 
-    @PutMapping("/coffee-shops/{shopId}/users/{userId}/mood")
+    @PutMapping("/coffee-shops/{shopId}/mood")
     public ResponseEntity<ResponseMetaData> toggleCoffeeShopMood(
             @PathVariable Long shopId,
-            @PathVariable Long userId,
             @RequestBody MoodRequest moodRequest
     ) {
         coffeeShopService.toggleCoffeeShopMood(shopId,
-                                               userId,
+                                               getCurrentUser().getId(),
                                                moodRequest.getMood());
         return ResponseEntity.ok().body(new ResponseMetaData(
                 new MetaDTO(MetaData.SUCCESS)));
@@ -204,4 +218,5 @@ public class CoffeeShopController extends BaseController {
                 moodCounts
         ));
     }
+
 }

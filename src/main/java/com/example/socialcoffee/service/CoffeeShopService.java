@@ -11,6 +11,7 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
+import com.example.socialcoffee.model.CoffeeShopMoodCountDTO;
 import com.example.socialcoffee.neo4j.NCoffeeShop;
 import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.neo4j.feature.*;
@@ -28,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -138,7 +140,6 @@ public class CoffeeShopService {
                                size,
                                coffeeShops.getTotalElements(),
                                coffeeShopVMs);
-
     }
 
     public ResponseEntity<ResponseMetaData> getSponsoredCoffeeShop(Double latitude,
@@ -969,5 +970,20 @@ public class CoffeeShopService {
         }
         return moodCounts;
     }
+
+    public PageDtoOut<CoffeeShopVM> searchByMood(Mood mood, Double latitude, Double longitude, PageRequest pageRequest) {
+        Page<CoffeeShopMoodCountDTO> topCoffeeShopByMood = coffeeShopRepository.findTopCoffeeShopByMood(mood.getValue(), pageRequest);
+        List<CoffeeShopVM> coffeeShopVMs = topCoffeeShopByMood.getContent().stream().map(c -> CoffeeShopVM.toVM(c,
+                latitude,
+                longitude)).toList();
+
+        PageDtoOut<CoffeeShopVM> res = PageDtoOut.from(pageRequest.getPageNumber(),
+                pageRequest.getPageSize(),
+                topCoffeeShopByMood.getTotalElements(),
+                coffeeShopVMs);
+        res.setMetaData(mood.getMessage());
+        return res;
+    }
+
 
 }
