@@ -7,14 +7,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Formula;
-import org.hibernate.annotations.Where;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Table(name = "coffee_shops")
 @Entity
@@ -28,42 +24,26 @@ public class CoffeeShop {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-
     private String name;
-
     private String coverPhoto;
-
     private String phoneNumber;
-
     private String webAddress;
-
     private String menuWebAddress;
-
     private String additionInfo;
-
     private Boolean isSponsored = Boolean.FALSE;
-
     private Integer openHour;
-
     private Integer closeHour;
-
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.LAZY)
     private List<Image> galleryPhotos;
-
     @OneToOne
     private Address address;
-
-    @ManyToMany(mappedBy = "coffeeShops", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "likedCoffeeShops", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<User> users;
-
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
     private String status;
-
     private Long createdBy;
-
     @ManyToMany
     @JoinTable(
             name = "coffee_shop_ambiance",
@@ -175,7 +155,6 @@ public class CoffeeShop {
     private Long reviewCount = 0L;
 
     @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Where(clause = "status = 'active'")
     @JsonIgnore
     private List<Review> reviews;
 

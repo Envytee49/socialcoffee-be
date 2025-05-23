@@ -49,7 +49,7 @@ public class User {
 
     private String gender;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     private Address address;
 
     private String bio;
@@ -58,10 +58,10 @@ public class User {
 
     private String status = Status.ACTIVE.getValue();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Notification> notifications;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(
@@ -71,7 +71,7 @@ public class User {
     )
     private List<Role> roles;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "users_likes",
             joinColumns = @JoinColumn(
@@ -79,7 +79,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(
                     name = "coffee_shop_id", referencedColumnName = "id")
     )
-    private Set<CoffeeShop> coffeeShops;
+    private Set<CoffeeShop> likedCoffeeShops;
 
     private String profilePhoto;
 
@@ -123,13 +123,13 @@ public class User {
     }
 
     public void addLike(CoffeeShop coffeeShop) {
-        if (CollectionUtils.isEmpty(this.coffeeShops)) this.coffeeShops = new HashSet<>();
-        this.coffeeShops.add(coffeeShop);
+        if (CollectionUtils.isEmpty(this.likedCoffeeShops)) this.likedCoffeeShops = new HashSet<>();
+        this.likedCoffeeShops.add(coffeeShop);
     }
 
     public void removeLike(CoffeeShop coffeeShop) {
-        if (CollectionUtils.isEmpty(this.coffeeShops)) return;
-        this.coffeeShops.remove(coffeeShop);
+        if (CollectionUtils.isEmpty(this.likedCoffeeShops)) return;
+        this.likedCoffeeShops.remove(coffeeShop);
     }
 
     public UserDTO toUserDTO() {

@@ -7,8 +7,9 @@ import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.enums.Status;
-import com.example.socialcoffee.neo4j.NCoffeeShop;
+import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
+import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.AuthProviderRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.RoleRepository;
@@ -24,7 +25,10 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,6 +68,8 @@ public class CacheableService {
     private final CoffeeShopRepository coffeeShopRepository;
 
     private final UserRepository userRepository;
+
+    private final NUserRepository nUserRepository;
 
     @Cacheable(value = "ambiances")
     public List<Ambiance> findAmbiances() {
@@ -144,12 +150,67 @@ public class CacheableService {
     public void clearRecommendation(Long userId) {
     }
 
-    @Cacheable(value = "List<CoffeeShopVM>", key = "#userId")
-    public List<CoffeeShopVM> getRecommendationForYou(Long userId) {
-        final List<Long> ids = nCoffeeShopRepository.findRecommendedForYou(userId).stream().map(NCoffeeShop::getId).toList();
-        return coffeeShopRepository.findAllById(ids).stream().map(c -> CoffeeShopVM.toVM(c,
+    @CacheEvict(value = "recommendation", allEntries = true)
+    public void clearAllWhenReview() {
+    }
+
+    @Cacheable(value = "recommendation", key = "#key + #userId")
+    public List<CoffeeShopVM> findBasedOnYourPreferences(String key, Long userId) {
+        final Map<Long, Double> ids = nCoffeeShopRepository.findBasedOnYourPreferences(userId)
+                .stream().collect(Collectors.toMap(
+                        CoffeeShopRecommendationDTO::getShopId,
+                        CoffeeShopRecommendationDTO::getScore
+                ));
+        return coffeeShopRepository.findAllById(ids.keySet()).stream().map(c -> CoffeeShopVM.toVM(c,
                         null,
-                        null))
+                        null,
+                        ids.get(c.getId())))
+                .sorted(Comparator.comparing(CoffeeShopVM::getScore, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
+
+    @Cacheable(value = "recommendation", key = "#key + #userId")
+    public List<CoffeeShopVM> findYouMayLikeRecommendation(String key, Long userId) {
+        final Map<Long, Double> ids = nUserRepository.findYouMayLikeRecommendation(userId)
+                .stream().collect(Collectors.toMap(
+                        CoffeeShopRecommendationDTO::getShopId,
+                        CoffeeShopRecommendationDTO::getScore
+                ));
+        return coffeeShopRepository.findAllById(ids.keySet()).stream().map(c -> CoffeeShopVM.toVM(c,
+                        null,
+                        null,
+                        ids.get(c.getId())))
+                .sorted(Comparator.comparing(CoffeeShopVM::getScore, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
+
+    @Cacheable(value = "recommendation", key = "#key + #userId")
+    public List<CoffeeShopVM> findLikedByPeopleYouFollow(String key, Long userId) {
+        final Map<Long, Double> ids = nUserRepository.findLikedByPeopleYouFollow(userId)
+                .stream().collect(Collectors.toMap(
+                        CoffeeShopRecommendationDTO::getShopId,
+                        CoffeeShopRecommendationDTO::getScore
+                ));
+        return coffeeShopRepository.findAllById(ids.keySet()).stream().map(c -> CoffeeShopVM.toVM(c,
+                        null,
+                        null,
+                        ids.get(c.getId())))
+                .sorted(Comparator.comparing(CoffeeShopVM::getScore, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
+
+    @Cacheable(value = "recommendation", key = "#key + #userId")
+    public List<CoffeeShopVM> findSimilarToPlacesYouLike(String key, Long userId) {
+        final Map<Long, Double> ids = nCoffeeShopRepository.findSimilarToPlacesYouLike(userId)
+                .stream().collect(Collectors.toMap(
+                        CoffeeShopRecommendationDTO::getShopId,
+                        CoffeeShopRecommendationDTO::getScore
+                ));
+        return coffeeShopRepository.findAllById(ids.keySet()).stream().map(c -> CoffeeShopVM.toVM(c,
+                        null,
+                        null,
+                        ids.get(c.getId())))
+                .sorted(Comparator.comparing(CoffeeShopVM::getScore, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 

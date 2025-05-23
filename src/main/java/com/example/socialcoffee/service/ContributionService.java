@@ -117,8 +117,7 @@ public class ContributionService {
             throw new RuntimeException(e);
         }
 
-        coffeeShopService.createCoffeeShop(contribution.getSubmittedBy(),
-                contributionRequest);
+        coffeeShopService.createCoffeeShop(contributionRequest);
         CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenApproveContribution(contribution.getSubmittedBy(), contribution.getName()));
 
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

@@ -23,197 +23,105 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
             "WITH u1, u2, shops1, shops2, likeIntersection, likeUnion, features1, collect(id(f2)) AS features2 " +
             "WITH u1, u2, shops1, shops2, likeIntersection, likeUnion, features1, features2, " +
             "     size([x IN features1 WHERE x IN features2 | x]) AS preferIntersection, " +
-            "     size(features1) + size(features2) - size([x IN features1 WHERE x IN features2 | x]) AS preferUnion " +
+            "     size(features1) + size(features2) - size([x IN features1 WHERE x IN features2 | x]) AS preferUnion "
+            +
             "WHERE likeUnion > 0 OR preferUnion > 0 " +
             "WITH u1, u2, " +
             "     CASE WHEN likeUnion > 0 THEN toFloat(likeIntersection) / likeUnion ELSE 0.0 END AS jaccardLike, " +
-            "     CASE WHEN preferUnion > 0 THEN toFloat(preferIntersection) / preferUnion ELSE 0.0 END AS jaccardPrefer " +
+            "     CASE WHEN preferUnion > 0 THEN toFloat(preferIntersection) / preferUnion ELSE 0.0 END AS jaccardPrefer "
+            +
             "RETURN u2 " +
             "ORDER BY (0.3 * jaccardLike + 0.7 * jaccardPrefer) DESC")
     List<NUser> findSimilarUsersByLikesAndPreferences(@Param("userId") Long userId);
 
-    // 1. Collaborative Filtering: User-Based with FOLLOW and REVIEW (including rating)
-    @Query(
-            value = """
-                        MATCH (u1:User {id: $userId})-[:LIKE]->(cs1:CoffeeShop)
-                        WITH u1, collect(cs1) AS shops1
-                    
-                        MATCH (u2:User)-[:LIKE]->(cs2:CoffeeShop)
-                        WHERE id(u1) <> id(u2)
-                        WITH u1, u2, shops1, collect(cs2) AS shops2,
-                             [x IN shops1 WHERE x IN shops2 | x] AS likeIntersectionList
-                        WITH u1, u2, shops1, shops2,
-                             size(likeIntersectionList) AS likeIntersection,
-                             size(shops1) + size(shops2) - size(likeIntersectionList) AS likeUnion
-                    
-                        MATCH (u1)-[:PREFER]->(f1)
-                        WITH u1, u2, likeIntersection, likeUnion, collect(id(f1)) AS features1
-                    
-                        MATCH (u2)-[:PREFER]->(f2)
-                        WITH u1, u2, likeIntersection, likeUnion, features1, collect(id(f2)) AS features2,
-                             [x IN features1 WHERE x IN features2 | x] AS preferIntersectionList
-                        WITH u1, u2, likeIntersection, likeUnion, features1, features2,
-                             size(preferIntersectionList) AS preferIntersection,
-                             size(features1) + size(features2) - size(preferIntersectionList) AS preferUnion
-                    
-                        OPTIONAL MATCH (u1)-[:FOLLOW]->(u2)
-                        WITH u1, u2, likeIntersection, likeUnion, preferIntersection, preferUnion,
-                             CASE WHEN count(*) > 0 THEN 1.0 ELSE 0.0 END AS followScore
-                        WHERE likeUnion > 0 OR preferUnion > 0 OR followScore > 0
-                    
-                        WITH u1, u2,
-                             0.3 * CASE WHEN likeUnion = 0 THEN 0 ELSE toFloat(likeIntersection) / likeUnion END +
-                             0.4 * CASE WHEN preferUnion = 0 THEN 0 ELSE toFloat(preferIntersection) / preferUnion END +
-                             0.2 * followScore AS similarityScore
-                    
-                        MATCH (u2)-[:LIKE]->(cs:CoffeeShop)
-                        WHERE NOT (u1)-[:LIKE]->(cs) AND cs.status = 'active'
-                        WITH cs, max(similarityScore) AS userScore
-                    
-                        MATCH (cs)<-[r:REVIEW]-(u:User)
-                        WITH cs, userScore, count(r) AS reviewCount, max(r.createdAt) AS latestReview, avg(r.rating) AS avgRating
-                    
-                        WITH cs, userScore, reviewCount, latestReview, avgRating,
-                             CASE WHEN latestReview IS NOT NULL
-                                  THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                                  ELSE 0.0 END AS recencyScore
-                    
-                        RETURN cs.id AS shopId,
-                               cs.name AS name,
-                               cs.coverPhoto AS coverPhoto,
-                               cs.status AS status,
-                               (0.6 * userScore +
-                                0.15 * (avgRating / 5.0) +
-                                0.15 * log(reviewCount + 1) +
-                                0.1 * recencyScore) AS score,
-                               'Liked by similar or followed users, ranked by ratings and reviews' AS matchReason
-                        ORDER BY score DESC
-                        LIMIT 10
-                    """
-    )
-    List<CoffeeShopRecommendationDTO> findUserBasedRecommendations(@Param("userId") Long userId);
-
-    // 2. Collaborative Filtering: Item-Based with REVIEW (including rating)
+    // 1. Collaborative Filtering: User-Based with FOLLOW and REVIEW (including
+    // rating)
     @Query(value = """
-            MATCH (u:User {id: $userId})-[:LIKE]->(cs1:CoffeeShop)
-            WITH u, collect(cs1) AS userLikedShops
-            
-            MATCH (cs1)<-[:LIKE]-(u2:User)-[:LIKE]->(cs2:CoffeeShop)
-            WHERE cs2.status = 'active' AND NOT (u)-[:LIKE]->(cs2) AND cs2 <> cs1
-            
-            WITH u, cs2, userLikedShops, collect(cs1) AS commonShops
-            
-            WITH cs2, userLikedShops, commonShops,
-                 [x IN commonShops WHERE x IN userLikedShops | x] AS overlap
-            
-            WITH cs2,
-                 size(overlap) AS shopIntersection,
-                 size(userLikedShops) + size(commonShops) - size(overlap) AS shopUnion
-            WHERE shopUnion > 0
-            
-            MATCH (cs2)<-[r:REVIEW]-(u:User)
-            WITH cs2, shopIntersection, shopUnion,
-                 count(r) AS reviewCount,
-                 max(r.createdAt) AS latestReview,
-                 avg(r.rating) AS avgRating
-            
-            WITH cs2, shopIntersection, shopUnion, reviewCount, latestReview, avgRating,
-                 CASE WHEN latestReview IS NOT NULL
-                      THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                      ELSE 0.0
-                 END AS recencyScore
-            
-            RETURN cs2.id AS shopId,
-                   cs2.name AS name,
-                   cs2.coverPhoto AS coverPhoto,
-                   cs2.status AS status,
-                   (
-                     0.6 * toFloat(shopIntersection) / shopUnion +
-                     0.15 * (avgRating / 5.0) +
-                     0.15 * log(reviewCount + 1) +
-                     0.1 * recencyScore
-                   ) AS score,
-                   'Similar to liked coffee shops, ranked by ratings and reviews' AS matchReason
-            ORDER BY score DESC
-            LIMIT 10
-            """)
-    List<CoffeeShopRecommendationDTO> findItemBasedRecommendations(@Param("userId") Long userId);
+            MATCH (u1:User {id: $userId})-[:LIKE]->(cs1:CoffeeShop)
+                                    WITH u1, collect(cs1) AS shops1
+                                    MATCH (u2:User)-[:LIKE]->(cs2:CoffeeShop)
+                                    WHERE id(u1) <> id(u2)
+                                    WITH u1, u2, shops1, collect(cs2) AS shops2
+                                    WITH u1, u2, shops1, shops2,
+                                         [x IN shops1 WHERE x IN shops2 | x] AS likeIntersectionList
+                                    WITH u1, u2, shops1, shops2,
+                                         size(likeIntersectionList) AS likeIntersection,
+                                         size(shops1) + size(shops2) - size(likeIntersectionList) AS likeUnion
+
+                                    MATCH (u1)-[:PREFER]->(f1)
+                                    WITH u1, u2, likeIntersection, likeUnion, collect(id(f1)) AS features1
+
+                                    MATCH (u2)-[:PREFER]->(f2)
+                                    WITH u1, u2, likeIntersection, likeUnion, features1, collect(id(f2)) AS features2
+                                    WITH u1, u2, likeIntersection, likeUnion, features1, features2,
+                                         [x IN features1 WHERE x IN features2 | x] AS preferIntersectionList
+                                    WITH u1, u2, likeIntersection, likeUnion, features1, features2,
+                                         size(preferIntersectionList) AS preferIntersection,
+                                         size(features1) + size(features2) - size(preferIntersectionList) AS preferUnion
+
+                                    OPTIONAL MATCH (u1)-[:FOLLOW]->(u2)
+                                    WITH u1, u2, likeIntersection, likeUnion, preferIntersection, preferUnion,
+                                         CASE WHEN count(*) > 0 THEN 1.0 ELSE 0.0 END AS followScore
+                                    WHERE likeUnion > 0 OR preferUnion > 0 OR followScore > 0
+
+                                    WITH u1, u2,
+                                         0.3 * CASE WHEN likeUnion = 0 THEN 0 ELSE toFloat(likeIntersection) / likeUnion END +
+                                         0.4 * CASE WHEN preferUnion = 0 THEN 0 ELSE toFloat(preferIntersection) / preferUnion END +
+                                         0.2 * followScore AS similarityScore
+
+                                    MATCH (u2)-[:LIKE]->(cs:CoffeeShop)
+                                    WHERE NOT (u1)-[:LIKE]->(cs)
+                                    WITH cs, max(similarityScore) AS userScore
+
+                                    MATCH (cs)<-[r:REVIEW]-(u:User)
+                                    WITH cs, userScore, count(r) AS reviewCount, max(r.createdAt) AS latestReview, avg(r.rating) AS avgRating
+
+                                    WITH cs, userScore, reviewCount, latestReview, avgRating,
+                                         CASE WHEN latestReview IS NOT NULL
+                                              THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
+                                              ELSE 0.0 END AS recencyScore
+
+                                    RETURN cs.id AS shopId,
+                                           (0.6 * userScore +
+                                            0.15 * (avgRating / 5.0) +
+                                            0.15 * log(reviewCount + 1) +
+                                            0.1 * recencyScore) AS score
+                                    ORDER BY score DESC
+                                    LIMIT 10
+              """)
+    List<CoffeeShopRecommendationDTO> findYouMayLikeRecommendation(@Param("userId") Long userId);
+
 
     // 3. Collaborative Filtering: Follow-Based with REVIEW (including rating)
-    @Query(value =
-            """
-                    MATCH (u:User {id: $userId})-[:FOLLOW]->(u2:User)-[:LIKE]->(cs:CoffeeShop)
-                             WHERE NOT (u)-[:LIKE]->(cs) AND cs.status = 'active'
-                    
-                             WITH cs, count(*) AS followLikes
-                    
-                             MATCH (cs)<-[r:REVIEW]-(reviewer:User)
-                             WITH cs, followLikes,
-                                  count(r) AS reviewCount,
-                                  max(r.createdAt) AS latestReview,
-                                  avg(r.rating) AS avgRating
-                    
-                             WITH cs, followLikes, reviewCount, latestReview, avgRating,
-                                  CASE WHEN latestReview IS NOT NULL
-                                       THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                                       ELSE 0.0
-                                  END AS recencyScore
-                    
-                             RETURN cs.id AS shopId,
-                                    cs.name AS name,
-                                    cs.coverPhoto AS coverPhoto,
-                                    cs.status AS status,
-                                    (
-                                      0.6 * toFloat(followLikes) / (followLikes + 10) +
-                                      0.15 * (avgRating / 5.0) +
-                                      0.15 * log(reviewCount + 1) +
-                                      0.1 * recencyScore
-                                    ) AS score,
-                                    'Liked by followed users, ranked by ratings and reviews' AS matchReason
-                             ORDER BY score DESC
-                             LIMIT 10
-                    """)
-    List<CoffeeShopRecommendationDTO> findFollowBasedRecommendations(@Param("userId") Long userId);
+    @Query(value = """
+            MATCH (u:User {id: $userId})-[:FOLLOW]->(u2:User)-[:LIKE]->(cs:CoffeeShop)
+                     WHERE NOT (u)-[:LIKE]->(cs)
 
-    // 4. Content-Based Filtering with REVIEW (including rating)
-    @Query(value =
-            """
-                            MATCH (u:User {id: $userId})-[:PREFER]->(f:Feature)
-                            MATCH (cs:CoffeeShop)-[:HAS_FEATURE]->(f)
-                            WHERE NOT (u)-[:LIKE]->(cs) AND cs.status = 'active'
-                    
-                            WITH u, cs, collect(f.id) AS matchedFeatures
-                    
-                            MATCH (cs)-[:HAS_FEATURE]->(allF:Feature)
-                            WITH u, cs, matchedFeatures, count(allF) AS totalFeatures
-                    
-                            MATCH (cs)<-[r:REVIEW]-(reviewer:User)
-                            WITH cs, matchedFeatures, totalFeatures,
-                                 count(r) AS reviewCount,
-                                 max(r.createdAt) AS latestReview,
-                                 avg(r.rating) AS avgRating
-                    
-                            WITH cs, matchedFeatures, totalFeatures, reviewCount, latestReview, avgRating,
-                                 CASE WHEN latestReview IS NOT NULL
-                                      THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                                      ELSE 0.0
-                                 END AS recencyScore
-                    
-                            RETURN cs.id AS shopId,
-                                   cs.name AS name,
-                                   cs.coverPhoto AS coverPhoto,
-                                   cs.status AS status,
-                                   (
-                                     0.6 * toFloat(size(matchedFeatures)) / (totalFeatures + 0.0001) +
-                                     0.15 * (avgRating / 5.0) +
-                                     0.15 * log(reviewCount + 1) +
-                                     0.1 * recencyScore
-                                   ) AS score,
-                                   'Matches preferred features, ranked by ratings and reviews' AS matchReason
-                            ORDER BY score DESC
-                            LIMIT 10
-                    """)
-    List<CoffeeShopRecommendationDTO> findContentBasedRecommendations(@Param("userId") Long userId);
+                     WITH cs, count(*) AS followLikes
+
+                     MATCH (cs)<-[r:REVIEW]-(reviewer:User)
+                     WITH cs, followLikes,
+                          count(r) AS reviewCount,
+                          max(r.createdAt) AS latestReview,
+                          avg(r.rating) AS avgRating
+
+                     WITH cs, followLikes, reviewCount, latestReview, avgRating,
+                          CASE WHEN latestReview IS NOT NULL
+                               THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
+                               ELSE 0.0
+                          END AS recencyScore
+
+                     RETURN cs.id AS shopId,
+                            (
+                              0.6 * toFloat(followLikes) / (followLikes + 10) +
+                              0.15 * (avgRating / 5.0) +
+                              0.15 * log(reviewCount + 1) +
+                              0.1 * recencyScore
+                            ) AS score
+                     ORDER BY score DESC
+                     LIMIT 10
+            """)
+    List<CoffeeShopRecommendationDTO> findLikedByPeopleYouFollow(@Param("userId") Long userId);
 
     @Query("MATCH (u1:User {id: $userId})-[p:PREFER]->(f) DELETE p")
     void clearAllPreferences(@Param("userId") Long userId);

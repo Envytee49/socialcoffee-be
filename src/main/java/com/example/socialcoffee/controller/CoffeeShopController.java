@@ -10,6 +10,7 @@ import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.request.MoodRequest;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.dto.response.MetaDTO;
+import com.example.socialcoffee.dto.response.MoodCountDto;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.Mood;
@@ -22,6 +23,7 @@ import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.PageRequest;
@@ -148,7 +150,7 @@ public class CoffeeShopController extends BaseController {
                 pageDtoOut));
     }
 
-    @GetMapping("/coffee-shops/search")
+    @GetMapping("/coffee-shops/search/mood")
     public ResponseEntity<ResponseMetaData> searchCoffeeShop(Mood mood,
                                                              PageDtoIn pageDtoIn) {
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.searchByMood(
@@ -221,7 +223,7 @@ public class CoffeeShopController extends BaseController {
 
     @GetMapping("/coffee-shops/{shopId}/moods")
     public ResponseEntity<ResponseMetaData> getCoffeeShopMoodCounts(@PathVariable Long shopId) {
-        Map<String, Long> moodCounts = coffeeShopService.getCoffeeShopMoodCounts(shopId);
+        MoodCountDto moodCounts = coffeeShopService.getCoffeeShopMoodCounts(shopId);
         return ResponseEntity.ok().body(new ResponseMetaData(
                 new MetaDTO(MetaData.SUCCESS),
                 moodCounts

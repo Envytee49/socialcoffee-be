@@ -1,12 +1,15 @@
 package com.example.socialcoffee.neo4j.relationship;
 
 import com.example.socialcoffee.neo4j.NCoffeeShop;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.RelationshipProperties;
+import org.springframework.data.neo4j.core.schema.TargetNode;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -16,14 +19,15 @@ import java.util.Objects;
 @Setter
 @Builder
 public class Review {
+    @Id
+    @GeneratedValue
+    private String id;
+
     @CreatedDate
     protected LocalDateTime createdAt;
 
     @LastModifiedDate
     protected LocalDateTime updatedAt;
-
-    @Id
-    private Long id;
 
     private Integer rating;
 
@@ -31,14 +35,14 @@ public class Review {
     private NCoffeeShop coffeeShop;
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(coffeeShop);
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (!(o instanceof final Review review)) return false;
         return Objects.equals(coffeeShop.getId(), review.coffeeShop.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(coffeeShop);
     }
 }

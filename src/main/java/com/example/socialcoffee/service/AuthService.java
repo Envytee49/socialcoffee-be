@@ -4,7 +4,8 @@ import com.example.socialcoffee.domain.AuthProvider;
 import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.domain.UserAuthConnection;
-import com.example.socialcoffee.dto.request.BasicAuthRequest;
+import com.example.socialcoffee.dto.request.LoginRequest;
+import com.example.socialcoffee.dto.request.RegisterRequest;
 import com.example.socialcoffee.dto.request.UpdateNewPassword;
 import com.example.socialcoffee.dto.response.LoginResponse;
 import com.example.socialcoffee.dto.response.MetaDTO;
@@ -18,10 +19,11 @@ import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -59,12 +61,12 @@ public class AuthService {
                                                            String authAction) {
         try {
             GoogleUserInfo userInfo = googleService.getUserInfoFromGoogle(code,
-                    redirectUri);
+                                                                          redirectUri);
             if (Objects.isNull(userInfo))
                 return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.GOOGLE_ERROR)));
 
             Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(),
-                    Status.ACTIVE.getValue());
+                                                                              Status.ACTIVE.getValue());
             if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
                 if (optionalUser.isEmpty()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
@@ -76,10 +78,10 @@ public class AuthService {
                 String jwtToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                        new LoginResponse(user.getRoles().getFirst().getName(),
-                                jwtToken,
-                                refreshToken,
-                                isLoginFirstTime)));
+                                                                     new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                                       jwtToken,
+                                                                                       refreshToken,
+                                                                                       isLoginFirstTime)));
             } else {
                 if (optionalUser.isPresent()) {
                     return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
@@ -96,7 +98,7 @@ public class AuthService {
                 repoService.saveNUser(nUser);
                 AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.GOOGLE.getValue());
                 UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
-                        authProvider.getId());
+                                                                               authProvider.getId());
                 userAuthConnectionRepository.save(userAuthConnection);
                 CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenSuccessRegister(saved));
                 return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
@@ -112,7 +114,7 @@ public class AuthService {
         if (Objects.isNull(userInfo))
             return ResponseEntity.internalServerError().body(new ResponseMetaData(new MetaDTO(MetaData.FACEBOOK_ERROR)));
         Optional<User> optionalUser = userRepository.findByEmailAndStatus(userInfo.getEmail(),
-                Status.ACTIVE.getValue());
+                                                                          Status.ACTIVE.getValue());
         if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
             if (optionalUser.isEmpty()) {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
@@ -122,9 +124,9 @@ public class AuthService {
             String jwtToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                    new LoginResponse(user.getRoles().getFirst().getName(),
-                            jwtToken,
-                            refreshToken)));
+                                                                 new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                                   jwtToken,
+                                                                                   refreshToken)));
         } else {
             if (optionalUser.isPresent()) {
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
@@ -135,73 +137,77 @@ public class AuthService {
             user = userRepository.save(user);
             AuthProvider authProvider = cacheableService.findProvider(AuthProviderEnum.FACEBOOK.getValue());
             UserAuthConnection userAuthConnection = new UserAuthConnection(user.getId(),
-                    authProvider.getId());
+                                                                           authProvider.getId());
             userAuthConnectionRepository.save(userAuthConnection);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
         }
     }
 
-    public ResponseEntity<ResponseMetaData> basicAuth(BasicAuthRequest request,
-                                                      String authAction) {
+    public ResponseEntity<ResponseMetaData> basicLogin(LoginRequest request) {
+        Optional<User> optionalUser = userRepository.findByUsernameAndStatus(request.getUsername(),
+                                                                             Status.ACTIVE.getValue());
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
+        }
+
+        User user = optionalUser.get();
+        // Verify password
+        if (!passwordEncoder.matches(request.getPassword(),
+                                     user.getPassword())) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_CREDENTIALS)));
+        }
+        boolean isLoginFirstTime = Objects.isNull(user.getLastLogin());
+        String jwtToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                                                             new LoginResponse(user.getRoles().getFirst().getName(),
+                                                                               jwtToken,
+                                                                               refreshToken,
+                                                                               isLoginFirstTime)));
+    }
+
+    @Transactional
+    public ResponseEntity<ResponseMetaData> basicRegister(RegisterRequest request) {
         String username = request.getUsername();
         String password = request.getPassword();
+        String confirmPassword = request.getConfirmPassword();
         String displayName = request.getDisplayName();
         String fullName = request.getFullName();
-        final List<MetaDTO> metaDTOS = validationService.validateBasicAuthRequest(request,
-                authAction);
-        if (!CollectionUtils.isEmpty(metaDTOS)) {
-            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOS));
+
+        if (userRepository.existsByUsername(username)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.USERNAME_EXISTED)));
         }
-
-        Optional<User> optionalUser = userRepository.findByUsernameAndStatus(username,
-                Status.ACTIVE.getValue());
-
-        if (AuthAction.LOGIN.getValue().equalsIgnoreCase(authAction)) {
-            // Login logic
-            if (optionalUser.isEmpty()) {
-                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_REGISTERED)));
-            }
-
-            User user = optionalUser.get();
-            // Verify password
-            if (!passwordEncoder.matches(password,
-                    user.getPassword())) {
-                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_CREDENTIALS)));
-            }
-            boolean isLoginFirstTime = Objects.isNull(user.getLastLogin());
-            String jwtToken = jwtService.generateAccessToken(user);
-            String refreshToken = jwtService.generateRefreshToken(user);
-
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                    new LoginResponse(user.getRoles().getFirst().getName(),
-                            jwtToken,
-                            refreshToken,
-                            isLoginFirstTime)));
-        } else {
-            // Register logic
-            if (optionalUser.isPresent()) {
-                return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_REGISTER)));
-            }
-
-            Role role = cacheableService.findRole(RoleEnum.USER.getValue());
-            User user = new User();
-            user.setUsername(username);
-            user.setDisplayName(displayName);
-            user.setName(fullName);
-            user.setPassword(passwordEncoder.encode(password));
-            user.setStatus(Status.ACTIVE.getValue());
-            user.setRoles(List.of(role));
-
-            final User saved = userRepository.save(user);
-            NUser nUser = NUser.builder()
-                    .id(saved.getId())
-                    .displayName(user.getDisplayName())
-                    .profilePhoto(user.getProfilePhoto())
-                    .build();
-            repoService.saveNUser(nUser);
-            CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenSuccessRegister(saved));
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+        if(!validationService.isSecurePassword(password)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.PASSWORD_INVALID)));
         }
+        if (!StringUtils.equals(password,
+                                confirmPassword)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.PASSWORD_IS_NOT_THE_SAME)));
+        }
+        if (userRepository.existsByDisplayName(displayName)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.DISPLAY_NAME_EXISTED)));
+        }
+        Role role = cacheableService.findRole(RoleEnum.USER.getValue());
+        User user = new User();
+        user.setUsername(username);
+        user.setDisplayName(displayName);
+        user.setName(fullName);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setStatus(Status.ACTIVE.getValue());
+        user.setRoles(List.of(role));
+
+        final User saved = userRepository.save(user);
+        NUser nUser = NUser.builder()
+                .id(saved.getId())
+                .displayName(user.getDisplayName())
+                .profilePhoto(user.getProfilePhoto())
+                .build();
+        repoService.saveNUser(nUser);
+        CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenSuccessRegister(saved));
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
     public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {

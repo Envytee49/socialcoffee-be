@@ -9,6 +9,7 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
+import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.repository.postgres.*;
 import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,12 @@ public class ReviewService {
 
     private final UserFollowRepository userFollowRepository;
 
+    private final RepoService repoService;
+
+    private final Neo4jClient neo4jClient;
+
+    private final CacheableService cacheableService;
+
     @Transactional
     public ResponseEntity<ResponseMetaData> uploadReview(User user,
                                                          Long shopId,
@@ -64,11 +72,10 @@ public class ReviewService {
                 images,
                 user,
                 coffeeShop);
-        review = reviewRepository.save(review);
-        coffeeShop.addReview(review);
-        coffeeShopRepository.save(coffeeShop);
-        user.addReview(review);
-        userRepository.save(user);
+        reviewRepository.save(review);
+        final NUser nUserById = repoService.findNUserById(user.getId());
+        nUserById.addReview(repoService.findNCoffeeShopById(coffeeShop.getId()), rating);
+        cacheableService.clearAllWhenReview();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
@@ -80,6 +87,9 @@ public class ReviewService {
         Review review = optionalReview.get();
         review.setStatus(Status.INACTIVE.getValue());
         reviewRepository.save(review);
+        final Long userId = review.getUser().getId();
+        final NUser nUserById = repoService.findNUserById(userId);
+        nUserById.removeReview(neo4jClient, userId, review.getCoffeeShop().getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 

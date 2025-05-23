@@ -21,4 +21,5 @@ public class NumberUtil {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
+
 }

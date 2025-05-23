@@ -153,8 +153,6 @@ public class UserController extends BaseController {
     @GetMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> getProfile(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser();
-        if (Objects.isNull(user))
-            return ResponseEntity.status(401).build();
         Long currentUserId = user.getId();
         user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
                 ? userRepository.findByDisplayNameAndStatus(displayName,

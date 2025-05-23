@@ -28,4 +28,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
                                     String value);
 
     List<User> findByStatus(String value);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByDisplayName(String displayName);
+
+    @Query(value = "SELECT COUNT(*) > 0 FROM users u JOIN users_likes ul ON u.id = :userId AND u.id = ul.user_id", nativeQuery = true)
+    boolean existsUserLike(@Param("userId") Long id);
+
+    @Query(value = "SELECT COUNT(*) > 0 FROM users u JOIN user_follows ul ON u.id = :userId AND u.id = ul.followee_id", nativeQuery = true)
+    boolean existsUserFollow(@Param("userId") Long id);
 }

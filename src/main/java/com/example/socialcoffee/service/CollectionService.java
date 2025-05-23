@@ -9,7 +9,6 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.CollectionRepository;
-import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -80,7 +79,8 @@ public class CollectionService {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> getCollections(Long coffeeShopId,
+    public ResponseEntity<ResponseMetaData> getCollections(Long userId,
+                                                           Long coffeeShopId,
                                                            PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
                 pageDtoIn.getSize());
@@ -90,7 +90,7 @@ public class CollectionService {
             if (Objects.isNull(coffeeShop))
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        final List<Collection> collections = collectionRepository.findByUser_Id(SecurityUtil.getUserId(),
+        final List<Collection> collections = collectionRepository.findByUser_Id(userId,
                 pageable);
         final CoffeeShop finalCoffeeShop = coffeeShop;
         final List<CollectionVM> collectionVMs = collections.stream().map(c -> new CollectionVM(c,

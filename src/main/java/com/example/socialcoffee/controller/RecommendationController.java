@@ -20,11 +20,36 @@ public class RecommendationController extends BaseController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/for-you")
-    public ResponseEntity<ResponseMetaData> getRecommendationForYou() {
+    @GetMapping("/base-on-your-preference")
+    public ResponseEntity<ResponseMetaData> findBasedOnYourPreferences() {
         User user = getCurrentUser();
-        return recommendationService.getRecommendationForYou(user);
+        return recommendationService.findBasedOnYourPreferences(user);
     }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/similar-place")
+    public ResponseEntity<ResponseMetaData> findSimilarToPlacesYouLike() {
+        User user = getCurrentUser();
+        return recommendationService.findSimilarToPlacesYouLike(user);
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/you-follow")
+    public ResponseEntity<ResponseMetaData> findLikedByPeopleYouFollow() {
+        User user = getCurrentUser();
+        return recommendationService.findLikedByPeopleYouFollow(user);
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/you-may-like")
+    public ResponseEntity<ResponseMetaData> findYouMayLikeRecommendation() {
+        User user = getCurrentUser();
+        return recommendationService.findYouMayLikeRecommendation(user);
+    }
+
+
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/people-with-same-taste")

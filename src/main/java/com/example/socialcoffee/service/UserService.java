@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,8 @@ public class UserService {
     private final ObjectMapper objectMapper;
 
     private final RepoService repoService;
+
+    private final Neo4jClient neo4jClient;
 
     public ResponseEntity<ResponseMetaData> getProfile(User user) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
@@ -292,9 +295,7 @@ public class UserService {
 
         userFollowRepository.deleteById(id);
         NUser u1 = repoService.findNUserById(user.getId());
-        NUser u2 = repoService.findNUserById(unfollowingWhoId);
-        u1.removeFollowing(u2);
-        repoService.saveNUser(u1);
+        u1.removeFollowing(neo4jClient, u1.getId(), unfollowingWhoId);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 

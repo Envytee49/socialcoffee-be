@@ -59,7 +59,7 @@ public class ReviewController extends BaseController {
     }
 
     @PostMapping("/migrate/reviews")
-    public ResponseEntity<ResponseMetaData> migrateReviews(@RequestBody List<Review> reviews) {
+    public ResponseEntity<ResponseMetaData> migrateReviews() {
         repoService.migrateReviews();
         return ResponseEntity.ok().build();
     }

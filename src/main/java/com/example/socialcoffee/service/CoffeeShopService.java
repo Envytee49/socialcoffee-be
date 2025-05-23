@@ -11,7 +11,6 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
-import com.example.socialcoffee.model.CoffeeShopMoodCountDTO;
 import com.example.socialcoffee.neo4j.NCoffeeShop;
 import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.neo4j.feature.*;
@@ -28,10 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +71,8 @@ public class CoffeeShopService {
     private final NotificationService notificationService;
 
     private final CoffeeShopMoodRepository coffeeShopMoodRepository;
+
+    private final Neo4jClient neo4jClient;
 
     public ResponseEntity<ResponseMetaData> getAllCoffeeShop(final Double lat,
                                                              final Double lng,
@@ -136,23 +139,25 @@ public class CoffeeShopService {
                                            Integer page,
                                            Integer size,
                                            Sort sort) {
-        Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request,
-                page,
-                size,
-                sort);
-        List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
-                        request.getLatitude(),
-                        request.getLongitude()))
-                .collect(Collectors.toList());
-//        if (ObjectUtils.allNotNull(request.getDistance(),
-//                                   request.getLongitude(),
-//                                   request.getLatitude())) {
-//            coffeeShopVMs.sort(Comparator.comparing(CoffeeShopVM::getDistance));
-//        }
-        return PageDtoOut.from(page,
-                size,
-                coffeeShops.getTotalElements(),
-                coffeeShopVMs);
+        try {
+            Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request,
+                    page,
+                    size,
+                    sort);
+            List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
+                            request.getLatitude(),
+                            request.getLongitude()))
+                    .collect(Collectors.toList());
+            return PageDtoOut.from(page,
+                    size,
+                    coffeeShops.getTotalElements(),
+                    coffeeShopVMs);
+        } catch (EmptyResultDataAccessException e) {
+            return PageDtoOut.from(page,
+                    size,
+                    0,
+                    Collections.emptyList());
+        }
     }
 
     public ResponseEntity<ResponseMetaData> getSponsoredCoffeeShop(Double latitude,
@@ -265,12 +270,36 @@ public class CoffeeShopService {
     public ResponseEntity<ResponseMetaData> unlikeCoffeeShop(Long shopId,
                                                              User currentUser) {
         NUser nUser = repoService.findNUserById(currentUser.getId());
-        nUser.removeLike(repoService.findNCoffeeShopById(shopId));
-        repoService.saveNUser(nUser);
-        final CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
-        currentUser.removeLike(coffeeShop);
-        userRepository.save(currentUser);
+        nUser.removeLike(neo4jClient, currentUser.getId(), shopId);
         return ResponseEntity.ok().build();
+    }
+
+    private Address buildAddress(CreateCoffeeShopRequest req) {
+        return Address.builder()
+                .googleMapUrl(req.getGoogleMapUrl())
+                .addressDetail(req.getAddressDetail())
+                .province(req.getProvince())
+                .district(req.getDistrict())
+                .ward(req.getWard())
+                .longitude(req.getLongitude())
+                .latitude(req.getLatitude())
+                .location(GeometryUtil.parseLocation(req.getLongitude(),
+                        req.getLatitude()))
+                .build();
+    }
+
+    private Address buildAddress(ContributionRequest req) {
+        return Address.builder()
+                .googleMapUrl(req.getGoogleMapUrl())
+                .addressDetail(req.getAddressDetail())
+                .province(req.getProvince())
+                .district(req.getDistrict())
+                .ward(req.getWard())
+                .longitude(req.getLongitude())
+                .latitude(req.getLatitude())
+                .location(GeometryUtil.parseLocation(req.getLongitude(),
+                        req.getLatitude()))
+                .build();
     }
 
     @Transactional
@@ -422,23 +451,9 @@ public class CoffeeShopService {
                 coffeeShop));
     }
 
-    private Address buildAddress(CreateCoffeeShopRequest req) {
-        return Address.builder()
-                .googleMapUrl(req.getGoogleMapUrl())
-                .addressDetail(req.getAddressDetail())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .longitude(req.getLongitude())
-                .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                        req.getLatitude()))
-                .build();
-    }
 
     @Transactional
-    public void createCoffeeShop(User user,
-                                 ContributionRequest req) {
+    public void createCoffeeShop(ContributionRequest req) {
         Address address = buildAddress(req);
         log.info("Start create coffee shop with name = {}",
                 req.getName());
@@ -590,20 +605,6 @@ public class CoffeeShopService {
         log.info("Finish create coffee shop with name = {}, id = {}",
                 req.getName(),
                 coffeeShop.getId());
-    }
-
-    private Address buildAddress(ContributionRequest req) {
-        return Address.builder()
-                .googleMapUrl(req.getGoogleMapUrl())
-                .addressDetail(req.getAddressDetail())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .longitude(req.getLongitude())
-                .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                        req.getLatitude()))
-                .build();
     }
 
     @Transactional
@@ -809,6 +810,15 @@ public class CoffeeShopService {
         address.setLatitude(req.getLatitude());
     }
 
+
+    private String objectToString(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public ResponseEntity<ResponseMetaData> contributeCoffeeShop(User user,
                                                                  MultipartFile coverPhoto,
                                                                  MultipartFile[] galleryPhotos,
@@ -824,19 +834,12 @@ public class CoffeeShopService {
         contribution.setStatus(Status.PENDING.getValue());
         contribution.setType(ContributionType.CONTRIBUTED.getValue());
         CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
-        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenContribute(user.getDisplayName(), saved.getName()));
+        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenContribute(user.getDisplayName(),
+                saved.getName()));
         log.info("Finish contribute coffee shop with name = {}, id = {}",
                 req.getName(),
                 saved.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
-    }
-
-    private String objectToString(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public ResponseEntity<ResponseMetaData> suggestAnEdit(User user,
@@ -857,7 +860,8 @@ public class CoffeeShopService {
         contribution.setType(ContributionType.SUGGESTED.getValue());
         contribution.setCoffeeShop(coffeeShop);
         CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
-        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenSuggestAnEdit(user.getDisplayName(), saved.getName()));
+        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenSuggestAnEdit(user.getDisplayName(),
+                saved.getName()));
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
@@ -904,7 +908,9 @@ public class CoffeeShopService {
     }
 
     @Transactional
-    public void toggleCoffeeShopMood(Long shopId, Long userId, String mood) {
+    public void toggleCoffeeShopMood(Long shopId,
+                                     Long userId,
+                                     String mood) {
         // Validate mood
         try {
             Mood.valueOf(mood.toUpperCase());
@@ -914,7 +920,9 @@ public class CoffeeShopService {
 
         // Check if mood exists for user and shop
         CoffeeShopMood existingMood = coffeeShopMoodRepository
-                .findByShopIdAndUserIdAndMood(shopId, userId, mood);
+                .findByShopIdAndUserIdAndMood(shopId,
+                        userId,
+                        mood);
 
         if (existingMood != null) {
             // Mood exists, remove it
@@ -944,22 +952,31 @@ public class CoffeeShopService {
         for (Long userId : userIds) {
             for (Long shopId : shopIds) {
                 // Clear existing moods for this user and shop
-                coffeeShopMoodRepository.deleteByShopIdAndUserId(shopId, userId);
+                coffeeShopMoodRepository.deleteByShopIdAndUserId(shopId,
+                        userId);
 
                 // Randomly assign 1 or 2 moods
                 int numMoods = random.nextInt(2) + 1; // 1 or 2
                 for (int i = 0; i < numMoods; i++) {
                     String mood = moods[random.nextInt(moods.length)].getValue();
                     // Avoid duplicate moods for the same shop and user
-                    if (coffeeShopMoodRepository.findByShopIdAndUserIdAndMood(shopId, userId, mood) == null) {
-                        log.info("Save coffee shop id = {}, user id = {}, mood = {}", shopId, userId, mood);
+                    if (coffeeShopMoodRepository.findByShopIdAndUserIdAndMood(shopId,
+                            userId,
+                            mood) == null) {
+                        log.info("Save coffee shop id = {}, user id = {}, mood = {}",
+                                shopId,
+                                userId,
+                                mood);
                         CoffeeShopMood newMood = CoffeeShopMood.builder()
                                 .shopId(shopId)
                                 .userId(userId)
                                 .mood(mood)
                                 .build();
                         coffeeShopMoodRepository.save(newMood);
-                        log.info("Finish coffee shop id = {}, user id = {}, mood = {}", shopId, userId, mood);
+                        log.info("Finish coffee shop id = {}, user id = {}, mood = {}",
+                                shopId,
+                                userId,
+                                mood);
                     }
                 }
             }
@@ -967,23 +984,43 @@ public class CoffeeShopService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Long> getCoffeeShopMoodCounts(Long shopId) {
+    public MoodCountDto getCoffeeShopMoodCounts(Long shopId) {
+        MoodCountDto moodCountDto = new MoodCountDto();
         List<CoffeeShopMood> moods = coffeeShopMoodRepository.findByShopId(shopId);
         Map<String, Long> moodCounts = new HashMap<>();
         for (Mood mood : Mood.values()) {
-            moodCounts.put(mood.getValue(), 0L);
+            moodCounts.put(mood.getValue(),
+                    0L);
         }
         for (CoffeeShopMood mood : moods) {
-            moodCounts.merge(mood.getMood(), 1L, Long::sum);
+            moodCounts.merge(mood.getMood(),
+                    1L,
+                    Long::sum);
         }
-        return moodCounts;
+        moodCountDto.setMoodCounts(moodCounts);
+        List<String> userMoodCounts = new ArrayList<>();
+        final List<CoffeeShopMood> userMoodCheckedList = moods.stream().filter(m -> m.getUserId().equals(SecurityUtil.getUserId())).toList();
+        for (final CoffeeShopMood coffeeShopMood : userMoodCheckedList) {
+            userMoodCounts.add(coffeeShopMood.getMood().toLowerCase());
+        }
+        moodCountDto.setUserMoodCounts(userMoodCounts);
+        return moodCountDto;
     }
 
-    public PageDtoOut<CoffeeShopVM> searchByMood(Mood mood, Double latitude, Double longitude, PageRequest pageRequest) {
-        Page<CoffeeShopMoodCountDTO> topCoffeeShopByMood = coffeeShopRepository.findTopCoffeeShopByMood(mood.getValue(), pageRequest);
-        List<CoffeeShopVM> coffeeShopVMs = topCoffeeShopByMood.getContent().stream().map(c -> CoffeeShopVM.toVM(c,
+    public PageDtoOut<CoffeeShopVM> searchByMood(Mood mood,
+                                                 Double latitude,
+                                                 Double longitude,
+                                                 PageRequest pageRequest) {
+        Page<Long> topCoffeeShopByMood = coffeeShopRepository.findTopCoffeeShopByMood(mood.getValue(),
+                pageRequest);
+        List<CoffeeShop> coffeeShops = coffeeShopRepository.findAllById(topCoffeeShopByMood.getContent());
+        List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                 latitude,
-                longitude)).toList();
+                longitude)).collect(Collectors.toList());
+//        coffeeShopVMs.sort(
+//                Comparator.comparing(CoffeeShopVM::getAverageRating, Comparator.nullsLast(Comparator.reverseOrder()))
+//                        .thenComparing(CoffeeShopVM::getReviewCounts, Comparator.nullsLast(Comparator.reverseOrder()))
+//        );
 
         PageDtoOut<CoffeeShopVM> res = PageDtoOut.from(pageRequest.getPageNumber(),
                 pageRequest.getPageSize(),

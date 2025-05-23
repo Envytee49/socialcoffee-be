@@ -23,4 +23,12 @@ public interface CommonConstant {
     String LATITUDE = "lat";
 
     String LONGITUDE = "lng";
+
+    String MAY_LIKE = "may_like:";
+
+    String PREFERENCE = "preference:";
+
+    String SIMILAR_PLACE = "similar_place:";
+
+    String YOU_FOLLOW = "you_follow:";
 }

@@ -22,7 +22,7 @@ public class CollectionController extends BaseController {
     public ResponseEntity<ResponseMetaData> getCollections(@RequestParam(value = "displayName", required = false) String displayName,
                                                            @RequestParam(value = "shopId", required = false) Long coffeeShopId,
                                                            PageDtoIn pageDtoIn) {
-        return collectionService.getCollections(coffeeShopId,
+        return collectionService.getCollections(getCurrentUser(displayName).getId(),coffeeShopId,
                 pageDtoIn);
     }
 

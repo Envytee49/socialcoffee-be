@@ -1,7 +1,7 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.configuration.ConfigResource;
-import com.example.socialcoffee.dto.request.BasicAuthRequest;
+import com.example.socialcoffee.dto.request.RegisterRequest;
 import com.example.socialcoffee.dto.request.UpdateNewPassword;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.enums.AuthAction;
@@ -23,7 +23,6 @@ import java.util.List;
 @Slf4j
 public class ValidationService {
     private final ConfigResource configResource;
-
     public List<MetaDTO> validationCommentPost(String content, MultipartFile[] file, boolean isCreateComment) {
         List<MetaDTO> metaDTOList = new ArrayList<>();
         content = StringUtils.trimToEmpty(content);
@@ -39,27 +38,7 @@ public class ValidationService {
         return metaDTOList;
     }
 
-    public List<MetaDTO> validateBasicAuthRequest(BasicAuthRequest request, String authAction) {
-        List<MetaDTO> metaList = new ArrayList<>();
-
-        if (StringUtils.isBlank(request.getUsername())) {
-            log.warn("Username is missing");
-            metaList.add(new MetaDTO(MetaData.USERNAME_MISSING));
-        }
-
-        if (StringUtils.isBlank(request.getPassword())) {
-            log.warn("Password is missing");
-            metaList.add(new MetaDTO(MetaData.PASSWORD_MISSING));
-        } else if (AuthAction.REGISTER.getValue().equalsIgnoreCase(authAction) &&
-                !isSecurePassword(request.getPassword())) {
-            log.warn("Password does not meet security requirements");
-            metaList.add(new MetaDTO(MetaData.PASSWORD_INVALID));
-        }
-
-        return metaList;
-    }
-
-    private boolean isSecurePassword(String password) {
+    public boolean isSecurePassword(String password) {
         // Password should be at least 15 characters long
         if (password.length() < 8) {
             return false;
@@ -83,7 +62,6 @@ public class ValidationService {
         // Password should contain at least one special character
         return password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
     }
-
     public List<MetaDTO> validateUpdateNewPassword(UpdateNewPassword updateNewPassword) {
         List<MetaDTO> metaList = new ArrayList<>();
         if (StringUtils.isBlank(updateNewPassword.getNewPassword())
@@ -102,7 +80,7 @@ public class ValidationService {
 
     public List<MetaDTO> validateReviewReact(String reaction) {
         List<MetaDTO> metaList = new ArrayList<>();
-        if (!ReviewVote.reactionIsExist(reaction)) {
+        if(!ReviewVote.reactionIsExist(reaction)) {
             metaList.add(new MetaDTO(MetaData.INVALID_REACTION));
         }
         return metaList;
