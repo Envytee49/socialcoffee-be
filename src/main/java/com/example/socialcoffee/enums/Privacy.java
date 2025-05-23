@@ -9,6 +9,7 @@ public enum Privacy {
     PUBLIC("public"),
     PRIVATE("private"),
     FOLLOWER("follower");
+
     private final String value;
 
     Privacy(String value) {

@@ -19,9 +19,13 @@ import java.util.Set;
 public class NCoffeeShop {
     @Id
     private Long id;
+
     private String name;
+
     private String coverPhoto;
+
     private String status = Status.ACTIVE.getValue();
+
     @JsonIgnore
     @Relationship(type = "HAS_FEATURE", direction = Relationship.Direction.OUTGOING)
     private Set<HasFeature> hasFeatures;

@@ -17,88 +17,88 @@ public class CoffeeShopSpecification {
 
             if (request.getName() != null && !request.getName().isEmpty()) {
                 predicate = criteriaBuilder.and(predicate,
-                                                criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
-                                                                     "%" + request.getName().toLowerCase() + "%"));
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                                "%" + request.getName().toLowerCase() + "%"));
             }
 
             if (request.getProvince() != null && !request.getProvince().isEmpty()) {
                 predicate = criteriaBuilder.and(predicate,
-                                                criteriaBuilder.equal(root.get("address").get("province"),
-                                                                      request.getProvince()));
+                        criteriaBuilder.equal(root.get("address").get("province"),
+                                request.getProvince()));
             }
 
             if (request.getDistrict() != null && !request.getDistrict().isEmpty()) {
                 predicate = criteriaBuilder.and(predicate,
-                                                criteriaBuilder.equal(root.get("address").get("district"),
-                                                                      request.getDistrict()));
+                        criteriaBuilder.equal(root.get("address").get("district"),
+                                request.getDistrict()));
             }
 
             if (request.getWard() != null && !request.getWard().isEmpty()) {
                 predicate = criteriaBuilder.and(predicate,
-                                                criteriaBuilder.equal(root.get("address").get("ward"),
-                                                                      request.getWard()));
+                        criteriaBuilder.equal(root.get("address").get("ward"),
+                                request.getWard()));
             }
 
             predicate = addListPredicate(request.getAmbiances(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "ambiances");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "ambiances");
             predicate = addListPredicate(request.getAmenities(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "amenities");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "amenities");
             predicate = addListPredicate(request.getCapacities(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "capacities");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "capacities");
             predicate = addListPredicate(request.getCategories(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "categories");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "categories");
             predicate = addListPredicate(request.getEntertainments(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "entertainments");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "entertainments");
             predicate = addListPredicate(request.getParkings(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "parkings");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "parkings");
             predicate = addListPredicate(request.getPrices(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "prices");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "prices");
             predicate = addListPredicate(request.getPurposes(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "purposes");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "purposes");
             predicate = addListPredicate(request.getServiceTypes(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "serviceTypes");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "serviceTypes");
             predicate = addListPredicate(request.getSpaces(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "spaces");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "spaces");
             predicate = addListPredicate(request.getSpecialties(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "specialties");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "specialties");
             predicate = addListPredicate(request.getVisitTimes(),
-                                         root,
-                                         criteriaBuilder,
-                                         predicate,
-                                         "visitTimes");
+                    root,
+                    criteriaBuilder,
+                    predicate,
+                    "visitTimes");
 
             if (request.getSort() != null) {
                 Join<CoffeeShop, Review> coffeeShopReviews = root.join("reviews", JoinType.LEFT);
@@ -125,7 +125,7 @@ public class CoffeeShopSpecification {
                                               String fieldName) {
         if (values != null && !values.isEmpty()) {
             return cb.and(predicate,
-                          root.join(fieldName).get("id").in(values));
+                    root.join(fieldName).get("id").in(values));
         }
         return predicate;
     }

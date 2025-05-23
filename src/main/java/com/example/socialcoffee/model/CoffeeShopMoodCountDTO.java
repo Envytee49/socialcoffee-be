@@ -6,23 +6,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface CoffeeShopMoodCountDTO {
-     Long getShopId();
-     String getShopName();
-     String getCoverPhoto();
-     String getPhoneNumber();
-     String getWebAddress();
-     Integer getOpenHour();
-     Integer getCloseHour();
-     String getAddressDetail();
-     String getProvince();
-     String getDistrict();
-     String getWard();
-     Double getLatitude();
-     Double getLongitude();
-     String getMood();
-     Long getMoodCount();
-     Double getAverageRating();
-     Long getReviewCount();
+    Long getShopId();
+
+    String getShopName();
+
+    String getCoverPhoto();
+
+    String getPhoneNumber();
+
+    String getWebAddress();
+
+    Integer getOpenHour();
+
+    Integer getCloseHour();
+
+    String getAddressDetail();
+
+    Double getLatitude();
+
+    Double getLongitude();
+
+    String getMood();
+
+    Long getMoodCount();
+
+    Double getAverageRating();
+
+    Long getReviewCount();
 
     @JsonIgnore
     default String getOverviewAddress() {
@@ -40,5 +50,11 @@ public interface CoffeeShopMoodCountDTO {
 
         return String.join(", ", parts);
     }
+
+    String getProvince();
+
+    String getDistrict();
+
+    String getWard();
 
 }

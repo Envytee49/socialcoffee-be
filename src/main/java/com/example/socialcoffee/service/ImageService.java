@@ -18,9 +18,11 @@ import java.util.Objects;
 @Slf4j
 public class ImageService {
     private final ImageRepository imageRepository;
+
     private final CloudinaryService cloudinaryService;
+
     public List<Image> save(MultipartFile[] files) {
-        if(Objects.isNull(files) || files.length == 0) return new ArrayList<>();
+        if (Objects.isNull(files) || files.length == 0) return new ArrayList<>();
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : files) {
             String url = cloudinaryService.upload(file);
@@ -34,7 +36,7 @@ public class ImageService {
     }
 
     public List<Image> save(List<String> paths) {
-        if(CollectionUtils.isEmpty(paths)) return new ArrayList<>();
+        if (CollectionUtils.isEmpty(paths)) return new ArrayList<>();
         List<Image> images = new ArrayList<>();
         for (String path : paths) {
             Image image = Image.builder()
@@ -47,11 +49,11 @@ public class ImageService {
     }
 
     public List<String> getImagePath(MultipartFile[] files) {
-        if(Objects.isNull(files) || files.length == 0) return new ArrayList<>();
+        if (Objects.isNull(files) || files.length == 0) return new ArrayList<>();
         List<String> images = new ArrayList<>();
         for (MultipartFile file : files) {
             String url = cloudinaryService.upload(file);
-            if(StringUtils.isNotBlank(url)) images.add(url);
+            if (StringUtils.isNotBlank(url)) images.add(url);
         }
         return images;
     }

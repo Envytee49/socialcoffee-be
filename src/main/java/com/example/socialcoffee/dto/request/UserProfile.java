@@ -7,19 +7,39 @@ import lombok.Getter;
 @Getter
 public class UserProfile {
     private Long userId;
+
     private String profileUrl;
+
     private String backgroundUrl;
+
     private String bio;
+
     private String username;
+
     private String displayName;
+
     private String phone;
+
     private String email;
+
     private String gender;
+
     private String dob;
+
     private String YYYYMMDDdob;
+
     private String location;
+
     private String joined;
+
     private Boolean isFollowing;
+
+    public UserProfile(User user,
+                       boolean isFollowing) {
+        this(user);
+        this.isFollowing = isFollowing;
+    }
+
     public UserProfile(User user) {
         this.userId = user.getId();
         this.profileUrl = user.getProfilePhoto();
@@ -34,11 +54,5 @@ public class UserProfile {
         this.YYYYMMDDdob = DateTimeUtil.covertLocalDateToYYYYMMDDString(user.getDob());
         this.dob = DateTimeUtil.covertLocalDateToString(user.getDob());
         this.gender = user.getGender();
-    }
-
-    public UserProfile(User user,
-                       boolean isFollowing) {
-        this(user);
-        this.isFollowing = isFollowing;
     }
 }

@@ -28,22 +28,39 @@ import java.util.*;
 @Slf4j
 public class RepoService {
     private final UserRepository userRepository;
+
     private final NUserRepository nUserRepository;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final NCoffeeShopRepository nCoffeeShopRepository;
+
     private final NFeatureRepository nFeatureRepository;
+
     private final NAmbianceRepository nAmbianceRepository;
+
     private final NAmenityRepository nAmenityRepository;
+
     private final NCapacityRepository nCapacityRepository;
+
     private final NDressCodeRepository nDressCodeRepository;
+
     private final NEntertainmentRepository nEntertainmentRepository;
+
     private final NParkingRepository nParkingRepository;
+
     private final NPriceRepository nPriceRepository;
+
     private final NServiceTypeRepository nServiceTypeRepository;
+
     private final NSpaceRepository nSpaceRepository;
+
     private final NSpecialtyRepository nSpecialtyRepository;
+
     private final NVisitTimeRepository nVisitTimeRepository;
+
     private final NCategoryRepository nCategoryRepository;
+
     private final NPurposeRepository nPurposeRepository;
 
     private final ReviewRepository reviewRepository;
@@ -338,7 +355,7 @@ public class RepoService {
     public NCoffeeShop findNCoffeeShopById(Long shopId) {
         return nCoffeeShopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Coffee Shop " +
-                                                                 shopId));
+                        shopId));
     }
 
     @Transactional

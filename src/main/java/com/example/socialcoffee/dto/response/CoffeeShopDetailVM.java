@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,36 +20,67 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class CoffeeShopDetailVM {
     private Long id;
+
     private String name;
+
     private String coverPhoto;
+
     private String phoneNumber;
+
     private String webAddress;
+
     private String menuWebAddress;
+
     private String additionInfo;
+
     private String openHour;
+
     private String closeHour;
+
     private String open;
+
     private String close;
+
     private String isOpen;
+
     private String status;
+
     private Boolean isSponsored;
+
     private List<Image> galleryPhotos;
+
     private Address address;
+
     private String description;
+
     private Double averageRating;
+
     private Long reviewCounts;
+
     private List<FeatureDTO.AmbianceDto> ambiances;
+
     private List<FeatureDTO.AmenityDto> amenities;
+
     private List<FeatureDTO.CapacityDto> capacities;
+
     private List<FeatureDTO.CategoryDto> categories;
+
     private List<FeatureDTO.DressCodeDto> dressCodes;
+
     private List<FeatureDTO.EntertainmentDto> entertainments;
+
     private List<FeatureDTO.ParkingDto> parkings;
+
     private List<FeatureDTO.PriceDto> prices;
+
     private List<FeatureDTO.PurposeDto> purposes;
+
     private List<FeatureDTO.ServiceTypeDto> serviceTypes;
+
     private List<FeatureDTO.SpaceDto> spaces;
+
     private List<FeatureDTO.SpecialtyDto> specialties;
+
     private List<FeatureDTO.VisitTimeDto> visitTimes;
 
     public CoffeeShopDetailVM(CoffeeShop coffeeShop) {
@@ -68,13 +98,14 @@ public class CoffeeShopDetailVM {
         this.galleryPhotos = coffeeShop.getGalleryPhotos();
         this.address = coffeeShop.getAddress();
         this.status = DateTimeUtil.checkCurrentOpenStatus(coffeeShop.getOpenHour(),
-                                                          coffeeShop.getCloseHour());
+                coffeeShop.getCloseHour());
         this.averageRating = NumberUtil.roundToTwoDecimals(coffeeShop.getAverageRating());
         this.isSponsored = coffeeShop.getIsSponsored();
         this.reviewCounts = coffeeShop.getReviewCount();
         this.description = coffeeShop.getDescription();
         mapFeaturesFromEntity(coffeeShop);
     }
+
     public void mapFeaturesFromEntity(CoffeeShop coffeeShop) {
         this.ambiances = coffeeShop.getAmbiances().stream()
                 .map(amb -> {
@@ -180,14 +211,13 @@ public class CoffeeShopDetailVM {
                     return dto;
                 }).collect(Collectors.toList());
     }
+
     public void setFeatureDto(SearchFilter preference) {
         if (preference.getAmbiances() != null
                 && this.ambiances != null) {
             var ids = preference.getAmbiances().stream().map(Ambiance::getId).toList();
             this.ambiances.forEach(dto -> dto.setSet(ids.contains(dto.getId())));
-        } else
-
-        if (preference.getAmenities() != null && this.amenities != null) {
+        } else if (preference.getAmenities() != null && this.amenities != null) {
             var ids = preference.getAmenities().stream().map(Amenity::getId).toList();
             this.amenities.forEach(dto -> dto.setSet(ids.contains(dto.getId())));
         }
@@ -248,9 +278,7 @@ public class CoffeeShopDetailVM {
                 && this.ambiances != null) {
             var ids = filter.getAmbiances();
             this.ambiances.forEach(dto -> dto.setInSearchPrompt(ids.contains(dto.getId())));
-        } else
-
-        if (filter.getAmenities() != null && this.amenities != null) {
+        } else if (filter.getAmenities() != null && this.amenities != null) {
             var ids = filter.getAmenities();
             this.amenities.forEach(dto -> dto.setInSearchPrompt(ids.contains(dto.getId())));
         }

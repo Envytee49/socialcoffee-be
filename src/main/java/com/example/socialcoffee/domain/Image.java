@@ -15,11 +15,17 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String url;
+
     private String thumbnailUrl;
+
     private double width;
+
     private double height;
+
     private double size;
+
     private String status = Status.ACTIVE.getValue();
 
     @Override

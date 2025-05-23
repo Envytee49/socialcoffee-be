@@ -9,9 +9,8 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
-import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
-import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.*;
+import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -84,8 +83,7 @@ public class ReviewService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> getReviewByShopId(final User user,
-                                                              Long shopId,
+    public ResponseEntity<ResponseMetaData> getReviewByShopId(Long shopId,
                                                               PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
                 pageDtoIn.getSize(),
@@ -102,7 +100,7 @@ public class ReviewService {
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
-                .map(r -> new ReviewVM(user.getId(),
+                .map(r -> new ReviewVM(SecurityUtil.getUserId(),
                         r,
                         groupedReactions.getOrDefault(r.getId(),
                                 null)))
@@ -197,15 +195,14 @@ public class ReviewService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> react(User user,
-                                                  Long reviewId,
+    public ResponseEntity<ResponseMetaData> react(Long reviewId,
                                                   String reaction) {
         Optional<Review> optionalReview = reviewRepository.findById(reviewId);
         if (optionalReview.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         ReviewReaction.ReviewReactionId reviewReactionId = new ReviewReaction.ReviewReactionId(reviewId,
-                user.getId());
+                SecurityUtil.getUserId());
         Optional<ReviewReaction> optionalReviewReaction = reviewReactionRepository.findById(reviewReactionId);
         if (optionalReviewReaction.isEmpty()) {
             ReviewReaction reviewReaction = new ReviewReaction(reviewReactionId,
@@ -223,9 +220,8 @@ public class ReviewService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> getReviews(final User user,
-                                                       PageDtoIn pageDtoIn,
-                                                       final String sortBy) {
+    public ResponseEntity<ResponseMetaData> getReviews(PageDtoIn pageDtoIn,
+                                                       String sortBy) {
         PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage(),
                 pageDtoIn.getSize());
 
@@ -235,7 +231,7 @@ public class ReviewService {
 
         List<ReviewVM> reviewVMS = reviews.getContent()
                 .stream()
-                .map(r -> new ReviewVM(user.getId(),
+                .map(r -> new ReviewVM(SecurityUtil.getUserId(),
                         r,
                         userReactionMap.getOrDefault(r.getId(),
                                 null)))
@@ -305,6 +301,4 @@ public class ReviewService {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 userDTOS));
     }
-
-
 }

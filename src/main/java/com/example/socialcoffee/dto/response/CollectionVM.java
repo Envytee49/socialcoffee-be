@@ -13,16 +13,21 @@ import java.util.Objects;
 @NoArgsConstructor
 public class CollectionVM {
     private Long id;
+
     private String name;
+
     private String coverUrl;
+
     private Integer totalItem;
+
     private Boolean isSaved;
+
     public CollectionVM(Collection collection, CoffeeShop coffeeShop) {
         this.id = collection.getId();
         this.name = collection.getName();
         this.coverUrl = collection.getCoverUrl();
         this.totalItem = collection.getCoffeeShops().size();
-        if(Objects.nonNull(coffeeShop)) {
+        if (Objects.nonNull(coffeeShop)) {
             this.isSaved = collection.getCoffeeShops().contains(coffeeShop);
         }
     }

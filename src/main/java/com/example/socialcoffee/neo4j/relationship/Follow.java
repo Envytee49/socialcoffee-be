@@ -1,7 +1,6 @@
 package com.example.socialcoffee.neo4j.relationship;
 
 import com.example.socialcoffee.neo4j.NUser;
-import com.example.socialcoffee.neo4j.feature.NFeature;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,26 +19,29 @@ import java.util.Objects;
 @Setter
 @Builder
 public class Follow {
+    @CreatedDate
+    protected LocalDateTime createdAt;
+
+    @LastModifiedDate
+    protected LocalDateTime updatedAt;
+
     @Id
     @GeneratedValue
     private String id;
-    @CreatedDate
-    protected LocalDateTime createdAt;
-    @LastModifiedDate
-    protected LocalDateTime updatedAt;
+
     @TargetNode
     private NUser user;
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(user);
+    }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (!(o instanceof final Follow follow)) return false;
         return Objects.equals(user.getId(),
-                              follow.user.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(user);
+                follow.user.getId());
     }
 }

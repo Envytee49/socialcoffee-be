@@ -6,6 +6,7 @@ import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.ContributionRequest;
+import com.example.socialcoffee.dto.request.EditReviewRequest;
 import com.example.socialcoffee.dto.request.MoodRequest;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.dto.response.MetaDTO;
@@ -15,6 +16,8 @@ import com.example.socialcoffee.enums.Mood;
 import com.example.socialcoffee.exception.UnauthorizedException;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.service.CoffeeShopService;
+import com.example.socialcoffee.service.ReviewService;
+import com.example.socialcoffee.service.ValidationService;
 import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import jakarta.validation.Valid;
@@ -26,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,7 +45,12 @@ import java.util.Objects;
 public class CoffeeShopController extends BaseController {
 
     private final CoffeeShopService coffeeShopService;
+
     private final AddressRepository addressRepository;
+
+    private final ReviewService reviewService;
+
+    private final ValidationService validationService;
 
 
     @PostMapping(value = "/coffee-shops/contribute", consumes = "multipart/form-data")
@@ -51,16 +60,16 @@ public class CoffeeShopController extends BaseController {
                                                                  @RequestPart(required = false) MultipartFile[] galleryPhotos) {
         User user = getCurrentUser();
         return coffeeShopService.contributeCoffeeShop(user,
-                                                      coverPhoto,
-                                                      galleryPhotos,
-                                                      request);
+                coverPhoto,
+                galleryPhotos,
+                request);
     }
 
     @GetMapping(value = "/coffee-shops/sponsored")
     public ResponseEntity<ResponseMetaData> getSponsoredCoffeeShop(@RequestParam(required = false) Double latitude,
                                                                    @RequestParam(required = false) Double longitude) {
         return coffeeShopService.getSponsoredCoffeeShop(latitude,
-                                                        longitude);
+                longitude);
     }
 
 
@@ -72,10 +81,10 @@ public class CoffeeShopController extends BaseController {
                                                               @PathVariable Long id) {
         User user = getCurrentUser();
         return coffeeShopService.suggestAnEdit(user,
-                                               coverPhoto,
-                                               galleryPhotos,
-                                               request,
-                                               id);
+                coverPhoto,
+                galleryPhotos,
+                request,
+                id);
     }
 
     @PutMapping(value = "/coffee-shops/contributions/{contributionId}", consumes = "multipart/form-data")
@@ -84,8 +93,8 @@ public class CoffeeShopController extends BaseController {
                                                              @RequestPart(required = false) MultipartFile[] galleryPhotos,
                                                              @PathVariable Long contributionId) {
         return coffeeShopService.editContribution(galleryPhotos,
-                                                  request,
-                                                  contributionId);
+                request,
+                contributionId);
     }
 
     @GetMapping("/coffee-shops/{id}")
@@ -95,14 +104,14 @@ public class CoffeeShopController extends BaseController {
         if (SecurityUtil.isAuthenticated()) {
             final Long userId = SecurityUtil.getUserId();
             if (SecurityUtil.isAdmin() || !Objects.equals(userId,
-                                                          NumberUtils.LONG_ZERO)) {
+                    NumberUtils.LONG_ZERO)) {
                 user = getCurrentUser(userId);
             } else throw new UnauthorizedException();
         }
 
         return coffeeShopService.getCoffeeShopById(id,
-                                                   user,
-                                                   filter);
+                user,
+                filter);
     }
 
     @GetMapping("/coffee-shops/{id}/suggest-an-edit")
@@ -118,25 +127,25 @@ public class CoffeeShopController extends BaseController {
             Pageable pageable
     ) {
         return coffeeShopService.getAllCoffeeShop(lat,
-                                                  lng,
-                                                  pageable);
+                lng,
+                pageable);
     }
 
     @GetMapping("/coffee-shops/search-filters")
     public ResponseEntity<ResponseMetaData> getSearchFilters() {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             coffeeShopService.getSearchFilters()));
+                coffeeShopService.getSearchFilters()));
     }
 
     @GetMapping("/coffee-shops/search")
     public ResponseEntity<ResponseMetaData> searchCoffeeShop(CoffeeShopSearchRequest request,
                                                              PageDtoIn pageDtoIn) {
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(request,
-                                                                             pageDtoIn.getPage() - 1,
-                                                                             pageDtoIn.getSize(),
-                                                                             Sort.unsorted());
+                pageDtoIn.getPage() - 1,
+                pageDtoIn.getSize(),
+                Sort.unsorted());
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+                pageDtoOut));
     }
 
     @GetMapping("/coffee-shops/search")
@@ -162,7 +171,7 @@ public class CoffeeShopController extends BaseController {
                 address.setLongitude(tmp);
             }
             Point point = GeometryUtil.parseLocation(address.getLongitude(),
-                                                     address.getLatitude());
+                    address.getLatitude());
             if (point == null || point.isEmpty()) {
                 System.err.println("Failed to create Point for address ID " + address.getId());
                 continue;
@@ -181,13 +190,13 @@ public class CoffeeShopController extends BaseController {
     @PutMapping("/coffee-shops/{shopId}/like")
     public ResponseEntity<ResponseMetaData> likeCoffeeShops(@PathVariable Long shopId) {
         return coffeeShopService.likeCoffeeShop(shopId,
-                                                getCurrentUser());
+                getCurrentUser());
     }
 
     @PutMapping("/coffee-shops/{shopId}/unlike")
     public ResponseEntity<ResponseMetaData> unlikeCoffeeShops(@PathVariable Long shopId) {
         return coffeeShopService.unlikeCoffeeShop(shopId,
-                                                  getCurrentUser());
+                getCurrentUser());
     }
 
     @PutMapping("/coffee-shops/{shopId}/mood")
@@ -196,8 +205,8 @@ public class CoffeeShopController extends BaseController {
             @RequestBody MoodRequest moodRequest
     ) {
         coffeeShopService.toggleCoffeeShopMood(shopId,
-                                               getCurrentUser().getId(),
-                                               moodRequest.getMood());
+                getCurrentUser().getId(),
+                moodRequest.getMood());
         return ResponseEntity.ok().body(new ResponseMetaData(
                 new MetaDTO(MetaData.SUCCESS)));
     }
@@ -217,6 +226,46 @@ public class CoffeeShopController extends BaseController {
                 new MetaDTO(MetaData.SUCCESS),
                 moodCounts
         ));
+    }
+
+    @GetMapping("/coffee-shops/{shop_id}/review")
+    public ResponseEntity<ResponseMetaData> getReviewByShopId(@PathVariable("shop_id") Long shopId,
+                                                              PageDtoIn pageDtoIn) {
+        return reviewService.getReviewByShopId(shopId,
+                pageDtoIn);
+    }
+
+    @PutMapping("/coffee-shops/{shop_id}/review/{review_id}")
+    public ResponseEntity<ResponseMetaData> editReview(@PathVariable("shop_id") Long shopId,
+                                                       @PathVariable("review_id") Long reviewId,
+                                                       @ModelAttribute @RequestPart EditReviewRequest editReviewRequest) {
+        return reviewService.editReview(shopId,
+                reviewId,
+                editReviewRequest);
+    }
+
+    @PostMapping("/coffee-shops/{shop_id}/review")
+    public ResponseEntity<ResponseMetaData> uploadReview(@PathVariable("shop_id") Long shopId,
+                                                         @RequestPart(value = "rating") String rating,
+                                                         @RequestPart(value = "content", required = false) String content,
+                                                         @RequestPart(value = "is_annonymous", required = false) String isAnonymous,
+                                                         @RequestPart(value = "review_id", required = false) String parentId,
+                                                         @RequestPart(value = "resource", required = false) MultipartFile[] file) {
+        User user = getCurrentUser();
+        content = StringUtils.trimToEmpty(content);
+        List<MetaDTO> metaDTOList = validationService.validationCommentPost(content,
+                file,
+                Boolean.TRUE);
+        if (!CollectionUtils.isEmpty(metaDTOList)) {
+            return ResponseEntity.badRequest().body(new ResponseMetaData(metaDTOList,
+                    null));
+        }
+        return reviewService.uploadReview(user,
+                shopId,
+                Integer.parseInt(rating),
+                content,
+                file,
+                NumberUtils.toLong(parentId));
     }
 
 }

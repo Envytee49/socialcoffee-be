@@ -18,21 +18,26 @@ public class Collection {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
     private String description;
+
     private String coverUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
+
     @ManyToMany
     private Set<CoffeeShop> coffeeShops;
 
     public void addCoffeeShop(CoffeeShop coffeeShop) {
-        if(CollectionUtils.isEmpty(this.coffeeShops)) coffeeShops = new HashSet<>();
+        if (CollectionUtils.isEmpty(this.coffeeShops)) coffeeShops = new HashSet<>();
         coffeeShops.add(coffeeShop);
     }
 
     public void removeCoffeeShop(CoffeeShop coffeeShop) {
-        if(CollectionUtils.isEmpty(this.coffeeShops)) return;
+        if (CollectionUtils.isEmpty(this.coffeeShops)) return;
         coffeeShops.remove(coffeeShop);
     }
 }

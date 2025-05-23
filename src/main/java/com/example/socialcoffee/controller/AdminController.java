@@ -1,6 +1,5 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.CreateCoffeeShopRequest;
@@ -27,9 +26,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin")
 public class AdminController extends BaseController {
     private final CoffeeShopService coffeeShopService;
+
     private final UserService userService;
+
     private final ContributionService contributionService;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final CoffeeShopContributionRepository coffeeShopContributionRepository;
 
     @GetMapping("/dashboard")
@@ -39,25 +42,21 @@ public class AdminController extends BaseController {
         dashboardVM.setTotalCoffeeShops(coffeeShopRepository.countByStatus(Status.ACTIVE.getValue()));
         dashboardVM.setPendingApprovals(coffeeShopContributionRepository.countByStatus(Status.PENDING.getValue()));
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             dashboardVM));
+                dashboardVM));
     }
 
     @PostMapping(value = "/coffee-shops", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseMetaData> createCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request) {
-        User user = getCurrentUser();
-        return coffeeShopService.createCoffeeShop(user,
-                                                  request);
+        return coffeeShopService.createCoffeeShop(request);
     }
 
     @PutMapping(value = "/coffee-shops/{id}", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResponseMetaData> updateCoffeeShop(@ModelAttribute CreateCoffeeShopRequest request,
                                                              @PathVariable Long id) {
-        User user = getCurrentUser();
-        return coffeeShopService.updateCoffeeShop(user,
-                                                  request,
-                                                  id);
+        return coffeeShopService.updateCoffeeShop(request,
+                id);
     }
 
     @DeleteMapping(value = "/coffee-shops/{id}")
@@ -84,10 +83,10 @@ public class AdminController extends BaseController {
                 .name(name)
                 .build();
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             coffeeShopService.search(coffeeShopSearchRequest,
-                                                                                      pageDtoIn.getPage() - 1,
-                                                                                      pageDtoIn.getSize(),
-                                                                                      Sort.by(Sort.Direction.DESC, "isSponsored"))));
+                coffeeShopService.search(coffeeShopSearchRequest,
+                        pageDtoIn.getPage() - 1,
+                        pageDtoIn.getSize(),
+                        Sort.by(Sort.Direction.DESC, "isSponsored"))));
     }
 
     @GetMapping("/requests")
@@ -99,12 +98,12 @@ public class AdminController extends BaseController {
             @RequestParam ContributionType type,
             PageDtoIn pageDtoIn) {
         PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage() - 1,
-                                                 pageDtoIn.getSize());
+                pageDtoIn.getSize());
         return contributionService.getContributions(userId,
-                                                    name,
-                                                    status,
-                                                    type.getValue(),
-                                                    pageRequest);
+                name,
+                status,
+                type.getValue(),
+                pageRequest);
     }
 
     @PutMapping("/contributions/{id}/approve")
@@ -113,8 +112,8 @@ public class AdminController extends BaseController {
             @PathVariable Long id,
             @RequestParam String comment) {
         return contributionService.approveContribution(id,
-                                                       getCurrentUser(),
-                                                       comment);
+                getCurrentUser(),
+                comment);
     }
 
     @PutMapping("/contributions/{id}/reject")
@@ -123,7 +122,7 @@ public class AdminController extends BaseController {
             @PathVariable Long id,
             @RequestParam String comment) {
         return contributionService.rejectContribution(id,
-                                                      getCurrentUser(),
-                                                      comment);
+                getCurrentUser(),
+                comment);
     }
 }

@@ -1,8 +1,8 @@
 package com.example.socialcoffee.neo4j;
 
 import com.example.socialcoffee.neo4j.relationship.Follow;
-import com.example.socialcoffee.neo4j.relationship.Prefer;
 import com.example.socialcoffee.neo4j.relationship.Like;
+import com.example.socialcoffee.neo4j.relationship.Prefer;
 import com.example.socialcoffee.neo4j.relationship.Review;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
@@ -23,7 +23,9 @@ import java.util.Set;
 public class NUser {
     @Id
     private Long id;
+
     private String displayName;
+
     private String profilePhoto;
 
     @Relationship(type = "LIKE", direction = Relationship.Direction.OUTGOING)
@@ -41,18 +43,20 @@ public class NUser {
     @Relationship(type = "REVIEW", direction = Relationship.Direction.OUTGOING)
     @JsonIgnore
     private Set<Review> reviewCoffeeShops;
+
     public void clearAllPreferences() {
         if (!CollectionUtils.isEmpty(this.preferCoffeeShops)) {
             this.preferCoffeeShops.clear();
         }
     }
+
     public void addFollowing(NUser u2) {
         if (CollectionUtils.isEmpty(this.followUsers)) {
             this.followUsers = new HashSet<>();
         }
         this.followUsers.add(Follow.builder()
-                                     .user(u2)
-                                     .build());
+                .user(u2)
+                .build());
     }
 
     public void removeFollowing(NUser u2) {
@@ -60,8 +64,8 @@ public class NUser {
             return;
         }
         this.followUsers.remove(Follow.builder()
-                                     .user(u2)
-                                     .build());
+                .user(u2)
+                .build());
     }
 
     public void addLike(NCoffeeShop coffeeShop) {
@@ -69,8 +73,8 @@ public class NUser {
             this.likeCoffeeShops = new HashSet<>();
         }
         this.likeCoffeeShops.add(Like.builder()
-                                     .coffeeShop(coffeeShop)
-                                     .build());
+                .coffeeShop(coffeeShop)
+                .build());
     }
 
     public void removeLike(NCoffeeShop coffeeShop) {
@@ -78,7 +82,7 @@ public class NUser {
             return;
         }
         this.likeCoffeeShops.remove(Like.builder()
-                                        .coffeeShop(coffeeShop)
-                                        .build());
+                .coffeeShop(coffeeShop)
+                .build());
     }
 }

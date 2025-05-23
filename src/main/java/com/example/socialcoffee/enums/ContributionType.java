@@ -6,6 +6,7 @@ import lombok.Getter;
 public enum ContributionType {
     SUGGESTED("Suggested"),
     CONTRIBUTED("Contributed");
+
     private final String value;
 
     ContributionType(String value) {

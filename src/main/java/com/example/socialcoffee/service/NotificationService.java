@@ -4,7 +4,6 @@ import com.example.socialcoffee.domain.User;
 import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.NotificationType;
 import com.example.socialcoffee.repository.postgres.UserRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,19 +55,19 @@ public class NotificationService {
             List<User> activeUsers = cacheableService.getActiveUsers();
             Map<String, String> meta = new HashMap<>();
             meta.put("id",
-                     id);
+                    id);
             meta.put("name",
-                     name);
+                    name);
             meta.put("path",
-                     path);
+                    path);
             String message = String.format("%s was edited! Check the change",
-                                           name);
+                    name);
             for (final User activeUser : activeUsers) {
                 activeUser.addNotification("Coffee shop edit",
-                                           NotificationType.COFFEE_SHOP.getValue(),
-                                           NotificationStatus.UNREAD.getValue(),
-                                           message,
-                                           objectToString(objectMapper, meta));
+                        NotificationType.COFFEE_SHOP.getValue(),
+                        NotificationStatus.UNREAD.getValue(),
+                        message,
+                        objectToString(objectMapper, meta));
             }
             userRepository.saveAll(activeUsers);
             log.info("Finish adding new notification for users");
@@ -122,28 +121,28 @@ public class NotificationService {
 
     public void pushNotiToAdminWhenContribute(String username, String cfName) {
         String message = String.format("%s contributed a new coffee shop: %s",
-                                       username,
-                                       cfName);
+                username,
+                cfName);
         User admin = userRepository.findByUserId(0L).get();
         admin.addNotification("New contribution",
-                             NotificationType.USER.getValue(),
-                             NotificationStatus.UNREAD.getValue(),
-                             message,
-                             null);
+                NotificationType.USER.getValue(),
+                NotificationStatus.UNREAD.getValue(),
+                message,
+                null);
         userRepository.save(admin);
     }
 
     public void pushNotiToAdminWhenSuggestAnEdit(String displayName,
                                                  String name) {
         String message = String.format("%s suggested an edit for coffee shop: %s",
-                                       displayName,
-                                       name);
+                displayName,
+                name);
         User admin = userRepository.findByUserId(0L).get();
         admin.addNotification("Edit suggestion",
-                              NotificationType.USER.getValue(),
-                              NotificationStatus.UNREAD.getValue(),
-                              message,
-                              null);
+                NotificationType.USER.getValue(),
+                NotificationStatus.UNREAD.getValue(),
+                message,
+                null);
         userRepository.save(admin);
     }
 }

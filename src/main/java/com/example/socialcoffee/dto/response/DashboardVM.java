@@ -7,5 +7,6 @@ import lombok.Setter;
 @Setter
 public class DashboardVM {
     private Long totalCoffeeShops;
+
     private Long pendingApprovals;
 }

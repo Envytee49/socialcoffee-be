@@ -41,68 +41,24 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserService {
     private final NUserRepository nUserRepository;
+
     private final UserFollowRepository userFollowRepository;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final UserRepository userRepository;
+
     private final ReviewRepository reviewRepository;
+
     private final CacheableService cacheableService;
+
     private final ObjectMapper objectMapper;
+
     private final RepoService repoService;
 
-    //    public ResponseEntity<ResponseMetaData> updateNewPassword(UpdateNewPassword updateNewPassword) {
-//        Long userId = SecurityUtil.getUserId();
-//        Optional<User> optionUser = userRepository.findByUserId(userId);
-//        if (optionUser.isEmpty() || Status.ACTIVE.getValue().equalsIgnoreCase(optionUser.get().getStatus())) {
-//            log.info("User with id {} not found", userId);
-//            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
-//        }
-////        if (redisAuthService.checkTimesPasswordFail(String.valueOf(userId), subSystem))
-////            return ResponseEntity.badRequest().body(new ResMDLogin(
-////                    new MetaDTO(MetaData.PASSWORD_FAIL_TOO_MANY_TIMES), null));
-//        User user = optionUser.get();
-//        if (!encoder.matches(updateNewPassword.getCurrentPassword(), user.getPassword())) {
-//            redisAuthService.countTimesPasswordFail(String.valueOf(userId));
-//            log.warn("Password is incorrect");
-//            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.PASSWORD_INCORRECT), null));
-//        }
-//        String oldPassword = user.getPassword();
-//        if (encoder.matches(updateNewPassword.getNewPassword(), oldPassword)) {
-//            log.warn("This password has already been used");
-//            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.PASSWORD_ALREADY_USED), null));
-//        }
-//        user.setPassword(encoder.encode(updateNewPassword.getNewPassword()));
-//        userRepository.save(user);
-//        deleteOldToken(String.valueOf(userId));
-//        LoginResponseDTO loginResponse = jwtService.generateAccessToken(user);
-//        log.info("SUCCESS while update new password with userId = {}", user.getId());
-//        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), loginResponse));
-//    }
-//
-//    public void deleteOldToken(String userId) {
-//        log.info("Start delete old token with userId = {}", userId);
-//
-//        String refreshTokenKey = redisTemplate.keys(
-//                RedisKeyUtil.getRefreshTokenKeyByUserId(authConfig.getPrefixRedisKey(), userId));
-//        if (!StringUtils.isBlank(refreshTokenKey)) {
-//        }
-//        redisTemplate.delete(refreshTokenKeyList);
-//
-//        String accessTokenKey = redisTemplate.keys(
-//                RedisKeyUtil.getAccessTokenKeyByUserId(authConfig.getPrefixRedisKey(), userId));
-//        if (!StringUtils.isBlank(accessTokenKey))
-//            redisTemplate.delete(accessTokenKeyList);
-//        log.info("SUCCESS delete old token with userId = {}", userId);
-//    }
     public ResponseEntity<ResponseMetaData> getProfile(User user) {
-
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user)));
-    }
-
-    public ResponseEntity<ResponseMetaData> getProfileByName(User user) {
-
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user)));
+                new UserProfile(user)));
     }
 
     public ResponseEntity<ResponseMetaData> getUserCoffeeShopPreference(User user) {
@@ -113,7 +69,7 @@ public class UserService {
                     }
             );
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                 preference));
+                    preference));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -134,7 +90,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nAmbiance).build());
             }
             featureObjectMap.put("ambiances",
-                                 ambiances);
+                    ambiances);
         }
 
         if (req.getAmenities() != null && !req.getAmenities().isEmpty()) {
@@ -146,7 +102,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nAmenity).build());
             }
             featureObjectMap.put("amenities",
-                                 amenities);
+                    amenities);
         }
 
         if (req.getPurposes() != null && !req.getPurposes().isEmpty()) {
@@ -158,7 +114,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nPurpose).build());
             }
             featureObjectMap.put("purposes",
-                                 purposes);
+                    purposes);
         }
 
         if (req.getCapacities() != null && !req.getCapacities().isEmpty()) {
@@ -170,7 +126,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nCapacity).build());
             }
             featureObjectMap.put("capacities",
-                                 capacities);
+                    capacities);
         }
 
         if (req.getCategories() != null && !req.getCategories().isEmpty()) {
@@ -182,7 +138,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nCategory).build());
             }
             featureObjectMap.put("categories",
-                                 categories);
+                    categories);
         }
 
         if (req.getDressCodes() != null && !req.getDressCodes().isEmpty()) {
@@ -194,7 +150,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nDressCode).build());
             }
             featureObjectMap.put("dressCodes",
-                                 dressCodes);
+                    dressCodes);
         }
 
         if (req.getEntertainments() != null && !req.getEntertainments().isEmpty()) {
@@ -206,7 +162,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nEntertainment).build());
             }
             featureObjectMap.put("entertainments",
-                                 entertainments);
+                    entertainments);
         }
 
         if (req.getParkings() != null && !req.getParkings().isEmpty()) {
@@ -218,7 +174,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nParking).build());
             }
             featureObjectMap.put("parkings",
-                                 parkings);
+                    parkings);
         }
 
         if (req.getPrices() != null && !req.getPrices().isEmpty()) {
@@ -230,7 +186,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nPrice).build());
             }
             featureObjectMap.put("prices",
-                                 prices);
+                    prices);
         }
 
         if (req.getServiceTypes() != null && !req.getServiceTypes().isEmpty()) {
@@ -242,7 +198,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nServiceType).build());
             }
             featureObjectMap.put("serviceTypes",
-                                 serviceTypes);
+                    serviceTypes);
         }
 
         if (req.getSpaces() != null && !req.getSpaces().isEmpty()) {
@@ -254,7 +210,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nSpace).build());
             }
             featureObjectMap.put("spaces",
-                                 spaces);
+                    spaces);
         }
 
         if (req.getSpecialties() != null && !req.getSpecialties().isEmpty()) {
@@ -266,7 +222,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nSpecialty).build());
             }
             featureObjectMap.put("specialties",
-                                 specialties);
+                    specialties);
         }
 
         if (req.getVisitTimes() != null && !req.getVisitTimes().isEmpty()) {
@@ -278,7 +234,7 @@ public class UserService {
                 prefers.add(Prefer.builder().feature(nVisitTime).build());
             }
             featureObjectMap.put("visitTimes",
-                                 visitTimes);
+                    visitTimes);
         }
         nUserRepository.clearAllPreferences(user.getId());
         nUser.setPreferCoffeeShops(prefers);
@@ -308,7 +264,7 @@ public class UserService {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         // Check if already following
         UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followingWhoId,
-                                                                     user.getId());
+                user.getId());
         if (userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_FOLLOWING)));
         }
@@ -328,7 +284,7 @@ public class UserService {
     public ResponseEntity<ResponseMetaData> unfollowUser(User user,
                                                          Long unfollowingWhoId) {
         UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(unfollowingWhoId,
-                                                                     user.getId());
+                user.getId());
 
         if (!userFollowRepository.existsById(id)) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOLLOWING)));
@@ -346,25 +302,25 @@ public class UserService {
                                           Pageable pageable) {
         // Get users who follow the specified user
         Page<User> followers = userFollowRepository.findFollowersByFolloweeId(userId,
-                                                                              pageable);
+                pageable);
         final Set<Long> relation = userFollowRepository.findRelationByIdIn(
                 followers
                         .getContent()
                         .stream()
                         .map(u -> new UserFollow.UserFollowerId(u.getId(),
-                                                                userId))
+                                userId))
                         .toList());
 
 
         return followers.map(u -> new FollowerDTO(u,
-                                                  relation.contains(u.getId())));
+                relation.contains(u.getId())));
     }
 
     public Page<FollowingDTO> getFollowing(Long userId,
                                            Pageable pageable) {
         // Get users who the specified user follows
         Page<User> following = userFollowRepository.findFollowingsByFollowerId(userId,
-                                                                               pageable);
+                pageable);
         return following.map(User::toFollowingDTO);
     }
 
@@ -372,9 +328,9 @@ public class UserService {
                                 Pageable pageable) {
         String name = request.getName();
         Page<User> users = userRepository.findByUsernameOrNameOrDisplayNameContainingIgnoreCase(name,
-                                                                                                name,
-                                                                                                name,
-                                                                                                pageable);
+                name,
+                name,
+                pageable);
         return users.map(User::toUserDTO);
     }
 
@@ -430,7 +386,7 @@ public class UserService {
 
         // Convert to DTO and return
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user)));
+                new UserProfile(user)));
     }
 
     public ResponseEntity<ResponseMetaData> getTopContributors(int limit) {
@@ -454,31 +410,31 @@ public class UserService {
         }
 
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             contributors));
+                contributors));
     }
 
     public Page<Image> getPhotos(Long id,
                                  Pageable pageRequest) {
         return reviewRepository.findPhotosByUserId(id,
-                                                   pageRequest);
+                pageRequest);
     }
 
     public ResponseEntity<ResponseMetaData> getRecentPhotos(Long userId) {
         final List<Image> photosByUserId = reviewRepository.findPhotosByUserId(userId);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             photosByUserId));
+                photosByUserId));
     }
 
     public ResponseEntity<ResponseMetaData> getRecentFollowing(Long id) {
         List<User> recentFollowing = userFollowRepository.findFollowingsByFollowerId(id);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             recentFollowing.stream().map(User::toUserDTO)));
+                recentFollowing.stream().map(User::toUserDTO)));
     }
 
     public ResponseEntity<ResponseMetaData> getRecentFollowers(Long id) {
         final List<User> recentFollowers = userFollowRepository.findFollowersByFolloweeId(id);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             recentFollowers.stream().map(User::toUserDTO)));
+                recentFollowers.stream().map(User::toUserDTO)));
     }
 
     public ResponseEntity<ResponseMetaData> migrateUsers() {
@@ -516,15 +472,15 @@ public class UserService {
             contributionVM.setComment(c.getReviewComments());
             try {
                 contributionVM.setData(objectMapper.readValue(c.getContribution(),
-                                                              ContributionRequest.class));
+                        ContributionRequest.class));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
             return contributionVM;
         }).toList();
         final List<ContributionVM> res = ObjectUtil.getPageResult(contributionVMS,
-                                                                  pageDtoIn.getPage() - 1,
-                                                                  pageDtoIn.getSize());
+                pageDtoIn.getPage() - 1,
+                pageDtoIn.getSize());
         PageDtoOut<ContributionVM> pageDtoOut = PageDtoOut.from(
                 pageDtoIn.getPage(),
                 pageDtoIn.getSize(),
@@ -532,6 +488,6 @@ public class UserService {
                 res
         );
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+                pageDtoOut));
     }
 }

@@ -17,7 +17,7 @@ public class StringAppUtils {
         int endIndex = json.lastIndexOf('}');
 
         return json.substring(startIndex,
-                              endIndex + 1);
+                endIndex + 1);
     }
 
     public static List<String> formatedListPrices(List<String> prices) {

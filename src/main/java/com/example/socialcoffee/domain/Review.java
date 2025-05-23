@@ -20,19 +20,28 @@ public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Integer rating;
+
     private String comment;
+
     @OneToMany
     private List<Image> images;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
     private String status = Status.ACTIVE.getValue();
+
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private CoffeeShop coffeeShop;
+
     public Review(Integer rating, String comment, List<Image> images,
                   final User user,
                   final CoffeeShop coffeeShop) {

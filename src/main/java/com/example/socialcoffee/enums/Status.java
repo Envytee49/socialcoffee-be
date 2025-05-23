@@ -10,6 +10,7 @@ public enum Status {
     REJECTED("rejected"),
     REPORTED("reported"),
     PENDING("pending");
+
     private final String value;
 
     Status(final String value) {

@@ -15,9 +15,9 @@ import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.UserSettingModel;
 import com.example.socialcoffee.neo4j.NUser;
-import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
+import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.service.*;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import com.example.socialcoffee.utils.ObjectUtil;
@@ -45,19 +45,27 @@ import java.util.*;
 public class UserController extends BaseController {
 
     private final UserService userService;
-    private final ValidationService validationService;
+
     private final CloudinaryService cloudinaryService;
+
     private final UserFollowRepository userFollowRepository;
+
     private final RepoService repoService;
+
     private final ContributionService contributionService;
+
     private final NotificationRepository notificationRepository;
+
     private final ObjectMapper objectMapper;
+
     private final UserSettingRepository userSettingRepository;
+
+    private final ReviewService reviewService;
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         return userService.updateUserProfile(getCurrentUser(userUpdateDTO.getUserId()),
-                                             userUpdateDTO);
+                userUpdateDTO);
     }
 
     @PatchMapping("/users/bio")
@@ -77,7 +85,7 @@ public class UserController extends BaseController {
     @PutMapping("/users/preference")
     public ResponseEntity<ResponseMetaData> updateCoffeeShopPreference(@RequestBody UpdatePreferenceRequest request) {
         return userService.updateCoffeeShopPreference(getCurrentUser(),
-                                                      request);
+                request);
     }
 
     @PatchMapping("/users/profile-photo")
@@ -90,7 +98,7 @@ public class UserController extends BaseController {
         nUser.setProfilePhoto(upload);
         repoService.saveNUser(nUser);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             upload));
+                upload));
     }
 
     @PatchMapping("/users/background-photo")
@@ -100,47 +108,39 @@ public class UserController extends BaseController {
         user.setBackgroundPhoto(upload);
         userRepository.save(user);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             upload));
+                upload));
     }
 
     @GetMapping("/users/search")
     public ResponseEntity<ResponseMetaData> searchUser(@Valid UserSearchRequest request,
                                                        PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
-                                           pageDtoIn.getSize(),
-                                           Sort.unsorted());
+                pageDtoIn.getSize(),
+                Sort.unsorted());
         Page<UserDTO> users = userService.search(request,
-                                                 pageable);
+                pageable);
         PageDtoOut<UserDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                         pageDtoIn.getSize(),
-                                                         users.getTotalElements(),
-                                                         users.getContent());
+                pageDtoIn.getSize(),
+                users.getTotalElements(),
+                users.getContent());
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+                pageDtoOut));
     }
 
-    //    @PutMapping("/users/update-password")
-//    public ResponseEntity<ResponseMetaData> updatePassword(@RequestBody UpdateNewPassword updateNewPassword) {
-//        List<MetaDTO> metaList = validationService.validateUpdateNewPassword(updateNewPassword);
-//        if (!CollectionUtils.isEmpty(metaList))
-//            return ResponseEntity.badRequest().body(new ResponseMetaData(metaList));
-//
-//        return userService.updateNewPassword(updateNewPassword);
-//    }
     @GetMapping("/users/photos")
     public ResponseEntity<ResponseMetaData> getUserPhotos(@RequestParam(value = "displayName") String displayName,
                                                           PageDtoIn pageDtoIn) {
         User user = getCurrentUser(displayName);
         Long userId = user.getId();
         Page<Image> followers = userService.getPhotos(userId,
-                                                      PageRequest.of(pageDtoIn.getPage() - 1,
-                                                                     pageDtoIn.getSize()));
+                PageRequest.of(pageDtoIn.getPage() - 1,
+                        pageDtoIn.getSize()));
         PageDtoOut<Image> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                       pageDtoIn.getSize(),
-                                                       followers.getTotalElements(),
-                                                       followers.getContent());
+                pageDtoIn.getSize(),
+                followers.getTotalElements(),
+                followers.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      pageDtoOut));
+                pageDtoOut));
     }
 
     @GetMapping("/users/recent-photos")
@@ -158,7 +158,7 @@ public class UserController extends BaseController {
         Long currentUserId = user.getId();
         user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
                 ? userRepository.findByDisplayNameAndStatus(displayName,
-                                                            Status.ACTIVE.getValue())
+                Status.ACTIVE.getValue())
                 : user;
         if (Objects.isNull(user)) {
             return ResponseEntity.notFound().build();
@@ -169,25 +169,25 @@ public class UserController extends BaseController {
             isFollowing = false;
         } else {
             isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(viewingUserId,
-                                                                                        currentUserId));
+                    currentUserId));
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             new UserProfile(user,
-                                                                             isFollowing)));
+                new UserProfile(user,
+                        isFollowing)));
     }
 
     @PostMapping("/users/{followingWhoId}/follow")
     public ResponseEntity<ResponseMetaData> followUser(@PathVariable Long followingWhoId) {
         User user = getCurrentUser();
         return userService.followUser(user,
-                                      followingWhoId);
+                followingWhoId);
     }
 
     @PostMapping("/users/{unfollowingWhoId}/unfollow")
     public ResponseEntity<ResponseMetaData> unfollowUser(@PathVariable Long unfollowingWhoId) {
         User user = getCurrentUser();
         return userService.unfollowUser(user,
-                                        unfollowingWhoId);
+                unfollowingWhoId);
     }
 
     @GetMapping("/users/followers")
@@ -195,14 +195,14 @@ public class UserController extends BaseController {
                                                          PageDtoIn pageDtoIn) {
         User user = getCurrentUser(displayName);
         Page<FollowerDTO> followers = userService.getFollowers(user.getId(),
-                                                               PageRequest.of(pageDtoIn.getPage() - 1,
-                                                                              pageDtoIn.getSize()));
+                PageRequest.of(pageDtoIn.getPage() - 1,
+                        pageDtoIn.getSize()));
         PageDtoOut<FollowerDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                             pageDtoIn.getSize(),
-                                                             followers.getTotalElements(),
-                                                             followers.getContent());
+                pageDtoIn.getSize(),
+                followers.getTotalElements(),
+                followers.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      pageDtoOut));
+                pageDtoOut));
 
     }
 
@@ -218,14 +218,14 @@ public class UserController extends BaseController {
                                                          PageDtoIn pageDtoIn) {
         User user = getCurrentUser(displayName);
         Page<FollowingDTO> following = userService.getFollowing(user.getId(),
-                                                                PageRequest.of(pageDtoIn.getPage() - 1,
-                                                                               pageDtoIn.getSize()));
+                PageRequest.of(pageDtoIn.getPage() - 1,
+                        pageDtoIn.getSize()));
         PageDtoOut<FollowingDTO> pageDtoOut = PageDtoOut.from(pageDtoIn.getPage(),
-                                                              pageDtoIn.getSize(),
-                                                              following.getTotalElements(),
-                                                              following.getContent());
+                pageDtoIn.getSize(),
+                following.getTotalElements(),
+                following.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      pageDtoOut));
+                pageDtoOut));
     }
 
     @GetMapping("/users/recent-following")
@@ -246,10 +246,10 @@ public class UserController extends BaseController {
                                                             PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
         return userService.getContributions(user,
-                                            name,
-                                            status,
-                                            type,
-                                            pageDtoIn);
+                name,
+                status,
+                type,
+                pageDtoIn);
     }
 
     @GetMapping("/users/requests")
@@ -260,12 +260,12 @@ public class UserController extends BaseController {
             @RequestParam ContributionType type,
             PageDtoIn pageDtoIn) {
         PageRequest pageRequest = PageRequest.of(pageDtoIn.getPage() - 1,
-                                                 pageDtoIn.getSize());
+                pageDtoIn.getSize());
         return contributionService.getContributions(SecurityUtil.getUserId(),
-                                                    name,
-                                                    status,
-                                                    type.getValue(),
-                                                    pageRequest);
+                name,
+                status,
+                type.getValue(),
+                pageRequest);
     }
 
     @PutMapping("/users/notifications/{id}")
@@ -303,17 +303,18 @@ public class UserController extends BaseController {
     public ResponseEntity<ResponseMetaData> userNotifications(@Valid PageDtoIn pageDtoIn) {
         final User currentUser = getCurrentUser();
         final List<Notification> notifications = currentUser.getNotifications();
-        if (CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                                                         Collections.emptyList()));
+        if (CollectionUtils.isEmpty(notifications))
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                    Collections.emptyList()));
         notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
         List<Notification> pageResult = ObjectUtil.getPageResult(notifications,
-                                                                 pageDtoIn.getPage() - 1,
-                                                                 pageDtoIn.getSize());
+                pageDtoIn.getPage() - 1,
+                pageDtoIn.getSize());
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
         for (final Notification notification : pageResult) {
             Object meta = ObjectUtil.stringToObject(objectMapper,
-                                                    notification.getMeta(),
-                                                    Object.class);
+                    notification.getMeta(),
+                    Object.class);
             NotificationDTO notificationDTO = NotificationDTO.builder()
                     .id(notification.getId())
                     .title(notification.getTitle())
@@ -326,7 +327,7 @@ public class UserController extends BaseController {
             notificationDTOS.add(notificationDTO);
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             notificationDTOS));
+                notificationDTOS));
     }
 
     @GetMapping("/users/setting")
@@ -339,15 +340,15 @@ public class UserController extends BaseController {
             userSetting.setId(user.getId());
             userSettingModel = new UserSettingModel();
             String setting = ObjectUtil.objectToString(objectMapper,
-                                                       userSettingModel);
+                    userSettingModel);
             userSetting.setSetting(setting);
             userSettingRepository.save(userSetting);
         } else {
             userSettingModel = ObjectUtil.stringToObject(objectMapper,
-                                                         optionalUserSetting.get().getSetting(), UserSettingModel.class);
+                    optionalUserSetting.get().getSetting(), UserSettingModel.class);
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             userSettingModel));
+                userSettingModel));
     }
 
     @PutMapping("/users/setting")
@@ -361,5 +362,16 @@ public class UserController extends BaseController {
                 new MetaDTO(MetaData.SUCCESS),
                 userSettingModel
         ));
+    }
+
+    @GetMapping("/users/{displayName}/reviews")
+    public ResponseEntity<ResponseMetaData> getReviewByUserId(@PathVariable(value = "displayName") String displayName,
+                                                              PageDtoIn pageDtoIn) {
+        User user = getCurrentUser();
+        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
+        String destinationUser = Objects.isNull(displayName) ? user.getDisplayName() : displayName;
+        return reviewService.getReviewByUserId(user,
+                destinationUser,
+                pageDtoIn);
     }
 }

@@ -33,9 +33,13 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class ContributionService {
     private final CoffeeShopContributionRepository coffeeShopContributionRepository;
+
     private final UserRepository userRepository;
+
     private final ObjectMapper objectMapper;
+
     private final CoffeeShopService coffeeShopService;
+
     private final NotificationService notificationService;
 
     public ResponseEntity<ResponseMetaData> getContributions(Long userId,
@@ -50,24 +54,24 @@ public class ContributionService {
         }
         if (Objects.nonNull(user) && StringUtils.isNotBlank(name)) {
             contributions = coffeeShopContributionRepository.findByStatusAndTypeAndSubmittedByAndName(status,
-                                                                                                      type,
-                                                                                                      user,
-                                                                                                      name,
-                                                                                                      pageRequest);
+                    type,
+                    user,
+                    name,
+                    pageRequest);
         } else if (Objects.nonNull(user)) {
             contributions = coffeeShopContributionRepository.findByStatusAndTypeAndSubmittedBy(status,
-                                                                                               type,
-                                                                                               user,
-                                                                                               pageRequest);
+                    type,
+                    user,
+                    pageRequest);
         } else if (StringUtils.isNotBlank(name)) {
             contributions = coffeeShopContributionRepository.findByStatusAndTypeAndName(status,
-                                                                                        type,
-                                                                                        name,
-                                                                                        pageRequest);
+                    type,
+                    name,
+                    pageRequest);
         } else {
             contributions = coffeeShopContributionRepository.findByStatusAndType(status,
-                                                                                 type,
-                                                                                 pageRequest);
+                    type,
+                    pageRequest);
         }
         List<ContributionVM> contributionVMS = contributions.getContent().stream().map(c -> {
             ContributionVM contributionVM = new ContributionVM();
@@ -79,7 +83,7 @@ public class ContributionService {
             contributionVM.setComment(c.getReviewComments());
             try {
                 contributionVM.setData(objectMapper.readValue(c.getContribution(),
-                                                              ContributionRequest.class));
+                        ContributionRequest.class));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -92,7 +96,7 @@ public class ContributionService {
                 contributionVMS
         );
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             pageDtoOut));
+                pageDtoOut));
     }
 
     @Transactional
@@ -108,13 +112,13 @@ public class ContributionService {
         ContributionRequest contributionRequest = null;
         try {
             contributionRequest = objectMapper.readValue(contribution.getContribution(),
-                                                         ContributionRequest.class);
+                    ContributionRequest.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
         coffeeShopService.createCoffeeShop(contribution.getSubmittedBy(),
-                                           contributionRequest);
+                contributionRequest);
         CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenApproveContribution(contribution.getSubmittedBy(), contribution.getName()));
 
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

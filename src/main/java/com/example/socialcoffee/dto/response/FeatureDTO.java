@@ -3,13 +3,17 @@ package com.example.socialcoffee.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeatureDTO {
     protected Long id;
+
     protected String value;
+
     protected boolean isSet;
+
     protected boolean isInSearchPrompt;
 
     public static class AmbianceDto extends FeatureDTO {

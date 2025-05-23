@@ -15,16 +15,27 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ReviewVM {
     private Long id;
+
     private Integer rating;
+
     private String privacy;
+
     private String content;
+
     private List<Image> images;
+
     private Map<String, Long> reactions;
+
     private String createdDate;
+
     private UserDTO user;
+
     private CoffeeShopDTO coffeeShop;
+
     private String timeAgo;
+
     private Long totalReactions = 0L;
+
     private String reaction;
 //    private Map<Long, String> userReactions;
 

@@ -46,17 +46,29 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CoffeeShopService {
     private final NCoffeeShopRepository nCoffeeShopRepository;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final GenerateTextService generateTextService;
+
     private final AddressRepository addressRepository;
+
     private final CacheableService cacheableService;
+
     private final CloudinaryService cloudinaryService;
+
     private final ImageService imageService;
+
     private final RepoService repoService;
+
     private final ObjectMapper objectMapper;
+
     private final UserRepository userRepository;
+
     private final CoffeeShopContributionRepository coffeeShopContributionRepository;
+
     private final NotificationService notificationService;
+
     private final CoffeeShopMoodRepository coffeeShopMoodRepository;
 
     public ResponseEntity<ResponseMetaData> getAllCoffeeShop(final Double lat,
@@ -64,10 +76,10 @@ public class CoffeeShopService {
                                                              final Pageable pageable) {
         final List<CoffeeShop> coffeeShops = coffeeShopRepository.findAll(pageable).getContent();
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
-                                                                                           lat,
-                                                                                           lng)).toList();
+                lat,
+                lng)).toList();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      coffeeShopVMs));
+                coffeeShopVMs));
     }
 
     public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id,
@@ -95,7 +107,7 @@ public class CoffeeShopService {
                     coffeeShopDetailVM.setFeatureDto(filter);
             }
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                 coffeeShopDetailVM));
+                    coffeeShopDetailVM));
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
@@ -110,11 +122,11 @@ public class CoffeeShopService {
             CoffeeShopEditVM coffeeShopEditVM = new CoffeeShopEditVM();
             CoffeeShop coffeeShop = coffeeShopOptional.get();
             BeanUtils.copyProperties(coffeeShop,
-                                     coffeeShopEditVM);
+                    coffeeShopEditVM);
             coffeeShopEditVM.setOpenTime(coffeeShop.getOpenHour());
             coffeeShopEditVM.setCloseTime(coffeeShop.getCloseHour());
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                 coffeeShopEditVM));
+                    coffeeShopEditVM));
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
@@ -125,11 +137,12 @@ public class CoffeeShopService {
                                            Integer size,
                                            Sort sort) {
         Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request,
-                                                                              page,
-                                                                              size,sort);
+                page,
+                size,
+                sort);
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
-                                                                                           request.getLatitude(),
-                                                                                           request.getLongitude()))
+                        request.getLatitude(),
+                        request.getLongitude()))
                 .collect(Collectors.toList());
 //        if (ObjectUtils.allNotNull(request.getDistance(),
 //                                   request.getLongitude(),
@@ -137,19 +150,19 @@ public class CoffeeShopService {
 //            coffeeShopVMs.sort(Comparator.comparing(CoffeeShopVM::getDistance));
 //        }
         return PageDtoOut.from(page,
-                               size,
-                               coffeeShops.getTotalElements(),
-                               coffeeShopVMs);
+                size,
+                coffeeShops.getTotalElements(),
+                coffeeShopVMs);
     }
 
     public ResponseEntity<ResponseMetaData> getSponsoredCoffeeShop(Double latitude,
                                                                    Double longitude) {
         List<CoffeeShop> coffeeShops = coffeeShopRepository.findByIsSponsored(true);
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
-                                                                                           latitude,
-                                                                                           longitude)).toList();
+                latitude,
+                longitude)).toList();
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             coffeeShopVMs));
+                coffeeShopVMs));
     }
 
     @Cacheable(value = "search_filter", key = "'SEARCH_FILTERS'")
@@ -167,9 +180,9 @@ public class CoffeeShopService {
         searchFilter.setSpecialties(cacheableService.findSpecialties());
         searchFilter.setVisitTimes(cacheableService.findVisitTimes());
         searchFilter.setDistances(Arrays.stream(Distance.values()).map(d -> new SearchFilter.DistanceDTO((long) d.ordinal(),
-                                                                                                         d.getValue())).collect(Collectors.toList()));
+                d.getValue())).collect(Collectors.toList()));
         searchFilter.setSorts(Arrays.stream(CoffeeShopSort.values()).map(s -> new SearchFilter.SortDTO((long) s.ordinal(),
-                                                                                                       s.getValue())).collect(Collectors.toList()));
+                s.getValue())).collect(Collectors.toList()));
         return searchFilter;
     }
 
@@ -215,14 +228,14 @@ public class CoffeeShopService {
         Page<CoffeeShop> coffeeShops;
         if (name != null && statusValue != null) {
             coffeeShops = coffeeShopRepository.findByNameContainingIgnoreCaseAndStatus(name,
-                                                                                       statusValue,
-                                                                                       pageable);
+                    statusValue,
+                    pageable);
         } else if (name != null) {
             coffeeShops = coffeeShopRepository.findByNameContainingIgnoreCase(name,
-                                                                              pageable);
+                    pageable);
         } else if (statusValue != null) {
             coffeeShops = coffeeShopRepository.findByStatus(statusValue,
-                                                            pageable);
+                    pageable);
         } else {
             coffeeShops = coffeeShopRepository.findAll(pageable);
         }
@@ -260,40 +273,11 @@ public class CoffeeShopService {
         return ResponseEntity.ok().build();
     }
 
-    private Address buildAddress(CreateCoffeeShopRequest req) {
-        return Address.builder()
-                .googleMapUrl(req.getGoogleMapUrl())
-                .addressDetail(req.getAddressDetail())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .longitude(req.getLongitude())
-                .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                                                     req.getLatitude()))
-                .build();
-    }
-
-    private Address buildAddress(ContributionRequest req) {
-        return Address.builder()
-                .googleMapUrl(req.getGoogleMapUrl())
-                .addressDetail(req.getAddressDetail())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .longitude(req.getLongitude())
-                .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                                                     req.getLatitude()))
-                .build();
-    }
-
     @Transactional
-    public ResponseEntity<ResponseMetaData> createCoffeeShop(User user,
-                                                             CreateCoffeeShopRequest req) {
+    public ResponseEntity<ResponseMetaData> createCoffeeShop(CreateCoffeeShopRequest req) {
         Address address = buildAddress(req);
         log.info("Start create coffee shop with name = {}",
-                 req.getName());
+                req.getName());
         Address savedAddress = addressRepository.save(address);
 
         CoffeeShop coffeeShop = new CoffeeShop();
@@ -429,23 +413,35 @@ public class CoffeeShopService {
                 .build();
         repoService.saveNCoffeeShop(nCoffeeShop);
         CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenFinishCreatingShop(saved.getId().toString(),
-                                                                               saved.getName(),
-                                                                               saved.getCoverPhoto()));
+                saved.getName(),
+                saved.getCoverPhoto()));
         log.info("Finish create coffee shop with name = {}, id = {}",
-                 req.getName(),
-                 coffeeShop.getId());
+                req.getName(),
+                coffeeShop.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      coffeeShop));
+                coffeeShop));
     }
 
-
+    private Address buildAddress(CreateCoffeeShopRequest req) {
+        return Address.builder()
+                .googleMapUrl(req.getGoogleMapUrl())
+                .addressDetail(req.getAddressDetail())
+                .province(req.getProvince())
+                .district(req.getDistrict())
+                .ward(req.getWard())
+                .longitude(req.getLongitude())
+                .latitude(req.getLatitude())
+                .location(GeometryUtil.parseLocation(req.getLongitude(),
+                        req.getLatitude()))
+                .build();
+    }
 
     @Transactional
     public void createCoffeeShop(User user,
                                  ContributionRequest req) {
         Address address = buildAddress(req);
         log.info("Start create coffee shop with name = {}",
-                 req.getName());
+                req.getName());
         Address savedAddress = addressRepository.save(address);
 
         CoffeeShop coffeeShop = new CoffeeShop();
@@ -592,17 +588,30 @@ public class CoffeeShopService {
                 .build();
         repoService.saveNCoffeeShop(nCoffeeShop);
         log.info("Finish create coffee shop with name = {}, id = {}",
-                 req.getName(),
-                 coffeeShop.getId());
+                req.getName(),
+                coffeeShop.getId());
+    }
+
+    private Address buildAddress(ContributionRequest req) {
+        return Address.builder()
+                .googleMapUrl(req.getGoogleMapUrl())
+                .addressDetail(req.getAddressDetail())
+                .province(req.getProvince())
+                .district(req.getDistrict())
+                .ward(req.getWard())
+                .longitude(req.getLongitude())
+                .latitude(req.getLatitude())
+                .location(GeometryUtil.parseLocation(req.getLongitude(),
+                        req.getLatitude()))
+                .build();
     }
 
     @Transactional
-    public ResponseEntity<ResponseMetaData> updateCoffeeShop(User user,
-                                                             CreateCoffeeShopRequest req,
+    public ResponseEntity<ResponseMetaData> updateCoffeeShop(CreateCoffeeShopRequest req,
                                                              Long id) {
         log.info("Start update coffee shop with id = {}, name = {}",
-                 id,
-                 req.getName());
+                id,
+                req.getName());
 
         // Verify coffee shop exists
         CoffeeShop coffeeShop = coffeeShopRepository.findById(id)
@@ -611,7 +620,7 @@ public class CoffeeShopService {
         // Update address
         Address address = coffeeShop.getAddress();
         updateAddress(address,
-                      req);
+                req);
         Address savedAddress = addressRepository.save(address);
 
         // Update coffee shop basic info
@@ -779,13 +788,13 @@ public class CoffeeShopService {
         nCoffeeShopRepository.clearAllFeatures(saved.getId());
         repoService.saveNCoffeeShop(nCoffeeShop);
         CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenFinishUpdatingShop(saved.getId().toString(),
-                                                                                                   saved.getName(),
-                                                                                                   saved.getCoverPhoto()));
+                saved.getName(),
+                saved.getCoverPhoto()));
         log.info("Finish update coffee shop with id = {}, name = {}",
-                 id,
-                 req.getName());
+                id,
+                req.getName());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      coffeeShop));
+                coffeeShop));
     }
 
     // Helper method to update address
@@ -800,21 +809,12 @@ public class CoffeeShopService {
         address.setLatitude(req.getLatitude());
     }
 
-
-    private String objectToString(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public ResponseEntity<ResponseMetaData> contributeCoffeeShop(User user,
                                                                  MultipartFile coverPhoto,
                                                                  MultipartFile[] galleryPhotos,
                                                                  ContributionRequest req) {
         log.info("Start create coffee shop with name = {}",
-                 req.getName());
+                req.getName());
         CoffeeShopContribution contribution = new CoffeeShopContribution();
         req.setGalleryPhotoPaths(imageService.getImagePath(galleryPhotos));
         req.setCoverPhotoPath(cloudinaryService.upload(coverPhoto));
@@ -826,9 +826,17 @@ public class CoffeeShopService {
         CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
         CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenContribute(user.getDisplayName(), saved.getName()));
         log.info("Finish contribute coffee shop with name = {}, id = {}",
-                 req.getName(),
-                 saved.getId());
+                req.getName(),
+                saved.getId());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
+    }
+
+    private String objectToString(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ResponseEntity<ResponseMetaData> suggestAnEdit(User user,
@@ -862,7 +870,7 @@ public class CoffeeShopService {
         req.addNewGalleryPhotos(imageService.getImagePath(galleryPhotos));
         contribution.setName(req.getName());
         contribution.setContribution(objectToString(req));
-        if(contribution.getStatus().equalsIgnoreCase(Status.REJECTED.getValue())) {
+        if (contribution.getStatus().equalsIgnoreCase(Status.REJECTED.getValue())) {
             contribution.setStatus(Status.PENDING.getValue());
         }
         CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
@@ -889,7 +897,7 @@ public class CoffeeShopService {
         List<Long> ids = coffeeShopRepository.findIdByIsSponsored(Boolean.TRUE);
         if (ids.size() >= CommonConstant.MAX_SPONSORED_SHOP && !ids.contains(id))
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.EXCEED_MAX_SPONSORED_SHOP,
-                                                                                     CommonConstant.MAX_SPONSORED_SHOP.toString())));
+                    CommonConstant.MAX_SPONSORED_SHOP.toString())));
         coffeeShop.setIsSponsored(!coffeeShop.getIsSponsored());
         coffeeShopRepository.save(coffeeShop);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

@@ -1,8 +1,8 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.configuration.AuthConfig;
-import com.example.socialcoffee.model.FacebookUserInfo;
 import com.example.socialcoffee.constants.CommonConstant;
+import com.example.socialcoffee.model.FacebookUserInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class FacebookService {
     private final AuthConfig authConfig;
+
     public FacebookUserInfo getUserInfoFromFacebook(String accessToken) {
         try {
             HttpClient client = HttpClients.custom().build();

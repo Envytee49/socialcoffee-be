@@ -11,12 +11,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter
 @Getter
-public class FollowerDTO extends UserDTO{
+public class FollowerDTO extends UserDTO {
     @JsonProperty(value = "is_following")
     private boolean isFollowing;
+
     public FollowerDTO(final User user) {
         super(user);
     }
+
     public FollowerDTO(final User user, boolean isFollowing) {
         super(user);
         this.isFollowing = isFollowing;

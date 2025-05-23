@@ -1,10 +1,10 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.repository.postgres.feature.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +16,29 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FeatureService {
     private final AmbianceRepository ambianceRepository;
+
     private final AmenityRepository amenityRepository;
+
     private final CapacityRepository capacityRepository;
+
     private final CategoryRepository categoryRepository;
+
     private final DressCodeRepository dressCodeRepository;
+
     private final EntertainmentRepository entertainmentRepository;
+
     private final ParkingRepository parkingRepository;
+
     private final PriceRepository priceRepository;
+
     private final ServiceTypeRepository serviceTypeRepository;
+
     private final SpaceRepository spaceRepository;
+
     private final SpecialtyRepository specialtyRepository;
+
     private final VisitTimeRepository visitTimeRepository;
+
     private final PurposeRepository purposeRepository;
 
     public ResponseEntity<ResponseMetaData> createAmbiance(String value) {
@@ -37,7 +49,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateAmbiance(UpdateFeatureRequest req) {
         Optional<Ambiance> ambianceOptional = ambianceRepository.findById(req.getId());
-        if(ambianceOptional.isEmpty()) {
+        if (ambianceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Ambiance ambiance = ambianceOptional.get();
@@ -48,12 +60,13 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteAmbiance(Long id) {
         Optional<Ambiance> ambianceOptional = ambianceRepository.findById(id);
-        if(ambianceOptional.isEmpty()) {
+        if (ambianceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         ambianceRepository.delete(ambianceOptional.get());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
+
     // Amenity Methods
     public ResponseEntity<ResponseMetaData> createAmenity(String value) {
         Amenity amenity = new Amenity(value);
@@ -63,7 +76,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateAmenity(UpdateFeatureRequest req) {
         Optional<Amenity> amenityOptional = amenityRepository.findById(req.getId());
-        if(amenityOptional.isEmpty()) {
+        if (amenityOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Amenity amenity = amenityOptional.get();
@@ -74,7 +87,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteAmenity(Long id) {
         Optional<Amenity> amenityOptional = amenityRepository.findById(id);
-        if(amenityOptional.isEmpty()) {
+        if (amenityOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         amenityRepository.delete(amenityOptional.get());
@@ -90,7 +103,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateCapacity(UpdateFeatureRequest req) {
         Optional<Capacity> capacityOptional = capacityRepository.findById(req.getId());
-        if(capacityOptional.isEmpty()) {
+        if (capacityOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Capacity capacity = capacityOptional.get();
@@ -101,7 +114,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteCapacity(Long id) {
         Optional<Capacity> capacityOptional = capacityRepository.findById(id);
-        if(capacityOptional.isEmpty()) {
+        if (capacityOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         capacityRepository.delete(capacityOptional.get());
@@ -117,7 +130,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateCategory(UpdateFeatureRequest req) {
         Optional<Category> categoryOptional = categoryRepository.findById(req.getId());
-        if(categoryOptional.isEmpty()) {
+        if (categoryOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Category category = categoryOptional.get();
@@ -128,7 +141,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteCategory(Long id) {
         Optional<Category> categoryOptional = categoryRepository.findById(id);
-        if(categoryOptional.isEmpty()) {
+        if (categoryOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         categoryRepository.delete(categoryOptional.get());
@@ -144,7 +157,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateDressCode(UpdateFeatureRequest req) {
         Optional<DressCode> dressCodeOptional = dressCodeRepository.findById(req.getId());
-        if(dressCodeOptional.isEmpty()) {
+        if (dressCodeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         DressCode dressCode = dressCodeOptional.get();
@@ -155,7 +168,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteDressCode(Long id) {
         Optional<DressCode> dressCodeOptional = dressCodeRepository.findById(id);
-        if(dressCodeOptional.isEmpty()) {
+        if (dressCodeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         dressCodeRepository.delete(dressCodeOptional.get());
@@ -171,7 +184,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateEntertainment(UpdateFeatureRequest req) {
         Optional<Entertainment> entertainmentOptional = entertainmentRepository.findById(req.getId());
-        if(entertainmentOptional.isEmpty()) {
+        if (entertainmentOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Entertainment entertainment = entertainmentOptional.get();
@@ -182,7 +195,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteEntertainment(Long id) {
         Optional<Entertainment> entertainmentOptional = entertainmentRepository.findById(id);
-        if(entertainmentOptional.isEmpty()) {
+        if (entertainmentOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         entertainmentRepository.delete(entertainmentOptional.get());
@@ -198,7 +211,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateParking(UpdateFeatureRequest req) {
         Optional<Parking> parkingOptional = parkingRepository.findById(req.getId());
-        if(parkingOptional.isEmpty()) {
+        if (parkingOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Parking parking = parkingOptional.get();
@@ -209,7 +222,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteParking(Long id) {
         Optional<Parking> parkingOptional = parkingRepository.findById(id);
-        if(parkingOptional.isEmpty()) {
+        if (parkingOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         parkingRepository.delete(parkingOptional.get());
@@ -225,7 +238,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updatePrice(UpdateFeatureRequest req) {
         Optional<Price> priceOptional = priceRepository.findById(req.getId());
-        if(priceOptional.isEmpty()) {
+        if (priceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Price price = priceOptional.get();
@@ -236,7 +249,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deletePrice(Long id) {
         Optional<Price> priceOptional = priceRepository.findById(id);
-        if(priceOptional.isEmpty()) {
+        if (priceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         priceRepository.delete(priceOptional.get());
@@ -252,7 +265,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateServiceType(UpdateFeatureRequest req) {
         Optional<ServiceType> serviceTypeOptional = serviceTypeRepository.findById(req.getId());
-        if(serviceTypeOptional.isEmpty()) {
+        if (serviceTypeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         ServiceType serviceType = serviceTypeOptional.get();
@@ -263,7 +276,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteServiceType(Long id) {
         Optional<ServiceType> serviceTypeOptional = serviceTypeRepository.findById(id);
-        if(serviceTypeOptional.isEmpty()) {
+        if (serviceTypeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         serviceTypeRepository.delete(serviceTypeOptional.get());
@@ -279,7 +292,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateSpace(UpdateFeatureRequest req) {
         Optional<Space> spaceOptional = spaceRepository.findById(req.getId());
-        if(spaceOptional.isEmpty()) {
+        if (spaceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Space space = spaceOptional.get();
@@ -290,7 +303,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteSpace(Long id) {
         Optional<Space> spaceOptional = spaceRepository.findById(id);
-        if(spaceOptional.isEmpty()) {
+        if (spaceOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         spaceRepository.delete(spaceOptional.get());
@@ -306,7 +319,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> updateSpecialty(UpdateFeatureRequest req) {
         Optional<Specialty> specialtyOptional = specialtyRepository.findById(req.getId());
-        if(specialtyOptional.isEmpty()) {
+        if (specialtyOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         Specialty specialty = specialtyOptional.get();
@@ -317,7 +330,7 @@ public class FeatureService {
 
     public ResponseEntity<ResponseMetaData> deleteSpecialty(Long id) {
         Optional<Specialty> specialtyOptional = specialtyRepository.findById(id);
-        if(specialtyOptional.isEmpty()) {
+        if (specialtyOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         specialtyRepository.delete(specialtyOptional.get());
@@ -341,9 +354,10 @@ public class FeatureService {
         visitTimeRepository.save(visitTime);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
+
     public ResponseEntity<ResponseMetaData> deleteVisitTime(Long id) {
         Optional<VisitTime> visitTimeOptional = visitTimeRepository.findById(id);
-        if(visitTimeOptional.isEmpty()) {
+        if (visitTimeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         visitTimeRepository.delete(visitTimeOptional.get());
@@ -367,9 +381,10 @@ public class FeatureService {
         purposeRepository.save(purpose);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
+
     public ResponseEntity<ResponseMetaData> deletePurpose(Long id) {
         Optional<Purpose> purposeTimeOptional = purposeRepository.findById(id);
-        if(purposeTimeOptional.isEmpty()) {
+        if (purposeTimeOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         purposeRepository.delete(purposeTimeOptional.get());

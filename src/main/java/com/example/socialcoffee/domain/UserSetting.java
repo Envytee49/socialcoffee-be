@@ -1,6 +1,8 @@
 package com.example.socialcoffee.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,5 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 public class UserSetting {
     @Id
     private Long id;
+
     private String setting;
 }

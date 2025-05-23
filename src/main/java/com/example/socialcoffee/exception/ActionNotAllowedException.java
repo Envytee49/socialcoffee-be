@@ -8,6 +8,6 @@ public class ActionNotAllowedException extends RuntimeException {
     public ActionNotAllowedException(final String message,
                                      final Throwable cause) {
         super(message,
-              cause);
+                cause);
     }
 }

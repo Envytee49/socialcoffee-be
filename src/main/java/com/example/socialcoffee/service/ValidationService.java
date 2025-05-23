@@ -23,6 +23,7 @@ import java.util.List;
 @Slf4j
 public class ValidationService {
     private final ConfigResource configResource;
+
     public List<MetaDTO> validationCommentPost(String content, MultipartFile[] file, boolean isCreateComment) {
         List<MetaDTO> metaDTOList = new ArrayList<>();
         content = StringUtils.trimToEmpty(content);
@@ -37,6 +38,7 @@ public class ValidationService {
 
         return metaDTOList;
     }
+
     public List<MetaDTO> validateBasicAuthRequest(BasicAuthRequest request, String authAction) {
         List<MetaDTO> metaList = new ArrayList<>();
 
@@ -56,6 +58,7 @@ public class ValidationService {
 
         return metaList;
     }
+
     private boolean isSecurePassword(String password) {
         // Password should be at least 15 characters long
         if (password.length() < 8) {
@@ -80,6 +83,7 @@ public class ValidationService {
         // Password should contain at least one special character
         return password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
     }
+
     public List<MetaDTO> validateUpdateNewPassword(UpdateNewPassword updateNewPassword) {
         List<MetaDTO> metaList = new ArrayList<>();
         if (StringUtils.isBlank(updateNewPassword.getNewPassword())
@@ -98,7 +102,7 @@ public class ValidationService {
 
     public List<MetaDTO> validateReviewReact(String reaction) {
         List<MetaDTO> metaList = new ArrayList<>();
-        if(!ReviewVote.reactionIsExist(reaction)) {
+        if (!ReviewVote.reactionIsExist(reaction)) {
             metaList.add(new MetaDTO(MetaData.INVALID_REACTION));
         }
         return metaList;

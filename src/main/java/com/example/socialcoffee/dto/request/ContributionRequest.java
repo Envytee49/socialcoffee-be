@@ -17,14 +17,18 @@ public class ContributionRequest {
     private String name;
 
     private String coverPhotoPath;
+
     private List<String> galleryPhotoPaths;
+
     private String phoneNumber;
 
 //    @NotBlank(message = "Description is required")
 //    private String description;
 
     private String webAddress;
+
     private String menuWebAddress;
+
     private String additionInfo;
 
     @NotNull(message = "Open hour is required")
@@ -34,9 +38,13 @@ public class ContributionRequest {
     private Integer closeHour;
 
     private String googleMapUrl;
+
     private String addressDetail;
+
     private String province;
+
     private String district;
+
     private String ward;
 
     @NotNull(message = "Longitude is required")
@@ -55,6 +63,7 @@ public class ContributionRequest {
     private List<Long> capacities;
 
     private List<Long> purposes;
+
     private List<Long> dressCodes;
 
     @NotEmpty(message = "At least one entertainment option must be selected")
@@ -73,6 +82,7 @@ public class ContributionRequest {
     private List<Long> spaces;
 
     private List<Long> specialties;
+
     private List<Long> visitTimes;
 
     public void addNewGalleryPhotos(List<String> imgs) {

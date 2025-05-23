@@ -1,14 +1,12 @@
 package com.example.socialcoffee.controller;
 
+import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.dto.request.CreateFeatureRequest;
 import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.neo4j.feature.NPurpose;
-import com.example.socialcoffee.neo4j.feature.NSpace;
-import com.example.socialcoffee.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.neo4j.NPurposeRepository;
 import com.example.socialcoffee.service.CacheableService;
 import com.example.socialcoffee.service.FeatureService;
@@ -19,12 +17,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/feature")
+@RequestMapping("/features")
 @RequiredArgsConstructor
 public class FeatureController {
     private final FeatureService featureService;
 
     private final CacheableService cacheableService;
+
     private final NPurposeRepository nPurposeRepository;
 
     @PostMapping("/migrate")
@@ -43,7 +42,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getAmbiances() {
         List<Ambiance> data = cacheableService.findAmbiances();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Amenity GET
@@ -51,7 +50,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getAmenities() {
         List<Amenity> data = cacheableService.findAmenities();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Capacity GET
@@ -59,7 +58,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getCapacities() {
         List<Capacity> data = cacheableService.findCapacities();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Category GET
@@ -67,7 +66,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getCategories() {
         List<Category> data = cacheableService.findCategories();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // DressCode GET
@@ -75,7 +74,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getDressCodes() {
         List<DressCode> data = cacheableService.findDressCodes();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Entertainment GET
@@ -83,7 +82,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getEntertainments() {
         List<Entertainment> data = cacheableService.findEntertainments();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Parking GET
@@ -91,7 +90,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getParkings() {
         List<Parking> data = cacheableService.findParkings();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Price GET
@@ -99,7 +98,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getPrices() {
         List<Price> data = cacheableService.findPrices();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // ServiceType GET
@@ -107,7 +106,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getServiceTypes() {
         List<ServiceType> data = cacheableService.findServiceTypes();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Space GET
@@ -115,7 +114,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getSpaces() {
         List<Space> data = cacheableService.findSpaces();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Specialty GET
@@ -123,7 +122,7 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getSpecialties() {
         List<Specialty> data = cacheableService.findSpecialties();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // VisitTime GET
@@ -131,14 +130,14 @@ public class FeatureController {
     public ResponseEntity<ResponseMetaData> getVisitTimes() {
         List<VisitTime> data = cacheableService.findVisitTimes();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     @GetMapping("/purpose")
     public ResponseEntity<ResponseMetaData> getPurposes() {
         List<Purpose> data = cacheableService.findPurposes();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                      data));
+                data));
     }
 
     // Ambiance Controller Methods

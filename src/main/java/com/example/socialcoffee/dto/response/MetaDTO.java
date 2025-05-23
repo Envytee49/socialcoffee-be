@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MetaDTO {
     private Integer code;
+
     private String message;
 
     public MetaDTO(MetaData metaData) {

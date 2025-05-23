@@ -22,6 +22,7 @@ import static com.example.socialcoffee.constants.CommonConstant.TOKEN_PREFIX;
 @Slf4j
 public class CustomJwtDecoder implements JwtDecoder {
     private final JwtService jwtService;
+
     @Value("${security.jwt.token.secret-key}")
     private String secretKey;
 
@@ -29,9 +30,9 @@ public class CustomJwtDecoder implements JwtDecoder {
     public Jwt decode(String token) throws JwtException {
         try {
             jwtService.verifyToken(token,
-                                   TOKEN_PREFIX);
+                    TOKEN_PREFIX);
             SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(),
-                                                            "HS512");
+                    "HS512");
             NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
                     .withSecretKey(secretKeySpec)
                     .macAlgorithm(MacAlgorithm.HS512)
@@ -40,11 +41,11 @@ public class CustomJwtDecoder implements JwtDecoder {
             return jwtDecoder.decode(token);
         } catch (JOSEException | ParseException e) {
             log.error("401 Unauthenticated: {}",
-                      e.getMessage());
+                    e.getMessage());
             throw new RuntimeException(e.getMessage());
         } catch (JwtException e) {
             throw new JwtException("Token decoding error",
-                                   e);
+                    e);
         }
     }
 }

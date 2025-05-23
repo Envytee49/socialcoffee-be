@@ -9,7 +9,9 @@ public enum Mood {
     SOCIAL("social", "In a social mood? Let’s connect you with great people!"),
     RELAXED("relaxed", "Chill vibes detected. Enjoy the peace."),
     STRESSED("stressed", "Tough day? Let us help you unwind.");
+
     private final String value;
+
     private final String message;
 
     Mood(final String value, final String message) {

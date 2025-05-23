@@ -1,16 +1,15 @@
 package com.example.socialcoffee.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
 public class UpdateNewPassword implements Serializable {
-
-    @JsonProperty("current_password")
+    @NotBlank(message = "Current password must not be blank")
     private String currentPassword;
 
-    @JsonProperty("new_password")
+    @NotBlank(message = "New password must not be blank")
     private String newPassword;
 }

@@ -9,12 +9,16 @@ import org.springframework.context.annotation.Configuration;
 public class AuthConfig {
     @Value("${oauth2.client.registration.google.userinfo-endpoint}")
     private String userInfoEndpoint;
+
     @Value("${oauth2.client.registration.google.client-id}")
     private String clientId;
+
     @Value("${oauth2.client.registration.google.client-secret}")
     private String clientSecret;
+
     @Value("${app.security.user-facebook-api}")
     private String userFacebookApi;
+
     @Value("${spring.redis.prefix-key}")
     private String prefixRedisKey;
 

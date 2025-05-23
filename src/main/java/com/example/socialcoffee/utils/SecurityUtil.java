@@ -1,6 +1,5 @@
 package com.example.socialcoffee.utils;
 
-import com.example.socialcoffee.domain.Role;
 import com.example.socialcoffee.enums.RoleEnum;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +17,14 @@ public class SecurityUtil {
         return extractPrincipal().getSubject();
     }
 
-    public Long getUserId() {
-        return NumberUtils.toLong(extractPrincipal().getClaimAsString("userId"), NumberUtils.LONG_ZERO);
-    }
-
-    public List<String> getUserRole() {
-        return extractPrincipal().getClaimAsStringList("scope");
-    }
-
     // SecurityContextHolder.getContext().getAuthentication() could not be null
     // since to get to this method authentication must have been set
     private Jwt extractPrincipal() {
         return ((Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
+    public Long getUserId() {
+        return NumberUtils.toLong(extractPrincipal().getClaimAsString("userId"), NumberUtils.LONG_ZERO);
     }
 
     public boolean isAuthenticated() {
@@ -38,5 +33,9 @@ public class SecurityUtil {
 
     public static boolean isAdmin() {
         return getUserRole().contains(RoleEnum.ADMIN.getValue());
+    }
+
+    public List<String> getUserRole() {
+        return extractPrincipal().getClaimAsStringList("scope");
     }
 }

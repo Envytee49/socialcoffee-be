@@ -19,27 +19,30 @@ import java.util.Objects;
 @Setter
 @Builder
 public class Like {
+    @CreatedDate
+    protected LocalDateTime createdAt;
+
+    @LastModifiedDate
+    protected LocalDateTime updatedAt;
+
     @Id
     @GeneratedValue
     private String id;
-    @CreatedDate
-    protected LocalDateTime createdAt;
-    @LastModifiedDate
-    protected LocalDateTime updatedAt;
+
     @TargetNode
     private NCoffeeShop coffeeShop;
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(coffeeShop);
+    }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (!(o instanceof final Like like)) return false;
         return Objects.equals(coffeeShop.getId(),
-                              like.coffeeShop.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(coffeeShop);
+                like.coffeeShop.getId());
     }
 }
 

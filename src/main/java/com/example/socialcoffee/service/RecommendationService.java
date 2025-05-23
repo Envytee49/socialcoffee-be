@@ -13,7 +13,7 @@ import com.example.socialcoffee.model.CoffeeShopFilter;
 import com.example.socialcoffee.neo4j.NUser;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
-import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
+import com.example.socialcoffee.utils.SecurityUtil;
 import com.example.socialcoffee.utils.StringAppUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -32,47 +33,52 @@ import java.util.List;
 @Service
 public class RecommendationService {
     private final NCoffeeShopRepository nCoffeeShopRepository;
-    private final CoffeeShopRepository coffeeShopRepository;
+
     private final Neo4jClient neo4jClient;
+
     private final CacheableService cacheableService;
+
     private final GenerateTextService generateTextService;
+
     private final ObjectMapper objectMapper;
+
     private final CoffeeShopService coffeeShopService;
+
     private final NUserRepository nUserRepository;
 
     public ResponseEntity<ResponseMetaData> getRelatedCoffeeShop(Long coffeeShopId) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             nCoffeeShopRepository.findRelatedCoffeeShops(coffeeShopId)));
+                nCoffeeShopRepository.findRelatedCoffeeShops(coffeeShopId)));
     }
 
     public ResponseEntity<ResponseMetaData> getRecommendationForYou(User user) {
         if (StringUtils.isBlank(user.getCoffeePreference())) {
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.NO_CONTENT),
-                                                                 new ArrayList<>()));
+                    new ArrayList<>()));
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             cacheableService.getRecommendationForYou(user.getId())));
+                cacheableService.getRecommendationForYou(user.getId())));
     }
 
-    public ResponseEntity<ResponseMetaData> getPeopleWithSameTaste(User user) {
-        final List<NUser> similarUsersByLikesAndPreferences = nUserRepository.findSimilarUsersByLikesAndPreferences(user.getId());
+    public ResponseEntity<ResponseMetaData> getPeopleWithSameTaste() {
+        final List<NUser> similarUsersByLikesAndPreferences = nUserRepository.findSimilarUsersByLikesAndPreferences(SecurityUtil.getUserId());
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             similarUsersByLikesAndPreferences));
+                similarUsersByLikesAndPreferences));
     }
 
     public ResponseEntity<ResponseMetaData> getTop1OfAllTime() {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             cacheableService.getTop1OfAllTime()));
+                cacheableService.getTop1OfAllTime()));
     }
 
     public ResponseEntity<ResponseMetaData> getTrendingThisWeek() {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             cacheableService.getTrendingThisWeek()));
+                cacheableService.getTrendingThisWeek()));
     }
 
     public ResponseEntity<ResponseMetaData> getTrendingThisMonth() {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             cacheableService.getTrendingThisMonth()));
+                cacheableService.getTrendingThisMonth()));
     }
 
     @SneakyThrows
@@ -81,7 +87,7 @@ public class RecommendationService {
         String json = generateTextService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
         log.info("Returned json: {}, given feature: {}", json, s);
         final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
-                                                                      CoffeeShopFilter.class);
+                CoffeeShopFilter.class);
         final CoffeeShopSearchRequest searchRequest = filter.toSearchRequest(
                 cacheableService.findAmbiances(),
                 cacheableService.findAmenities(),
@@ -97,11 +103,15 @@ public class RecommendationService {
                 cacheableService.findVisitTimes()
         );
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(searchRequest,
-                                                                             0,
-                                                                             5,
-                                                                             Sort.unsorted());
+                0,
+                5,
+                Sort.unsorted());
+        List<CoffeeShopVM> data = pageDtoOut.getData();
+        data.sort(Comparator.comparing(CoffeeShopVM::getAverageRating).reversed()
+                .thenComparing(CoffeeShopVM::getReviewCounts).reversed());
+        pageDtoOut.setData(data);
         pageDtoOut.setMetaData(searchRequest);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                                    pageDtoOut));
+                pageDtoOut));
     }
 }

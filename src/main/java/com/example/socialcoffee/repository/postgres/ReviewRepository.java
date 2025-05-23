@@ -5,7 +5,6 @@ import com.example.socialcoffee.domain.Image;
 import com.example.socialcoffee.domain.Review;
 import com.example.socialcoffee.domain.User;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -42,17 +41,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Object[]> getAverageRatingByCoffeeShopId(List<Long> shopIds);
 
     @Query(value = """
-        SELECT r.* FROM reviews r
-        LEFT JOIN review_reactions rr ON r.id = rr.review_id
-        GROUP BY r.id
-        ORDER BY SUM(
-            CASE rr.type
-                WHEN 'upvote' THEN 1
-                WHEN 'downvote' THEN -1
-                ELSE 0
-            END
-        ) DESC
-    """, nativeQuery = true)
+                SELECT r.* FROM reviews r
+                LEFT JOIN review_reactions rr ON r.id = rr.review_id
+                GROUP BY r.id
+                ORDER BY SUM(
+                    CASE rr.type
+                        WHEN 'upvote' THEN 1
+                        WHEN 'downvote' THEN -1
+                        ELSE 0
+                    END
+                ) DESC
+            """, nativeQuery = true)
     Page<Review> findAllOrderByScoreDesc(Pageable pageable);
 
     @Query(value = """

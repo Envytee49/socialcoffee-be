@@ -32,21 +32,35 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String displayName;
+
     private String username;
+
     private String name;
+
     private String email;
+
     private String password;
+
     private String phone;
+
     private LocalDate dob;
+
     private String gender;
+
     @OneToOne
     private Address address;
+
     private String bio;
+
     private String coffeePreference;
+
     private String status = Status.ACTIVE.getValue();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Notification> notifications;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -56,6 +70,7 @@ public class User {
                     name = "role_id", referencedColumnName = "id")
     )
     private List<Role> roles;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_likes",
@@ -65,15 +80,22 @@ public class User {
                     name = "coffee_shop_id", referencedColumnName = "id")
     )
     private Set<CoffeeShop> coffeeShops;
+
     private String profilePhoto;
+
     private String backgroundPhoto;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
     private LocalDateTime lastLogin;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Collection> collections;
+
     @OneToMany(mappedBy = "submittedBy", cascade = CascadeType.ALL)
     private List<CoffeeShopContribution> contributions;
 

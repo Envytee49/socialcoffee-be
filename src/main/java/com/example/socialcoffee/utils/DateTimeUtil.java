@@ -16,27 +16,13 @@ public class DateTimeUtil {
         if (StringUtils.isBlank(dateStr)) return null;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateTimeFormat.MMDDYYYY);
         return LocalDate.parse(dateStr,
-                               formatter);
-    }
-
-    public static String covertLocalDateToString(LocalDate localDate) {
-        if (Objects.isNull(localDate)) return StringUtils.EMPTY;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy",
-                                                                  Locale.ENGLISH);
-        return localDate.format(formatter);
+                formatter);
     }
 
     public static String covertLocalDateToYYYYMMDDString(LocalDate localDate) {
         if (Objects.isNull(localDate)) return StringUtils.EMPTY;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateTimeFormat.YYYYMMDD_HYPHEN);
         return localDate.format(formatter);
-    }
-
-    private static LocalDate convertMMMDYYYStrToLocalDate(String dateStr) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy",
-                                                                  Locale.ENGLISH);
-        return LocalDate.parse(dateStr,
-                               formatter);
     }
 
     public static LocalDate convertYYYYMMDDStrToLocalDate(String dateStr) {
@@ -46,8 +32,15 @@ public class DateTimeUtil {
         } catch (Exception e) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DateTimeFormat.YYYYMMDD_HYPHEN);
             return LocalDate.parse(dateStr,
-                                   formatter);
+                    formatter);
         }
+    }
+
+    private static LocalDate convertMMMDYYYStrToLocalDate(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy",
+                Locale.ENGLISH);
+        return LocalDate.parse(dateStr,
+                formatter);
     }
 
     public static String convertMinuteToHour(Integer minute) {
@@ -87,7 +80,6 @@ public class DateTimeUtil {
         return "Closed";
     }
 
-
     public static String getTimeAgo(LocalDateTime createdAt) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -96,43 +88,50 @@ public class DateTimeUtil {
         }
 
         long seconds = ChronoUnit.SECONDS.between(createdAt,
-                                                  now);
+                now);
         if (seconds < 60) {
             return seconds + "s";
         }
 
         long minutes = ChronoUnit.MINUTES.between(createdAt,
-                                                  now);
+                now);
         if (minutes < 60) {
             return minutes + "m";
         }
 
         long hours = ChronoUnit.HOURS.between(createdAt,
-                                              now);
+                now);
         if (hours < 24) {
             return hours + "h";
         }
 
         long days = ChronoUnit.DAYS.between(createdAt,
-                                            now);
+                now);
         if (days < 30) {
             return days + "d";
         }
 
         long months = ChronoUnit.MONTHS.between(createdAt,
-                                                now);
+                now);
         if (months < 12) {
             return months + "mo";
         }
 
         long years = ChronoUnit.YEARS.between(createdAt,
-                                              now);
+                now);
         return years + "y";
     }
 
     public static String covertLocalDateToString(LocalDateTime createdAt) {
         if (Objects.isNull(createdAt)) return StringUtils.EMPTY;
         return covertLocalDateToString(createdAt.toLocalDate());
+    }
+
+    public static String covertLocalDateToString(LocalDate localDate) {
+        if (Objects.isNull(localDate)) return StringUtils.EMPTY;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy",
+                Locale.ENGLISH);
+        return localDate.format(formatter);
     }
 
     public static String convertIntegerToString(Integer minutes) {
@@ -142,7 +141,7 @@ public class DateTimeUtil {
 
         // Format hours and minutes to ensure two digits
         return String.format("%02d:%02d",
-                             hours,
-                             remainingMinutes);
+                hours,
+                remainingMinutes);
     }
 }

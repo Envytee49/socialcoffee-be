@@ -9,8 +9,23 @@ import org.locationtech.jts.io.WKTReader;
 public class GeometryUtil {
 
     public static final int SRID = 4326; //LatLng
-    private static WKTReader wktReader = new WKTReader();
+
     private static final double EARTH_RADIUS_KM = 6371.0;
+
+    private static final WKTReader wktReader = new WKTReader();
+
+    public static Point parseLocation(Double x,
+                                      Double y) {
+        if (ObjectUtils.anyNull(x,
+                y)) return null;
+        Geometry geometry = GeometryUtil.wktToGeometry(String.format("POINT (%s %s)",
+                x,
+                y));
+        Point p = (Point) geometry;
+        p.setSRID(SRID);
+        return p;
+    }
+
     private static Geometry wktToGeometry(String wellKnownText) {
         Geometry geometry = null;
 
@@ -23,18 +38,6 @@ public class GeometryUtil {
         return geometry;
     }
 
-    public static Point parseLocation(Double x,
-                                      Double y) {
-        if (ObjectUtils.anyNull(x,
-                                y)) return null;
-        Geometry geometry = GeometryUtil.wktToGeometry(String.format("POINT (%s %s)",
-                                                                     x,
-                                                                     y));
-        Point p = (Point) geometry;
-        p.setSRID(SRID);
-        return p;
-    }
-
     /**
      * Calculates the distance between two geographic points using the Haversine formula.
      *
@@ -45,7 +48,7 @@ public class GeometryUtil {
      * @return Distance between the two points in kilometers, rounded to 2 decimal places
      */
     public static Double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
-        if(ObjectUtils.anyNull(lat1, lon1, lat2, lon2)) return null;
+        if (ObjectUtils.anyNull(lat1, lon1, lat2, lon2)) return null;
         double lat1Rad = Math.toRadians(lat1);
         double lon1Rad = Math.toRadians(lon1);
         double lat2Rad = Math.toRadians(lat2);

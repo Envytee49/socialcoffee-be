@@ -13,8 +13,11 @@ public class UserAuthConnection {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long userId;
+
     private Long authId;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

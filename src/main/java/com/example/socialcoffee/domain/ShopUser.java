@@ -10,21 +10,28 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 @Table(name = "shop_users")
 @Entity
 public class ShopUser {
     @EmbeddedId
     private ShopUserId id;
+
     private String type;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime approvedAt;
+
     private String status;
+
     @Embeddable
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ShopUserId implements Serializable {
         private Long userId;
+
         private Long shopId;
     }
 }

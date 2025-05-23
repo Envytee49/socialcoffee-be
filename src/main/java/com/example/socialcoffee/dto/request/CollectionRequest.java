@@ -8,6 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 public class CollectionRequest {
     private String name;
+
     private String description;
+
     private MultipartFile file;
 }

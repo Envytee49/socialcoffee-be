@@ -16,18 +16,31 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CoffeeShopDTO {
     private Long id;
+
     private String name;
+
     private String coverPhoto;
+
     private String phoneNumber;
+
     private String webAddress;
+
     private String menuWebAddress;
+
     private String description;
+
     private Integer openHour;
+
     private Integer closeHour;
+
     private String status;
+
     private AddressDTO address;
+
     private Long createdBy;
+
     private List<ImageDTO> galleryPhotos;
+
     public CoffeeShopDTO(CoffeeShop coffeeShop) {
         this.id = coffeeShop.getId();
         this.name = coffeeShop.getName();

@@ -29,8 +29,7 @@ public class RecommendationController extends BaseController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/people-with-same-taste")
     public ResponseEntity<ResponseMetaData> getPeopleWithSameTaste() {
-        User user = getCurrentUser();
-        return recommendationService.getPeopleWithSameTaste(user);
+        return recommendationService.getPeopleWithSameTaste();
     }
 
     @GetMapping("/top-10-of-all-time")

@@ -1,7 +1,6 @@
 package com.example.socialcoffee.neo4j.relationship;
 
 import com.example.socialcoffee.neo4j.NCoffeeShop;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,25 +16,29 @@ import java.util.Objects;
 @Setter
 @Builder
 public class Review {
-    @Id
-    private Long id;
     @CreatedDate
     protected LocalDateTime createdAt;
+
     @LastModifiedDate
     protected LocalDateTime updatedAt;
+
+    @Id
+    private Long id;
+
     private Integer rating;
+
     @TargetNode
     private NCoffeeShop coffeeShop;
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(coffeeShop);
+    }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (!(o instanceof final Review review)) return false;
         return Objects.equals(coffeeShop.getId(), review.coffeeShop.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(coffeeShop);
     }
 }

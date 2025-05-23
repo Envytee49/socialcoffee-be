@@ -5,8 +5,11 @@ import lombok.Data;
 @Data
 public class LoginResponse {
     private String role;
+
     private String token;
+
     private String refreshToken;
+
     private boolean firstTimeLogin;
 
     public LoginResponse(final String role,

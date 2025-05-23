@@ -1,7 +1,9 @@
 package com.example.socialcoffee.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
@@ -30,6 +32,7 @@ public class UserFollow {
     @AllArgsConstructor
     public static class UserFollowerId implements Serializable {
         private Long followerId;
+
         private Long followeeId;
     }
 }

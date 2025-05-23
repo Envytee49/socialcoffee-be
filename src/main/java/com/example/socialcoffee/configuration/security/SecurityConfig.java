@@ -20,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final CustomJwtDecoder customJwtDecoder;
+
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
@@ -32,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasAnyRole(RoleEnum.USER.getValue(), RoleEnum.ADMIN.getValue())
                         .requestMatchers("/admin/**").hasRole(RoleEnum.ADMIN.getValue())
                         .requestMatchers("/recommendation/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/coffee-shops/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/coffee-shops/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(

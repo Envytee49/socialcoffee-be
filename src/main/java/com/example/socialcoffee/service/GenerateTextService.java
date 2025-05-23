@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class GenerateTextService {
     private final ChatClient chatClient;
+
     public String parseFilterFromPrompt(String prompt) {
         try {
             if (StringAppUtils.isEmpty(prompt)) return null;

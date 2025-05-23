@@ -17,13 +17,20 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String title;
+
     private String message;
+
     private String type;
+
     private String meta;
+
     private String status;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

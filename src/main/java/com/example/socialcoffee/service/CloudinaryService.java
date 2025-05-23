@@ -18,14 +18,14 @@ public class CloudinaryService {
     private final Cloudinary cloudinary;
 
     public String upload(MultipartFile file) {
-        try{
-            if(Objects.isNull(file)) return StringUtils.EMPTY;
+        try {
+            if (Objects.isNull(file)) return StringUtils.EMPTY;
             log.info("Start uploading {}", file.getOriginalFilename());
             final Map data = this.cloudinary.uploader().upload(file.getBytes(),
-                                                                 Map.of());
+                    Map.of());
             log.info("Finish uploading {}", file.getOriginalFilename());
             return (String) data.get("url");
-        }catch (IOException io){
+        } catch (IOException io) {
             throw new RuntimeException("Image upload fail");
         }
     }

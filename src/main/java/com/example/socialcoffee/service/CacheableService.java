@@ -30,22 +30,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CacheableService {
     private final AmbianceRepository ambianceRepository;
+
     private final AmenityRepository amenityRepository;
+
     private final CapacityRepository capacityRepository;
+
     private final CategoryRepository categoryRepository;
+
     private final DressCodeRepository dressCodeRepository;
+
     private final EntertainmentRepository entertainmentRepository;
+
     private final ParkingRepository parkingRepository;
+
     private final PriceRepository priceRepository;
+
     private final ServiceTypeRepository serviceTypeRepository;
+
     private final SpaceRepository spaceRepository;
+
     private final SpecialtyRepository specialtyRepository;
+
     private final VisitTimeRepository visitTimeRepository;
+
     private final PurposeRepository purposeRepository;
+
     private final AuthProviderRepository authProviderRepository;
+
     private final RoleRepository roleRepository;
+
     private final NCoffeeShopRepository nCoffeeShopRepository;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final UserRepository userRepository;
 
     @Cacheable(value = "ambiances")
@@ -131,23 +148,23 @@ public class CacheableService {
     public List<CoffeeShopVM> getRecommendationForYou(Long userId) {
         final List<Long> ids = nCoffeeShopRepository.findRecommendedForYou(userId).stream().map(NCoffeeShop::getId).toList();
         return coffeeShopRepository.findAllById(ids).stream().map(c -> CoffeeShopVM.toVM(c,
-                                                                                         null,
-                                                                                         null))
+                        null,
+                        null))
                 .toList();
     }
 
     @Cacheable(value = "List<CoffeeShopVM>", key = "'TOP_10_OF_ALL_TIME'")
     public List<CoffeeShopVM> getTop1OfAllTime() {
         final List<CoffeeShop> top10 = coffeeShopRepository.findTop10CoffeeShopsByWeightedRatingAndCollections(1.0,
-                                                                                                               2.0,
-                                                                                                               4.0,
-                                                                                                               8.0,
-                                                                                                               16.0);
+                2.0,
+                4.0,
+                8.0,
+                16.0);
 
         return top10
                 .stream().map(c -> CoffeeShopVM.toVM(c,
-                                                     null,
-                                                     null))
+                        null,
+                        null))
                 .toList();
     }
 
@@ -156,20 +173,20 @@ public class CacheableService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         Pageable top10 = PageRequest.of(0,
-                                        10);
+                10);
         final List<CoffeeShop> trendingThisWeek = coffeeShopRepository.findTrendingCoffeeShops(1.0,
-                                                                                               2.0,
-                                                                                               4.0,
-                                                                                               8.0,
-                                                                                               16.0,
-                                                                                               startOfWeek,
-                                                                                               now,
-                                                                                               top10);
+                2.0,
+                4.0,
+                8.0,
+                16.0,
+                startOfWeek,
+                now,
+                top10);
 
         return trendingThisWeek
                 .stream().map(c -> CoffeeShopVM.toVM(c,
-                                                     null,
-                                                     null))
+                        null,
+                        null))
                 .toList();
     }
 
@@ -178,20 +195,20 @@ public class CacheableService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfMonth = now.withDayOfMonth(1);
         Pageable top10 = PageRequest.of(0,
-                                        10);
+                10);
         final List<CoffeeShop> trendingThisWeek = coffeeShopRepository.findTrendingCoffeeShops(1.0,
-                                                                                               2.0,
-                                                                                               4.0,
-                                                                                               8.0,
-                                                                                               16.0,
-                                                                                               startOfMonth,
-                                                                                               now,
-                                                                                               top10);
+                2.0,
+                4.0,
+                8.0,
+                16.0,
+                startOfMonth,
+                now,
+                top10);
 
         return trendingThisWeek
                 .stream().map(c -> CoffeeShopVM.toVM(c,
-                                                     null,
-                                                     null))
+                        null,
+                        null))
                 .toList();
     }
 

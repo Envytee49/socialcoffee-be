@@ -26,7 +26,9 @@ import java.util.List;
 @Slf4j
 public class CrawlDataService {
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final AddressRepository addressRepository;
+
     private final ImageRepository imageRepository;
 
     @Transactional
@@ -54,8 +56,8 @@ public class CrawlDataService {
                 });
         for (var cf : res.getResult().getRows()) {
             log.info("Crawling {} {}",
-                     cf.getId(),
-                     cf.getName());
+                    cf.getId(),
+                    cf.getName());
             Address address = Address.builder()
                     .addressDetail(cf.getAddress())
                     .ward(cf.getWard())
@@ -84,7 +86,7 @@ public class CrawlDataService {
                     .galleryPhotos(images)
                     .build();
             log.info("CoffeeShop: {}",
-                     coffeeShop);
+                    coffeeShop);
             coffeeShopRepository.save(coffeeShop);
         }
         log.info("Crawl done");

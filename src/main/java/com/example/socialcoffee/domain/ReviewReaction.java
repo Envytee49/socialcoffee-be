@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "review_reactions")
 @NoArgsConstructor
@@ -18,9 +19,12 @@ import java.time.LocalDateTime;
 public class ReviewReaction {
     @EmbeddedId
     private ReviewReactionId id;
+
     private String type;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
@@ -36,6 +40,7 @@ public class ReviewReaction {
     @Getter
     public static class ReviewReactionId {
         private Long reviewId;
+
         private Long userId;
     }
 }

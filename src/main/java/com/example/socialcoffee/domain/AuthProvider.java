@@ -12,6 +12,7 @@ public class AuthProvider {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
     public AuthProvider(final String name) {

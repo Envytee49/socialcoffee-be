@@ -1,6 +1,6 @@
 package com.example.socialcoffee.neo4j.relationship;
 
-import com.example.socialcoffee.neo4j.feature.*;
+import com.example.socialcoffee.neo4j.feature.NFeature;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,13 +18,16 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class Prefer {
+    @CreatedDate
+    protected LocalDateTime createdAt;
+
+    @LastModifiedDate
+    protected LocalDateTime updatedAt;
+
     @Id
     @GeneratedValue
     private String id;
-    @CreatedDate
-    protected LocalDateTime createdAt;
-    @LastModifiedDate
-    protected LocalDateTime updatedAt;
+
     @TargetNode
     private NFeature feature;
 }

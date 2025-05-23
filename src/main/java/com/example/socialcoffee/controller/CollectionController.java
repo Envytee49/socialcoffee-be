@@ -22,10 +22,8 @@ public class CollectionController extends BaseController {
     public ResponseEntity<ResponseMetaData> getCollections(@RequestParam(value = "displayName", required = false) String displayName,
                                                            @RequestParam(value = "shopId", required = false) Long coffeeShopId,
                                                            PageDtoIn pageDtoIn) {
-        User user = getCurrentUser(displayName);
-        return collectionService.getCollections(user,
-                                                coffeeShopId,
-                                                pageDtoIn);
+        return collectionService.getCollections(coffeeShopId,
+                pageDtoIn);
     }
 
     @GetMapping("/collections/{collectionId}")
@@ -42,34 +40,34 @@ public class CollectionController extends BaseController {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.INVALID_PARAMETERS)));
         }
         return collectionService.createNewCollection(user,
-                                                     request);
+                request);
     }
 
     @PutMapping("/collections/{collectionId}")
     public ResponseEntity<ResponseMetaData> addCoffeeShopToCollection(@PathVariable Long collectionId,
                                                                       @RequestParam(value = "shopId") String shopId) {
         return collectionService.addCoffeeShopToCollection(collectionId,
-                                                           Long.parseLong(shopId));
+                Long.parseLong(shopId));
     }
 
     @PatchMapping("/collections/{collectionId}/name")
     public ResponseEntity<ResponseMetaData> updateCollectionName(@PathVariable Long collectionId,
                                                                  @RequestParam(value = "name") String name) {
         return collectionService.updateCollectionName(collectionId,
-                                                      name);
+                name);
     }
 
     @PatchMapping("/collections/{collectionId}/description")
     public ResponseEntity<ResponseMetaData> updateCollectionDescription(@PathVariable Long collectionId,
                                                                         @RequestParam(value = "description") String description) {
         return collectionService.updateCollectionDescription(collectionId,
-                                                             description);
+                description);
     }
 
     @DeleteMapping("/collections/{collectionId}")
     public ResponseEntity<ResponseMetaData> removeCoffeeShopFromCollection(@PathVariable Long collectionId,
                                                                            @RequestParam(value = "shopId") String shopId) {
         return collectionService.removeCoffeeShopFromCollection(collectionId,
-                                                                Long.parseLong(shopId));
+                Long.parseLong(shopId));
     }
 }

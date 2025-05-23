@@ -8,11 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.Optional;
-
 public interface CoffeeShopContributionRepository extends JpaRepository<CoffeeShopContribution, Long> {
     Page<CoffeeShopContribution> findByStatus(String status, Pageable pageable);
+
     Page<CoffeeShopContribution> findByType(String type, Pageable pageable);
+
     Page<CoffeeShopContribution> findByStatusAndType(String status, String type, Pageable pageable);
 
     Page<CoffeeShopContribution> findByStatusAndTypeAndSubmittedByAndName(String status,

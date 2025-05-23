@@ -15,11 +15,17 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PageDtoOut<T> {
     private int page;
+
     private int size;
+
     private long totalPages;
+
     private long totalElements;
+
     private Object metaData;
+
     private List<T> data;
+
     public static <T> PageDtoOut<T> from(int page, int size, long totalElements, List<T> data) {
         long totalPages = totalElements / size;
         if (totalElements % size != 0) {

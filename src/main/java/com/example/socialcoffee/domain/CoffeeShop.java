@@ -7,13 +7,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.Where;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.example.socialcoffee.utils.ObjectUtil.getNames;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Table(name = "coffee_shops")
 @Entity
@@ -27,26 +28,42 @@ public class CoffeeShop {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
+
     private String name;
+
     private String coverPhoto;
+
     private String phoneNumber;
+
     private String webAddress;
+
     private String menuWebAddress;
+
     private String additionInfo;
+
     private Boolean isSponsored = Boolean.FALSE;
+
     private Integer openHour;
+
     private Integer closeHour;
+
     @OneToMany(fetch = FetchType.EAGER)
     private List<Image> galleryPhotos;
+
     @OneToOne
     private Address address;
+
     @ManyToMany(mappedBy = "coffeeShops", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<User> users;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
     private String status;
+
     private Long createdBy;
+
     @ManyToMany
     @JoinTable(
             name = "coffee_shop_ambiance",
@@ -158,29 +175,24 @@ public class CoffeeShop {
     private Long reviewCount = 0L;
 
     @OneToMany(mappedBy = "coffeeShop", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Where(clause = "status = 'active'")
     @JsonIgnore
     private List<Review> reviews;
 
     public void addReview(Review review) {
-        if(CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
+        if (CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
         this.reviews.add(review);
     }
+
     public void updateGalleryPhotos(List<Image> galleryPhotos) {
         this.galleryPhotos.addAll(0, galleryPhotos);
     }
 
 
     public CoffeeShopDTO toCoffeeShopDTO() {
-        CoffeeShopDTO coffeeShopDTO  = new CoffeeShopDTO();
+        CoffeeShopDTO coffeeShopDTO = new CoffeeShopDTO();
         BeanUtils.copyProperties(this, coffeeShopDTO);
         return coffeeShopDTO;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        CoffeeShop that = (CoffeeShop) o;
-        return Objects.equals(id, that.id);
     }
 
     @Override
@@ -188,22 +200,11 @@ public class CoffeeShop {
         return Objects.hashCode(id);
     }
 
-    @JsonIgnore
-    public String getOverviewAddress() {
-        final Address addr = this.address;
-        List<String> parts = new ArrayList<>();
-
-        if (StringUtils.isNotBlank(addr.getProvince())) {
-            parts.add(addr.getProvince());
-        }
-        if (StringUtils.isNotBlank(addr.getDistrict())) {
-            parts.add(addr.getDistrict());
-        }
-        if (StringUtils.isNotBlank(addr.getWard())) {
-            parts.add(addr.getWard());
-        }
-
-        return String.join(", ", parts);
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CoffeeShop that = (CoffeeShop) o;
+        return Objects.equals(id, that.id);
     }
 
     @Override
@@ -222,31 +223,21 @@ public class CoffeeShop {
                 '}';
     }
 
-    public String featureToString() {
-        Map<String, List<String>> featureMap = new ConcurrentHashMap<>();
-        featureMap.put("ambiances", getNames(ambiances));
-        featureMap.put("amenities", getNames(amenities));
-        featureMap.put("capacities", getNames(capacities));
-        featureMap.put("categories", getNames(categories));
-        featureMap.put("dressCodes", getNames(dressCodes));
-        featureMap.put("entertainments", getNames(entertainments));
-        featureMap.put("parkings", getNames(parkings));
-        featureMap.put("prices", getNames(prices));
-        featureMap.put("serviceTypes", getNames(serviceTypes));
-        featureMap.put("spaces", getNames(spaces));
-        featureMap.put("specialties", getNames(specialties));
-        featureMap.put("visitTimes", getNames(visitTimes));
-        featureMap.forEach((key, value) -> {
-            if (value == null || value.isEmpty()) {
-                featureMap.remove(key);
-            }
-        });
-        StringBuilder sb = new StringBuilder();
-        featureMap.forEach((key, value) -> {
-            sb.append(key).append(": ").append(value).append("\n");
-        });
-        sb.append("name: ").append(name);
-        sb.append("additional information: ").append(additionInfo);
-        return sb.toString();
+    @JsonIgnore
+    public String getOverviewAddress() {
+        final Address addr = this.address;
+        List<String> parts = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(addr.getProvince())) {
+            parts.add(addr.getProvince());
+        }
+        if (StringUtils.isNotBlank(addr.getDistrict())) {
+            parts.add(addr.getDistrict());
+        }
+        if (StringUtils.isNotBlank(addr.getWard())) {
+            parts.add(addr.getWard());
+        }
+
+        return String.join(", ", parts);
     }
 }

@@ -18,13 +18,16 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class HasFeature {
+    @CreatedDate
+    protected LocalDateTime createdAt;
+
+    @LastModifiedDate
+    protected LocalDateTime updatedAt;
+
     @Id
     @GeneratedValue
     private String id;
-    @CreatedDate
-    protected LocalDateTime createdAt;
-    @LastModifiedDate
-    protected LocalDateTime updatedAt;
+
     @TargetNode
     private NFeature feature;
 }

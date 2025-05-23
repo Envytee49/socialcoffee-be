@@ -9,6 +9,7 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.CollectionRepository;
+import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +28,9 @@ import java.util.Optional;
 @Slf4j
 public class CollectionService {
     private final CollectionRepository collectionRepository;
+
     private final CoffeeShopRepository coffeeShopRepository;
+
     private final CloudinaryService cloudinaryService;
 
     @Transactional
@@ -77,25 +80,24 @@ public class CollectionService {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    public ResponseEntity<ResponseMetaData> getCollections(User user,
-                                                           Long coffeeShopId,
+    public ResponseEntity<ResponseMetaData> getCollections(Long coffeeShopId,
                                                            PageDtoIn pageDtoIn) {
         Pageable pageable = PageRequest.of(pageDtoIn.getPage() - 1,
-                                           pageDtoIn.getSize());
+                pageDtoIn.getSize());
         CoffeeShop coffeeShop = null;
         if (Objects.nonNull(coffeeShopId)) {
             coffeeShop = coffeeShopRepository.findByShopId(coffeeShopId);
             if (Objects.isNull(coffeeShop))
                 return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
-        final List<Collection> collections = collectionRepository.findByUser(user,
-                                                                             pageable);
+        final List<Collection> collections = collectionRepository.findByUser_Id(SecurityUtil.getUserId(),
+                pageable);
         final CoffeeShop finalCoffeeShop = coffeeShop;
         final List<CollectionVM> collectionVMs = collections.stream().map(c -> new CollectionVM(c,
-                                                                                                finalCoffeeShop))
+                        finalCoffeeShop))
                 .toList();
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             collectionVMs));
+                collectionVMs));
     }
 
     public ResponseEntity<ResponseMetaData> getCollectionById(Long collectionId,
@@ -106,15 +108,15 @@ public class CollectionService {
             return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
         }
         CollectionDetailVM collectionDetailVM = new CollectionDetailVM(collection,
-                                                                       collection
-                                                                               .getCoffeeShops()
-                                                                               .stream().map(c -> CoffeeShopVM.toVM(c,
-                                                                                                                    lat,
-                                                                                                                    lng))
-                                                                               .toList());
+                collection
+                        .getCoffeeShops()
+                        .stream().map(c -> CoffeeShopVM.toVM(c,
+                                lat,
+                                lng))
+                        .toList());
 
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                                                             collectionDetailVM));
+                collectionDetailVM));
     }
 
 

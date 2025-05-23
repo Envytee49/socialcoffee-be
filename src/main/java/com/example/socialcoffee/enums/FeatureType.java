@@ -20,10 +20,6 @@ public enum FeatureType {
         this.key = key;
     }
 
-    public String getKey() {
-        return key;
-    }
-
     public static FeatureType fromKey(String key) {
         for (FeatureType type : values()) {
             if (type.key.equalsIgnoreCase(key)) {
@@ -31,6 +27,10 @@ public enum FeatureType {
             }
         }
         throw new IllegalArgumentException("Invalid feature type: " + key);
+    }
+
+    public String getKey() {
+        return key;
     }
 }
 
