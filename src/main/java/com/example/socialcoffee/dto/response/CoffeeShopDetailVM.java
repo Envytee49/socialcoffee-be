@@ -1,9 +1,10 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.Address;
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.postgres.Address;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Image;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import com.example.socialcoffee.utils.NumberUtil;

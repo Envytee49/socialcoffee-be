@@ -27,8 +27,6 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController extends BaseController {
     private final CoffeeShopService coffeeShopService;
 
-    private final UserService userService;
-
     private final ContributionService contributionService;
 
     private final CoffeeShopRepository coffeeShopRepository;

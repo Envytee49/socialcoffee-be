@@ -1,6 +1,6 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.dto.common.AddressDTO;
 import com.example.socialcoffee.dto.common.ImageDTO;
 import com.fasterxml.jackson.annotation.JsonInclude;

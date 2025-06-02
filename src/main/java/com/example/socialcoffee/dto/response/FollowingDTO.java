@@ -1,7 +1,7 @@
 package com.example.socialcoffee.dto.response;
 
 
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

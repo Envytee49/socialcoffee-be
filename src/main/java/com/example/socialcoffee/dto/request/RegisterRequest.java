@@ -15,6 +15,5 @@ public class RegisterRequest {
     private String confirmPassword;
     @NotBlank(message = "display name must not be blank")
     private String displayName;
-    @NotBlank(message = "full name must not be blank")
     private String fullName;
 }

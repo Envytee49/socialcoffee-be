@@ -28,20 +28,6 @@ public class ObjectUtil {
         return list.subList(startIndex, endIndex);
     }
 
-    public static <T> List<String> getNames(List<T> features) {
-        if (features == null) return List.of();
-        return features.stream()
-                .map(f -> {
-                    try {
-                        return (String) f.getClass().getMethod("getName").invoke(f);
-                    } catch (Exception e) {
-                        return "";
-                    }
-                })
-                .filter(name -> !name.isEmpty())
-                .toList();
-    }
-
     public static String objectToString(ObjectMapper objectMapper, Object object) {
         try {
             return objectMapper.writeValueAsString(object);

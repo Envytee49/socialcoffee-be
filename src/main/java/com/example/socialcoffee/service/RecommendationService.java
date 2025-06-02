@@ -2,7 +2,7 @@ package com.example.socialcoffee.service;
 
 import com.cloudinary.utils.StringUtils;
 import com.example.socialcoffee.constants.CommonConstant;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
@@ -10,7 +10,7 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.model.CoffeeShopFilter;
-import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;

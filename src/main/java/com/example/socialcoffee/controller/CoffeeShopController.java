@@ -1,7 +1,7 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.Address;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.Address;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
@@ -17,6 +17,7 @@ import com.example.socialcoffee.enums.Mood;
 import com.example.socialcoffee.exception.UnauthorizedException;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.service.CoffeeShopService;
+import com.example.socialcoffee.service.ContributionService;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;
 import com.example.socialcoffee.utils.GeometryUtil;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -54,18 +54,8 @@ public class CoffeeShopController extends BaseController {
 
     private final ValidationService validationService;
 
+    private final ContributionService contributionService;
 
-    @PostMapping(value = "/coffee-shops/contribute", consumes = "multipart/form-data")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ResponseMetaData> contributeCoffeeShop(@Valid @ModelAttribute ContributionRequest request,
-                                                                 @RequestPart(required = true) MultipartFile coverPhoto,
-                                                                 @RequestPart(required = false) MultipartFile[] galleryPhotos) {
-        User user = getCurrentUser();
-        return coffeeShopService.contributeCoffeeShop(user,
-                coverPhoto,
-                galleryPhotos,
-                request);
-    }
 
     @GetMapping(value = "/coffee-shops/sponsored")
     public ResponseEntity<ResponseMetaData> getSponsoredCoffeeShop(@RequestParam(required = false) Double latitude,
@@ -73,6 +63,18 @@ public class CoffeeShopController extends BaseController {
         return coffeeShopService.getSponsoredCoffeeShop(latitude,
                 longitude);
     }
+    @PostMapping(value = "/coffee-shops/contribute", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ResponseMetaData> contributeCoffeeShop(@Valid @ModelAttribute ContributionRequest request,
+                                                                 @RequestPart(required = true) MultipartFile coverPhoto,
+                                                                 @RequestPart(required = false) MultipartFile[] galleryPhotos) {
+        User user = getCurrentUser();
+        return contributionService.contributeCoffeeShop(user,
+                coverPhoto,
+                galleryPhotos,
+                request);
+    }
+
 
 
     @PutMapping(value = "/coffee-shops/{id}/suggest-an-edit", consumes = "multipart/form-data")
@@ -82,7 +84,7 @@ public class CoffeeShopController extends BaseController {
                                                               @RequestPart(required = false) MultipartFile[] galleryPhotos,
                                                               @PathVariable Long id) {
         User user = getCurrentUser();
-        return coffeeShopService.suggestAnEdit(user,
+        return contributionService.suggestAnEdit(user,
                 coverPhoto,
                 galleryPhotos,
                 request,
@@ -94,7 +96,7 @@ public class CoffeeShopController extends BaseController {
     public ResponseEntity<ResponseMetaData> editContribution(@ModelAttribute ContributionRequest request,
                                                              @RequestPart(required = false) MultipartFile[] galleryPhotos,
                                                              @PathVariable Long contributionId) {
-        return coffeeShopService.editContribution(galleryPhotos,
+        return contributionService.editContribution(galleryPhotos,
                 request,
                 contributionId);
     }

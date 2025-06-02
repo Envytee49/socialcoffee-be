@@ -1,7 +1,7 @@
 package com.example.socialcoffee.repository.postgres;
 
-import com.example.socialcoffee.domain.ReviewReaction;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.ReviewReaction;
+import com.example.socialcoffee.domain.postgres.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

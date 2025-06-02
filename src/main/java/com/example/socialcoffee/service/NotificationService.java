@@ -1,6 +1,6 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.NotificationType;
 import com.example.socialcoffee.repository.postgres.UserRepository;

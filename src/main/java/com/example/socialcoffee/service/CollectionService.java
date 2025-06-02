@@ -1,8 +1,8 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Collection;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Collection;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.request.CollectionRequest;
 import com.example.socialcoffee.dto.response.*;
@@ -41,7 +41,7 @@ public class CollectionService {
                 .user(user)
                 .build();
         if (Objects.nonNull(request.getFile())) {
-            collection.setCoverUrl(cloudinaryService.upload(request.getFile()));
+            collection.setCoverPhoto(cloudinaryService.upload(request.getFile()));
         }
         collectionRepository.save(collection);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

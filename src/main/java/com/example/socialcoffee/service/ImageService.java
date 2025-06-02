@@ -1,6 +1,6 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.postgres.Image;
 import com.example.socialcoffee.repository.postgres.ImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

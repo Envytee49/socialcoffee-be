@@ -1,6 +1,6 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.service.RecommendationService;
 import lombok.RequiredArgsConstructor;

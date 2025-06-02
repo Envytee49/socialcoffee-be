@@ -1,6 +1,6 @@
 package com.example.socialcoffee.repository.postgres;
 
-import com.example.socialcoffee.domain.AuthProvider;
+import com.example.socialcoffee.domain.postgres.AuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AuthProviderRepository extends JpaRepository<AuthProvider, Long> {

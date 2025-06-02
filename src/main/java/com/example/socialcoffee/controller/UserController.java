@@ -1,6 +1,6 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.domain.postgres.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
@@ -14,7 +14,7 @@ import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.UserSettingModel;
-import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserSettingRepository;
@@ -372,4 +372,5 @@ public class UserController extends BaseController {
                 destinationUser,
                 pageDtoIn);
     }
+
 }

@@ -1,6 +1,6 @@
 package com.example.socialcoffee.repository.postgres;
 
-import com.example.socialcoffee.domain.CoffeeShopMood;
+import com.example.socialcoffee.domain.postgres.CoffeeShopMood;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 

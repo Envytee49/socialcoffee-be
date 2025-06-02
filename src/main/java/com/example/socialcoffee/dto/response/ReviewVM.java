@@ -1,7 +1,7 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.Image;
-import com.example.socialcoffee.domain.Review;
+import com.example.socialcoffee.domain.postgres.Image;
+import com.example.socialcoffee.domain.postgres.Review;
 import com.example.socialcoffee.model.UserReaction;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;

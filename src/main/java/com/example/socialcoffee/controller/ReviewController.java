@@ -3,7 +3,6 @@ package com.example.socialcoffee.controller;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
-import com.example.socialcoffee.neo4j.relationship.Review;
 import com.example.socialcoffee.service.RepoService;
 import com.example.socialcoffee.service.ReviewService;
 import com.example.socialcoffee.service.ValidationService;

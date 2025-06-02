@@ -1,7 +1,7 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.Role;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.Role;
+import com.example.socialcoffee.domain.postgres.User;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;

@@ -1,6 +1,6 @@
 package com.example.socialcoffee.repository.postgres.custom;
 
-import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;

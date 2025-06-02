@@ -1,7 +1,7 @@
 package com.example.socialcoffee.controller;
 
 import com.example.socialcoffee.constants.CommonConstant;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.exception.UnauthorizedException;

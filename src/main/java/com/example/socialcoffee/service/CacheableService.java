@@ -1,10 +1,10 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.AuthProvider;
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Role;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.postgres.AuthProvider;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Role;
+import com.example.socialcoffee.domain.postgres.User;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.response.CoffeeShopVM;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;

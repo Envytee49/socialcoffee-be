@@ -1,7 +1,7 @@
 package com.example.socialcoffee;
 
-import com.example.socialcoffee.domain.AuthProvider;
-import com.example.socialcoffee.domain.Role;
+import com.example.socialcoffee.domain.postgres.AuthProvider;
+import com.example.socialcoffee.domain.postgres.Role;
 import com.example.socialcoffee.enums.AuthProviderEnum;
 import com.example.socialcoffee.enums.RoleEnum;
 import com.example.socialcoffee.repository.postgres.AuthProviderRepository;

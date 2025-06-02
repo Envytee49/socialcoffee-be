@@ -1,6 +1,6 @@
 package com.example.socialcoffee.repository.postgres;
 
-import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.repository.postgres.custom.CoffeeShopRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

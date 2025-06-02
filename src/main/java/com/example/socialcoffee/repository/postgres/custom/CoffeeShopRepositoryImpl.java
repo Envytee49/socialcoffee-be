@@ -1,7 +1,7 @@
 package com.example.socialcoffee.repository.postgres.custom;
 
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Review;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Review;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.enums.CoffeeShopSort;
 import jakarta.persistence.EntityManager;

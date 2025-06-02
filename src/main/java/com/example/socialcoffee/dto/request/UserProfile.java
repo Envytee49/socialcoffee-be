@@ -1,6 +1,6 @@
 package com.example.socialcoffee.dto.request;
 
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import lombok.Getter;
 

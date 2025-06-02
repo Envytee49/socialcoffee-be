@@ -1,6 +1,6 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.*;
+import com.example.socialcoffee.domain.postgres.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.EditReviewRequest;
@@ -9,7 +9,7 @@ import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.ReviewVote;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserReaction;
-import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.postgres.*;
 import com.example.socialcoffee.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -68,10 +68,10 @@ public class ReviewService {
         }
         List<Image> images = imageService.save(file);
         Review review = new Review(rating,
-                content,
-                images,
-                user,
-                coffeeShop);
+                                   content,
+                                   images,
+                                   user,
+                                   coffeeShop);
         reviewRepository.save(review);
         final NUser nUserById = repoService.findNUserById(user.getId());
         nUserById.addReview(repoService.findNCoffeeShopById(coffeeShop.getId()), rating);

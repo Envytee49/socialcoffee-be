@@ -1,6 +1,6 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.model.CoffeeShopMoodCountDTO;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import com.example.socialcoffee.utils.GeometryUtil;
@@ -58,6 +58,29 @@ public class CoffeeShopVM {
                 .name(coffeeShop.getName())
                 .build();
     }
+
+    public static CoffeeShopVM toVM(CoffeeShop coffeeShop) {
+        Double longitude = coffeeShop.getAddress().getLongitude();
+        Double latitude = coffeeShop.getAddress().getLatitude();
+
+        return CoffeeShopVM.builder()
+                .id(coffeeShop.getId())
+                .coverPhoto(coffeeShop.getCoverPhoto())
+                .detailAddress(coffeeShop.getAddress().getAddressDetail())
+                .overviewAddress(coffeeShop.getOverviewAddress())
+                .status(DateTimeUtil.checkCurrentOpenStatus(coffeeShop.getOpenHour(),
+                        coffeeShop.getCloseHour()))
+                .openHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getOpenHour()))
+                .closeHour(DateTimeUtil.convertMinuteToHour(coffeeShop.getCloseHour()))
+                .longitude(longitude)
+                .isSponsored(coffeeShop.getIsSponsored())
+                .latitude(latitude)
+                .averageRating(NumberUtil.roundToTwoDecimals(coffeeShop.getAverageRating()))
+                .reviewCounts(coffeeShop.getReviewCount())
+                .name(coffeeShop.getName())
+                .build();
+    }
+
 
     public static CoffeeShopVM toVM(CoffeeShop coffeeShop, Double userLat, Double userLng) {
         Boolean isFalseLocation= coffeeShop.getAddress().getLatitude() > coffeeShop.getAddress().getLongitude();

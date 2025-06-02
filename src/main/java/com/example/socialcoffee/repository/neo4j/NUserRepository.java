@@ -1,7 +1,7 @@
 package com.example.socialcoffee.repository.neo4j;
 
 import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
-import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;

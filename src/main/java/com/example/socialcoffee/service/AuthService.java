@@ -1,9 +1,9 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.AuthProvider;
-import com.example.socialcoffee.domain.Role;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.UserAuthConnection;
+import com.example.socialcoffee.domain.postgres.AuthProvider;
+import com.example.socialcoffee.domain.postgres.Role;
+import com.example.socialcoffee.domain.postgres.User;
+import com.example.socialcoffee.domain.postgres.UserAuthConnection;
 import com.example.socialcoffee.dto.request.LoginRequest;
 import com.example.socialcoffee.dto.request.RegisterRequest;
 import com.example.socialcoffee.dto.request.UpdateNewPassword;
@@ -13,7 +13,7 @@ import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.model.FacebookUserInfo;
 import com.example.socialcoffee.model.GoogleUserInfo;
-import com.example.socialcoffee.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.postgres.UserAuthConnectionRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.SecurityUtil;
@@ -194,7 +194,7 @@ public class AuthService {
         User user = new User();
         user.setUsername(username);
         user.setDisplayName(displayName);
-        user.setName(fullName);
+        user.setFullName(fullName);
         user.setPassword(passwordEncoder.encode(password));
         user.setStatus(Status.ACTIVE.getValue());
         user.setRoles(List.of(role));

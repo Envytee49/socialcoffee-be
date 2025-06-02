@@ -1,6 +1,6 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.request.*;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.AuthAction;
@@ -12,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Objects;
 
 @Slf4j
 @RestController

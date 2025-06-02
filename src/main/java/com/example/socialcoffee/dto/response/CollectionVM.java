@@ -1,7 +1,7 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Collection;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +25,7 @@ public class CollectionVM {
     public CollectionVM(Collection collection, CoffeeShop coffeeShop) {
         this.id = collection.getId();
         this.name = collection.getName();
-        this.coverUrl = collection.getCoverUrl();
+        this.coverUrl = collection.getCoverPhoto();
         this.totalItem = collection.getCoffeeShops().size();
         if (Objects.nonNull(coffeeShop)) {
             this.isSaved = collection.getCoffeeShops().contains(coffeeShop);
@@ -35,7 +35,7 @@ public class CollectionVM {
     public CollectionVM(Collection collection) {
         this.id = collection.getId();
         this.name = collection.getName();
-        this.coverUrl = collection.getCoverUrl();
+        this.coverUrl = collection.getCoverPhoto();
         this.totalItem = collection.getCoffeeShops().size();
     }
 }

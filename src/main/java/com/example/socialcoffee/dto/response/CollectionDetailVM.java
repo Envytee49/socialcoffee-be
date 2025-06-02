@@ -1,6 +1,6 @@
 package com.example.socialcoffee.dto.response;
 
-import com.example.socialcoffee.domain.Collection;
+import com.example.socialcoffee.domain.postgres.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

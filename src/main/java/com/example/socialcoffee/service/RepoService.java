@@ -1,15 +1,16 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Review;
-import com.example.socialcoffee.domain.User;
+import com.example.socialcoffee.domain.neo4j.feature.*;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Review;
+import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;
-import com.example.socialcoffee.neo4j.NCoffeeShop;
-import com.example.socialcoffee.neo4j.NUser;
-import com.example.socialcoffee.neo4j.feature.*;
-import com.example.socialcoffee.neo4j.relationship.HasFeature;
+import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
+import com.example.socialcoffee.domain.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.neo4j.*;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.ReviewRepository;

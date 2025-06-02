@@ -1,20 +1,19 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.CoffeeShopContribution;
-import com.example.socialcoffee.domain.Image;
-import com.example.socialcoffee.domain.User;
-import com.example.socialcoffee.domain.UserFollow;
-import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.feature.*;
+import com.example.socialcoffee.domain.neo4j.relationship.Prefer;
+import com.example.socialcoffee.domain.postgres.CoffeeShopContribution;
+import com.example.socialcoffee.domain.postgres.Image;
+import com.example.socialcoffee.domain.postgres.User;
+import com.example.socialcoffee.domain.postgres.UserFollow;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.*;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.neo4j.NUser;
-import com.example.socialcoffee.neo4j.feature.*;
-import com.example.socialcoffee.neo4j.relationship.Prefer;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
-import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.ReviewRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
@@ -44,8 +43,6 @@ public class UserService {
     private final NUserRepository nUserRepository;
 
     private final UserFollowRepository userFollowRepository;
-
-    private final CoffeeShopRepository coffeeShopRepository;
 
     private final UserRepository userRepository;
 
@@ -347,14 +344,6 @@ public class UserService {
             repoService.saveNUser(u1);
         }
 
-//        if (userUpdateDTO.getBio() != null) {
-//            user.setBio(userUpdateDTO.getBio());
-//        }
-
-//        if (userUpdateDTO.getCoffeePreference() != null) {
-//            user.setCoffeePreference(userUpdateDTO.getCoffeePreference());
-//        }
-
         if (StringUtils.isNotBlank(userUpdateDTO.getPhone())) {
             user.setPhone(userUpdateDTO.getPhone());
         }
@@ -388,30 +377,6 @@ public class UserService {
         // Convert to DTO and return
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 new UserProfile(user)));
-    }
-
-    public ResponseEntity<ResponseMetaData> getTopContributors(int limit) {
-        List<Object[]> results = coffeeShopRepository.findTopContributors(limit);
-
-        List<ContributorDTO> contributors = new ArrayList<>();
-        for (Object[] result : results) {
-            Long userId = (Long) result[0];
-            Long contributionCount = (Long) result[1];
-
-            // Get the user details
-            User user = userRepository.findById(userId)
-                    .orElse(null);
-
-            if (user != null) {
-                ContributorDTO contributor = new ContributorDTO();
-                contributor.setUser(user.toUserDTO());
-                contributor.setContributionCount(contributionCount);
-                contributors.add(contributor);
-            }
-        }
-
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                contributors));
     }
 
     public Page<Image> getPhotos(Long id,

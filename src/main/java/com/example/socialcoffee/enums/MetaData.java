@@ -83,7 +83,7 @@ public enum MetaData {
     EXCEED_MAX_SPONSORED_SHOP(4028,
                               "Max sponsored shop can only be %s"),
     PASSWORD_IS_NOT_THE_SAME(4029,
-                             "Confirm password is not the same"), USERNAME_EXISTED(4030,"Username existed"
+                             "Password and confirm password are not the identical"), USERNAME_EXISTED(4030,"Username existed"
                                                                                    ), DISPLAY_NAME_EXISTED(4031,"Display name existed"
                                                                                                            );
 

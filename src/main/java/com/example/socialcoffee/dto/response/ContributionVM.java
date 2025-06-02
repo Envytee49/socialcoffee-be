@@ -23,4 +23,6 @@ public class ContributionVM {
 
     private String updatedAt;
 
+    private CoffeeShopDetailVM coffeeShop;
+
 }

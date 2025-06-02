@@ -1,8 +1,9 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.constants.CommonConstant;
-import com.example.socialcoffee.domain.*;
-import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.neo4j.feature.*;
+import com.example.socialcoffee.domain.postgres.*;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.ContributionRequest;
@@ -11,10 +12,9 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
-import com.example.socialcoffee.neo4j.NCoffeeShop;
-import com.example.socialcoffee.neo4j.NUser;
-import com.example.socialcoffee.neo4j.feature.*;
-import com.example.socialcoffee.neo4j.relationship.HasFeature;
+import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
+import com.example.socialcoffee.domain.neo4j.NUser;
+import com.example.socialcoffee.domain.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.postgres.*;
 import com.example.socialcoffee.utils.GeometryUtil;
@@ -42,6 +42,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.example.socialcoffee.utils.ObjectUtil.objectToString;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -49,8 +51,6 @@ public class CoffeeShopService {
     private final NCoffeeShopRepository nCoffeeShopRepository;
 
     private final CoffeeShopRepository coffeeShopRepository;
-
-    private final GenerateTextService generateTextService;
 
     private final AddressRepository addressRepository;
 
@@ -65,8 +65,6 @@ public class CoffeeShopService {
     private final ObjectMapper objectMapper;
 
     private final UserRepository userRepository;
-
-    private final CoffeeShopContributionRepository coffeeShopContributionRepository;
 
     private final NotificationService notificationService;
 
@@ -809,79 +807,6 @@ public class CoffeeShopService {
         address.setLongitude(req.getLongitude());
         address.setLatitude(req.getLatitude());
     }
-
-
-    private String objectToString(Object object) {
-        try {
-            return objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public ResponseEntity<ResponseMetaData> contributeCoffeeShop(User user,
-                                                                 MultipartFile coverPhoto,
-                                                                 MultipartFile[] galleryPhotos,
-                                                                 ContributionRequest req) {
-        log.info("Start create coffee shop with name = {}",
-                req.getName());
-        CoffeeShopContribution contribution = new CoffeeShopContribution();
-        req.setGalleryPhotoPaths(imageService.getImagePath(galleryPhotos));
-        req.setCoverPhotoPath(cloudinaryService.upload(coverPhoto));
-        contribution.setName(req.getName());
-        contribution.setContribution(objectToString(req));
-        contribution.setSubmittedBy(user);
-        contribution.setStatus(Status.PENDING.getValue());
-        contribution.setType(ContributionType.CONTRIBUTED.getValue());
-        CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
-        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenContribute(user.getDisplayName(),
-                saved.getName()));
-        log.info("Finish contribute coffee shop with name = {}, id = {}",
-                req.getName(),
-                saved.getId());
-        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
-    }
-
-    public ResponseEntity<ResponseMetaData> suggestAnEdit(User user,
-                                                          MultipartFile coverPhoto,
-                                                          MultipartFile[] galleryPhotos,
-                                                          ContributionRequest req,
-                                                          Long shopId) {
-        CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
-        if (Objects.isNull(coffeeShop)) throw new NotFoundException();
-        // Retrieve existing contribution
-        CoffeeShopContribution contribution = new CoffeeShopContribution();
-        req.addNewGalleryPhotos(imageService.getImagePath(galleryPhotos));
-        req.setCoverPhotoPath(coffeeShop.getCoverPhoto());
-        contribution.setName(req.getName());
-        contribution.setContribution(objectToString(req));
-        contribution.setSubmittedBy(user);
-        contribution.setStatus(Status.PENDING.getValue());
-        contribution.setType(ContributionType.SUGGESTED.getValue());
-        contribution.setCoffeeShop(coffeeShop);
-        CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
-        CompletableFuture.runAsync(() -> notificationService.pushNotiToAdminWhenSuggestAnEdit(user.getDisplayName(),
-                saved.getName()));
-        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
-    }
-
-    public ResponseEntity<ResponseMetaData> editContribution(MultipartFile[] galleryPhotos,
-                                                             ContributionRequest req,
-                                                             Long contributionId) {
-        final CoffeeShopContribution contribution = coffeeShopContributionRepository.findByCId(contributionId);
-        if (Objects.isNull(contribution)) throw new NotFoundException();
-        // Retrieve existing contribution
-        req.addNewGalleryPhotos(imageService.getImagePath(galleryPhotos));
-        contribution.setName(req.getName());
-        contribution.setContribution(objectToString(req));
-        if (contribution.getStatus().equalsIgnoreCase(Status.REJECTED.getValue())) {
-            contribution.setStatus(Status.PENDING.getValue());
-        }
-        CoffeeShopContribution saved = coffeeShopContributionRepository.save(contribution);
-
-        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
-    }
-
 
     @Transactional
     public ResponseEntity<ResponseMetaData> deleteCoffeeShop(Long id) {

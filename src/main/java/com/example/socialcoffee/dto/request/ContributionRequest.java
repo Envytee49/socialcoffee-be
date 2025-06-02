@@ -22,9 +22,6 @@ public class ContributionRequest {
 
     private String phoneNumber;
 
-//    @NotBlank(message = "Description is required")
-//    private String description;
-
     private String webAddress;
 
     private String menuWebAddress;

@@ -1,6 +1,7 @@
 package com.example.socialcoffee.dto.response;
 
 import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

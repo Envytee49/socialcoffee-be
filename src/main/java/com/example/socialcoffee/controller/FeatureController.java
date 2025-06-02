@@ -1,12 +1,12 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.feature.*;
+import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.request.CreateFeatureRequest;
 import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.neo4j.feature.NPurpose;
+import com.example.socialcoffee.domain.neo4j.feature.NPurpose;
 import com.example.socialcoffee.repository.neo4j.NPurposeRepository;
 import com.example.socialcoffee.service.CacheableService;
 import com.example.socialcoffee.service.FeatureService;

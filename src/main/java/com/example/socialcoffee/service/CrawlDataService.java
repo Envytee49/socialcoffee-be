@@ -1,8 +1,8 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.Address;
-import com.example.socialcoffee.domain.CoffeeShop;
-import com.example.socialcoffee.domain.Image;
+import com.example.socialcoffee.domain.postgres.Address;
+import com.example.socialcoffee.domain.postgres.CoffeeShop;
+import com.example.socialcoffee.domain.postgres.Image;
 import com.example.socialcoffee.enums.RoleEnum;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.CrawlResponse;
