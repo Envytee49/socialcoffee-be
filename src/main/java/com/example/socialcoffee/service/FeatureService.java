@@ -1,6 +1,5 @@
 package com.example.socialcoffee.service;
 
-import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.request.UpdateFeatureRequest;
 import com.example.socialcoffee.dto.response.MetaDTO;

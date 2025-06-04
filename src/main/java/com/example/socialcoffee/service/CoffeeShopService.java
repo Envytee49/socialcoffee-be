@@ -38,10 +38,13 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -282,18 +285,19 @@ public class CoffeeShopService {
 
         // Process features
         Set<HasFeature> hasFeatures = new HashSet<>();
-        processFeatures(req.getAmbiances(), cacheableService::findAmbiances, repoService::findNAmbianceById, hasFeatures);
-        processFeatures(req.getAmenities(), cacheableService::findAmenities, repoService::findNAmenityById, hasFeatures);
-        processFeatures(req.getCapacities(), cacheableService::findCapacities, repoService::findNCapacityById, hasFeatures);
-        processFeatures(req.getPurposes(), cacheableService::findPurposes, repoService::findNPurposeById, hasFeatures);
-        processFeatures(req.getDressCodes(), cacheableService::findDressCodes, repoService::findNDressCodeById, hasFeatures);
-        processFeatures(req.getEntertainments(), cacheableService::findEntertainments, repoService::findNEntertainmentById, hasFeatures);
-        processFeatures(req.getParkings(), cacheableService::findParkings, repoService::findNParkingById, hasFeatures);
-        processFeatures(req.getPrices(), cacheableService::findPrices, repoService::findNPriceById, hasFeatures);
-        processFeatures(req.getServiceTypes(), cacheableService::findServiceTypes, repoService::findNServiceTypeById, hasFeatures);
-        processFeatures(req.getSpaces(), cacheableService::findSpaces, repoService::findNSpaceById, hasFeatures);
-        processFeatures(req.getSpecialties(), cacheableService::findSpecialties, repoService::findNSpecialtyById, hasFeatures);
-        processFeatures(req.getVisitTimes(), cacheableService::findVisitTimes, repoService::findNVisitTimeById, hasFeatures);
+        processFeatures(req.getAmbiances(), cacheableService::findAmbiances, repoService::findNAmbianceById, coffeeShop::setAmbiances, hasFeatures);
+        processFeatures(req.getAmenities(), cacheableService::findAmenities, repoService::findNAmenityById, coffeeShop::setAmenities, hasFeatures);
+        processFeatures(req.getCapacities(), cacheableService::findCapacities, repoService::findNCapacityById, coffeeShop::setCapacities, hasFeatures);
+        processFeatures(req.getPurposes(), cacheableService::findPurposes, repoService::findNPurposeById, coffeeShop::setPurposes, hasFeatures);
+        processFeatures(req.getDressCodes(), cacheableService::findDressCodes, repoService::findNDressCodeById, coffeeShop::setDressCodes, hasFeatures);
+        processFeatures(req.getEntertainments(), cacheableService::findEntertainments, repoService::findNEntertainmentById, coffeeShop::setEntertainments, hasFeatures);
+        processFeatures(req.getParkings(), cacheableService::findParkings, repoService::findNParkingById, coffeeShop::setParkings, hasFeatures);
+        processFeatures(req.getPrices(), cacheableService::findPrices, repoService::findNPriceById, coffeeShop::setPrices, hasFeatures);
+        processFeatures(req.getServiceTypes(), cacheableService::findServiceTypes, repoService::findNServiceTypeById, coffeeShop::setServiceTypes, hasFeatures);
+        processFeatures(req.getSpaces(), cacheableService::findSpaces, repoService::findNSpaceById, coffeeShop::setSpaces, hasFeatures);
+        processFeatures(req.getSpecialties(), cacheableService::findSpecialties, repoService::findNSpecialtyById, coffeeShop::setSpecialties, hasFeatures);
+        processFeatures(req.getVisitTimes(), cacheableService::findVisitTimes, repoService::findNVisitTimeById, coffeeShop::setVisitTimes, hasFeatures);
+
 
         // Save coffee shop
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
@@ -317,27 +321,21 @@ public class CoffeeShopService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShop));
     }
 
-    private <T, N> void processFeatures(
+    private <T extends Feature, N extends NFeature> void processFeatures(
             List<Long> featureIds,
-            Function<Void, List<T>> findFeatures,
+            Supplier<List<T>> findFeatures,
             Function<T, N> mapToNFeature,
+            Consumer<List<T>> setFeatures,
             Set<HasFeature> hasFeatures) {
-        if (featureIds != null && !featureIds.isEmpty()) {
-            findFeatures.apply(null).stream()
-                    .filter(feature -> featureIds.contains(getFeatureId(feature)))
+        if (!CollectionUtils.isEmpty(featureIds)) {
+            List<T> filteredFeatures = findFeatures.get().stream()
+                    .filter(feature -> featureIds.contains(feature.getId()))
+                    .collect(Collectors.toList());
+            setFeatures.accept(filteredFeatures);
+            filteredFeatures.stream()
                     .map(mapToNFeature)
                     .map(nFeature -> HasFeature.builder().feature(nFeature).build())
                     .forEach(hasFeatures::add);
-        }
-    }
-
-    private <T> Long getFeatureId(T feature) {
-        // Assuming all feature types have a getId() method; adjust if necessary
-        try {
-            return (Long) feature.getClass().getMethod("getId").invoke(feature);
-        } catch (Exception e) {
-            log.error("Error retrieving ID for feature: {}", feature, e);
-            return null;
         }
     }
 
@@ -350,8 +348,7 @@ public class CoffeeShopService {
                 .ward(req.getWard())
                 .longitude(req.getLongitude())
                 .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                        req.getLatitude()))
+                .location(GeometryUtil.parseLocation(req.getLongitude(), req.getLatitude()))
                 .build();
     }
 
@@ -373,128 +370,21 @@ public class CoffeeShopService {
         coffeeShop.setAddress(savedAddress);
 
         Set<HasFeature> hasFeatures = new HashSet<>();
-        if (req.getAmbiances() != null && !req.getAmbiances().isEmpty()) {
-            List<Ambiance> ambiances = cacheableService.findAmbiances().stream()
-                    .filter(a -> req.getAmbiances().contains(a.getId())).collect(Collectors.toList());
-            coffeeShop.setAmbiances(ambiances);
-            for (final Ambiance ambiance : ambiances) {
-                NAmbiance nAmbiance = repoService.findNAmbianceById(ambiance);
-                hasFeatures.add(HasFeature.builder().feature(nAmbiance).build());
-            }
-        }
+        processFeatures(req.getAmbiances(), cacheableService::findAmbiances, repoService::findNAmbianceById, coffeeShop::setAmbiances, hasFeatures);
+        processFeatures(req.getAmenities(), cacheableService::findAmenities, repoService::findNAmenityById, coffeeShop::setAmenities, hasFeatures);
+        processFeatures(req.getCapacities(), cacheableService::findCapacities, repoService::findNCapacityById, coffeeShop::setCapacities, hasFeatures);
+        processFeatures(req.getPurposes(), cacheableService::findPurposes, repoService::findNPurposeById, coffeeShop::setPurposes, hasFeatures);
+        processFeatures(req.getDressCodes(), cacheableService::findDressCodes, repoService::findNDressCodeById, coffeeShop::setDressCodes, hasFeatures);
+        processFeatures(req.getEntertainments(), cacheableService::findEntertainments, repoService::findNEntertainmentById, coffeeShop::setEntertainments, hasFeatures);
+        processFeatures(req.getParkings(), cacheableService::findParkings, repoService::findNParkingById, coffeeShop::setParkings, hasFeatures);
+        processFeatures(req.getPrices(), cacheableService::findPrices, repoService::findNPriceById, coffeeShop::setPrices, hasFeatures);
+        processFeatures(req.getServiceTypes(), cacheableService::findServiceTypes, repoService::findNServiceTypeById, coffeeShop::setServiceTypes, hasFeatures);
+        processFeatures(req.getSpaces(), cacheableService::findSpaces, repoService::findNSpaceById, coffeeShop::setSpaces, hasFeatures);
+        processFeatures(req.getSpecialties(), cacheableService::findSpecialties, repoService::findNSpecialtyById, coffeeShop::setSpecialties, hasFeatures);
+        processFeatures(req.getVisitTimes(), cacheableService::findVisitTimes, repoService::findNVisitTimeById, coffeeShop::setVisitTimes, hasFeatures);
 
-        if (req.getAmenities() != null && !req.getAmenities().isEmpty()) {
-            List<Amenity> amenities = cacheableService.findAmenities().stream()
-                    .filter(a -> req.getAmenities().contains(a.getId())).collect(Collectors.toList());
-            coffeeShop.setAmenities(amenities); // Added setAmenities
-            for (final Amenity amenity : amenities) {
-                NAmenity nAmenity = repoService.findNAmenityById(amenity);
-                hasFeatures.add(HasFeature.builder().feature(nAmenity).build());
-            }
-        }
-
-        if (req.getCapacities() != null && !req.getCapacities().isEmpty()) {
-            List<Capacity> capacities = cacheableService.findCapacities().stream()
-                    .filter(c -> req.getCapacities().contains(c.getId())).collect(Collectors.toList());
-            coffeeShop.setCapacities(capacities); // Added setCapacities
-            for (final Capacity capacity : capacities) {
-                NCapacity nCapacity = repoService.findNCapacityById(capacity);
-                hasFeatures.add(HasFeature.builder().feature(nCapacity).build());
-            }
-        }
-
-        if (req.getPurposes() != null && !req.getPurposes().isEmpty()) {
-            List<Purpose> purposes = cacheableService.findPurposes().stream()
-                    .filter(c -> req.getPurposes().contains(c.getId())).collect(Collectors.toList());
-            coffeeShop.setPurposes(purposes); // Added setPurposes
-            for (final Purpose purpose : purposes) {
-                NPurpose nPurpose = repoService.findNPurposeById(purpose);
-                hasFeatures.add(HasFeature.builder().feature(nPurpose).build());
-            }
-        }
-
-        if (req.getDressCodes() != null && !req.getDressCodes().isEmpty()) {
-            List<DressCode> dressCodes = cacheableService.findDressCodes().stream()
-                    .filter(d -> req.getDressCodes().contains(d.getId())).collect(Collectors.toList());
-            coffeeShop.setDressCodes(dressCodes); // Added setDressCodes
-            for (final DressCode dressCode : dressCodes) {
-                NDressCode nDressCode = repoService.findNDressCodeById(dressCode);
-                hasFeatures.add(HasFeature.builder().feature(nDressCode).build());
-            }
-        }
-
-        if (req.getEntertainments() != null && !req.getEntertainments().isEmpty()) {
-            List<Entertainment> entertainments = cacheableService.findEntertainments().stream()
-                    .filter(e -> req.getEntertainments().contains(e.getId())).collect(Collectors.toList());
-            coffeeShop.setEntertainments(entertainments); // Added setEntertainments
-            for (final Entertainment entertainment : entertainments) {
-                NEntertainment nEntertainment = repoService.findNEntertainmentById(entertainment);
-                hasFeatures.add(HasFeature.builder().feature(nEntertainment).build());
-            }
-        }
-
-        if (req.getParkings() != null && !req.getParkings().isEmpty()) {
-            List<Parking> parkings = cacheableService.findParkings().stream()
-                    .filter(p -> req.getParkings().contains(p.getId())).collect(Collectors.toList());
-            coffeeShop.setParkings(parkings); // Added setParkings
-            for (final Parking parking : parkings) {
-                NParking nParking = repoService.findNParkingById(parking);
-                hasFeatures.add(HasFeature.builder().feature(nParking).build());
-            }
-        }
-
-        if (req.getPrices() != null && !req.getPrices().isEmpty()) {
-            List<Price> prices = cacheableService.findPrices().stream()
-                    .filter(p -> req.getPrices().contains(p.getId())).collect(Collectors.toList());
-            coffeeShop.setPrices(prices); // Added setPrices
-            for (final Price price : prices) {
-                NPrice nPrice = repoService.findNPriceById(price);
-                hasFeatures.add(HasFeature.builder().feature(nPrice).build());
-            }
-        }
-
-        if (req.getServiceTypes() != null && !req.getServiceTypes().isEmpty()) {
-            List<ServiceType> serviceTypes = cacheableService.findServiceTypes().stream()
-                    .filter(s -> req.getServiceTypes().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setServiceTypes(serviceTypes); // Added setServiceTypes
-            for (final ServiceType serviceType : serviceTypes) {
-                NServiceType nServiceType = repoService.findNServiceTypeById(serviceType);
-                hasFeatures.add(HasFeature.builder().feature(nServiceType).build());
-            }
-        }
-
-        if (req.getSpaces() != null && !req.getSpaces().isEmpty()) {
-            List<Space> spaces = cacheableService.findSpaces().stream()
-                    .filter(s -> req.getSpaces().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setSpaces(spaces); // Added setSpaces
-            for (final Space space : spaces) {
-                NSpace nSpace = repoService.findNSpaceById(space);
-                hasFeatures.add(HasFeature.builder().feature(nSpace).build());
-            }
-        }
-
-        if (req.getSpecialties() != null && !req.getSpecialties().isEmpty()) {
-            List<Specialty> specialties = cacheableService.findSpecialties().stream()
-                    .filter(s -> req.getSpecialties().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setSpecialties(specialties); // Added setSpecialties
-            for (final Specialty specialty : specialties) {
-                NSpecialty nSpecialty = repoService.findNSpecialtyById(specialty);
-                hasFeatures.add(HasFeature.builder().feature(nSpecialty).build());
-            }
-        }
-
-        if (req.getVisitTimes() != null && !req.getVisitTimes().isEmpty()) {
-            List<VisitTime> visitTimes = cacheableService.findVisitTimes().stream()
-                    .filter(v -> req.getVisitTimes().contains(v.getId())).collect(Collectors.toList());
-            coffeeShop.setVisitTimes(visitTimes); // Added setVisitTimes
-            for (final VisitTime visitTime : visitTimes) {
-                NVisitTime nVisitTime = repoService.findNVisitTimeById(visitTime);
-                hasFeatures.add(HasFeature.builder().feature(nVisitTime).build());
-            }
-        }
         coffeeShop.setGalleryPhotos(imageService.save(req.getGalleryPhotoPaths()));
         coffeeShop.setCoverPhoto(req.getCoverPhotoPath());
-//        coffeeShop.setDescription(req.getDescription());
         coffeeShop.setCreatedBy(CommonConstant.ADMIN_INDEX);
         coffeeShop.setStatus(Status.ACTIVE.getValue());
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
@@ -505,9 +395,7 @@ public class CoffeeShopService {
                 .hasFeatures(hasFeatures)
                 .build();
         repoService.saveNCoffeeShop(nCoffeeShop);
-        log.info("Finish create coffee shop with name = {}, id = {}",
-                req.getName(),
-                coffeeShop.getId());
+        log.info("Finish create coffee shop with name = {}, id = {}", req.getName(), coffeeShop.getId());
     }
 
     private Address buildAddress(ContributionRequest req) {
@@ -562,138 +450,18 @@ public class CoffeeShopService {
 
         // Update features
         Set<HasFeature> hasFeatures = new HashSet<>();
-
-        // Ambiances
-        if (req.getAmbiances() != null) {
-            List<Ambiance> ambiances = cacheableService.findAmbiances().stream()
-                    .filter(a -> req.getAmbiances().contains(a.getId())).collect(Collectors.toList());
-            coffeeShop.setAmbiances(ambiances);
-            for (Ambiance ambiance : ambiances) {
-                NAmbiance nAmbiance = repoService.findNAmbianceById(ambiance);
-                hasFeatures.add(HasFeature.builder().feature(nAmbiance).build());
-            }
-        }
-
-        // Amenities
-        if (req.getAmenities() != null) {
-            List<Amenity> amenities = cacheableService.findAmenities().stream()
-                    .filter(a -> req.getAmenities().contains(a.getId())).collect(Collectors.toList());
-            coffeeShop.setAmenities(amenities);
-            for (Amenity amenity : amenities) {
-                NAmenity nAmenity = repoService.findNAmenityById(amenity);
-                hasFeatures.add(HasFeature.builder().feature(nAmenity).build());
-            }
-        }
-
-        // Capacities
-        if (req.getCapacities() != null) {
-            List<Capacity> capacities = cacheableService.findCapacities().stream()
-                    .filter(c -> req.getCapacities().contains(c.getId())).collect(Collectors.toList());
-            coffeeShop.setCapacities(capacities);
-            for (Capacity capacity : capacities) {
-                NCapacity nCapacity = repoService.findNCapacityById(capacity);
-                hasFeatures.add(HasFeature.builder().feature(nCapacity).build());
-            }
-        }
-
-        // Purposes
-        if (req.getPurposes() != null) {
-            List<Purpose> purposes = cacheableService.findPurposes().stream()
-                    .filter(c -> req.getPurposes().contains(c.getId())).collect(Collectors.toList());
-            coffeeShop.setPurposes(purposes);
-            for (Purpose purpose : purposes) {
-                NPurpose nPurpose = repoService.findNPurposeById(purpose);
-                hasFeatures.add(HasFeature.builder().feature(nPurpose).build());
-            }
-        }
-
-        // Dress Codes
-        if (req.getDressCodes() != null) {
-            List<DressCode> dressCodes = cacheableService.findDressCodes().stream()
-                    .filter(d -> req.getDressCodes().contains(d.getId())).collect(Collectors.toList());
-            coffeeShop.setDressCodes(dressCodes);
-            for (DressCode dressCode : dressCodes) {
-                NDressCode nDressCode = repoService.findNDressCodeById(dressCode);
-                hasFeatures.add(HasFeature.builder().feature(nDressCode).build());
-            }
-        }
-
-        // Entertainments
-        if (req.getEntertainments() != null) {
-            List<Entertainment> entertainments = cacheableService.findEntertainments().stream()
-                    .filter(e -> req.getEntertainments().contains(e.getId())).collect(Collectors.toList());
-            coffeeShop.setEntertainments(entertainments);
-            for (Entertainment entertainment : entertainments) {
-                NEntertainment nEntertainment = repoService.findNEntertainmentById(entertainment);
-                hasFeatures.add(HasFeature.builder().feature(nEntertainment).build());
-            }
-        }
-
-        // Parkings
-        if (req.getParkings() != null) {
-            List<Parking> parkings = cacheableService.findParkings().stream()
-                    .filter(p -> req.getParkings().contains(p.getId())).collect(Collectors.toList());
-            coffeeShop.setParkings(parkings);
-            for (Parking parking : parkings) {
-                NParking nParking = repoService.findNParkingById(parking);
-                hasFeatures.add(HasFeature.builder().feature(nParking).build());
-            }
-        }
-
-        // Prices
-        if (req.getPrices() != null) {
-            List<Price> prices = cacheableService.findPrices().stream()
-                    .filter(p -> req.getPrices().contains(p.getId())).collect(Collectors.toList());
-            coffeeShop.setPrices(prices);
-            for (Price price : prices) {
-                NPrice nPrice = repoService.findNPriceById(price);
-                hasFeatures.add(HasFeature.builder().feature(nPrice).build());
-            }
-        }
-
-        // Service Types
-        if (req.getServiceTypes() != null) {
-            List<ServiceType> serviceTypes = cacheableService.findServiceTypes().stream()
-                    .filter(s -> req.getServiceTypes().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setServiceTypes(serviceTypes);
-            for (ServiceType serviceType : serviceTypes) {
-                NServiceType nServiceType = repoService.findNServiceTypeById(serviceType);
-                hasFeatures.add(HasFeature.builder().feature(nServiceType).build());
-            }
-        }
-
-        // Spaces
-        if (req.getSpaces() != null) {
-            List<Space> spaces = cacheableService.findSpaces().stream()
-                    .filter(s -> req.getSpaces().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setSpaces(spaces);
-            for (Space space : spaces) {
-                NSpace nSpace = repoService.findNSpaceById(space);
-                hasFeatures.add(HasFeature.builder().feature(nSpace).build());
-            }
-        }
-
-        // Specialties
-        if (req.getSpecialties() != null) {
-            List<Specialty> specialties = cacheableService.findSpecialties().stream()
-                    .filter(s -> req.getSpecialties().contains(s.getId())).collect(Collectors.toList());
-            coffeeShop.setSpecialties(specialties);
-            for (Specialty specialty : specialties) {
-                NSpecialty nSpecialty = repoService.findNSpecialtyById(specialty);
-                hasFeatures.add(HasFeature.builder().feature(nSpecialty).build());
-            }
-        }
-
-        // Visit Times
-        if (req.getVisitTimes() != null) {
-            List<VisitTime> visitTimes = cacheableService.findVisitTimes().stream()
-                    .filter(v -> req.getVisitTimes().contains(v.getId())).collect(Collectors.toList());
-            coffeeShop.setVisitTimes(visitTimes);
-            for (VisitTime visitTime : visitTimes) {
-                NVisitTime nVisitTime = repoService.findNVisitTimeById(visitTime);
-                hasFeatures.add(HasFeature.builder().feature(nVisitTime).build());
-            }
-        }
+        processFeatures(req.getAmbiances(), cacheableService::findAmbiances, repoService::findNAmbianceById, coffeeShop::setAmbiances, hasFeatures);
+        processFeatures(req.getAmenities(), cacheableService::findAmenities, repoService::findNAmenityById, coffeeShop::setAmenities, hasFeatures);
+        processFeatures(req.getCapacities(), cacheableService::findCapacities, repoService::findNCapacityById, coffeeShop::setCapacities, hasFeatures);
+        processFeatures(req.getPurposes(), cacheableService::findPurposes, repoService::findNPurposeById, coffeeShop::setPurposes, hasFeatures);
+        processFeatures(req.getDressCodes(), cacheableService::findDressCodes, repoService::findNDressCodeById, coffeeShop::setDressCodes, hasFeatures);
+        processFeatures(req.getEntertainments(), cacheableService::findEntertainments, repoService::findNEntertainmentById, coffeeShop::setEntertainments, hasFeatures);
+        processFeatures(req.getParkings(), cacheableService::findParkings, repoService::findNParkingById, coffeeShop::setParkings, hasFeatures);
+        processFeatures(req.getPrices(), cacheableService::findPrices, repoService::findNPriceById, coffeeShop::setPrices, hasFeatures);
+        processFeatures(req.getServiceTypes(), cacheableService::findServiceTypes, repoService::findNServiceTypeById, coffeeShop::setServiceTypes, hasFeatures);
+        processFeatures(req.getSpaces(), cacheableService::findSpaces, repoService::findNSpaceById, coffeeShop::setSpaces, hasFeatures);
+        processFeatures(req.getSpecialties(), cacheableService::findSpecialties, repoService::findNSpecialtyById, coffeeShop::setSpecialties, hasFeatures);
+        processFeatures(req.getVisitTimes(), cacheableService::findVisitTimes, repoService::findNVisitTimeById, coffeeShop::setVisitTimes, hasFeatures);
 
         // Save updated coffee shop
         CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
@@ -755,24 +523,20 @@ public class CoffeeShopService {
     public void toggleCoffeeShopMood(Long shopId,
                                      Long userId,
                                      String mood) {
-        // Validate mood
         try {
             Mood.valueOf(mood.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid mood: " + mood);
         }
 
-        // Check if mood exists for user and shop
         CoffeeShopMood existingMood = coffeeShopMoodRepository
                 .findByShopIdAndUserIdAndMood(shopId,
                         userId,
                         mood);
 
         if (existingMood != null) {
-            // Mood exists, remove it
             coffeeShopMoodRepository.delete(existingMood);
         } else {
-            // Check if shop already has 2 moods for this user
             CoffeeShopMood newMood = CoffeeShopMood.builder()
                     .shopId(shopId)
                     .userId(userId)
@@ -795,11 +559,9 @@ public class CoffeeShopService {
 
         for (Long userId : userIds) {
             for (Long shopId : shopIds) {
-                // Clear existing moods for this user and shop
                 coffeeShopMoodRepository.deleteByShopIdAndUserId(shopId,
                         userId);
 
-                // Randomly assign 1 or 2 moods
                 int numMoods = random.nextInt(2) + 1; // 1 or 2
                 for (int i = 0; i < numMoods; i++) {
                     String mood = moods[random.nextInt(moods.length)].getValue();
@@ -861,11 +623,6 @@ public class CoffeeShopService {
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                 latitude,
                 longitude)).collect(Collectors.toList());
-//        coffeeShopVMs.sort(
-//                Comparator.comparing(CoffeeShopVM::getAverageRating, Comparator.nullsLast(Comparator.reverseOrder()))
-//                        .thenComparing(CoffeeShopVM::getReviewCounts, Comparator.nullsLast(Comparator.reverseOrder()))
-//        );
-
         PageDtoOut<CoffeeShopVM> res = PageDtoOut.from(pageRequest.getPageNumber(),
                 pageRequest.getPageSize(),
                 topCoffeeShopByMood.getTotalElements(),
@@ -873,6 +630,4 @@ public class CoffeeShopService {
         res.setMetaData(mood.getMessage());
         return res;
     }
-
-
 }
