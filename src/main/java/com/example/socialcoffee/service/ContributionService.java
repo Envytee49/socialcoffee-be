@@ -55,7 +55,6 @@ public class ContributionService {
 
     private final CloudinaryService cloudinaryService;
 
-
     public ResponseEntity<ResponseMetaData> contributeCoffeeShop(User user,
                                                                  MultipartFile coverPhoto,
                                                                  MultipartFile[] galleryPhotos,

@@ -80,8 +80,6 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
 
     Long countByStatus(String value);
 
-    long countByIsSponsored(Boolean sponsored);
-
     @Query(value = "SELECT c.id FROM CoffeeShop c WHERE c.isSponsored = :isSponsor")
     List<Long> findIdByIsSponsored(@Param(value = "isSponsor") Boolean isSponsor);
 

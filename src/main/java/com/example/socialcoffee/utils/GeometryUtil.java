@@ -38,15 +38,6 @@ public class GeometryUtil {
         return geometry;
     }
 
-    /**
-     * Calculates the distance between two geographic points using the Haversine formula.
-     *
-     * @param lat1 Latitude of the first point in degrees
-     * @param lon1 Longitude of the first point in degrees
-     * @param lat2 Latitude of the second point in degrees
-     * @param lon2 Longitude of the second point in degrees
-     * @return Distance between the two points in kilometers, rounded to 2 decimal places
-     */
     public static Double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
         if (ObjectUtils.anyNull(lat1, lon1, lat2, lon2)) return null;
         double lat1Rad = Math.toRadians(lat1);

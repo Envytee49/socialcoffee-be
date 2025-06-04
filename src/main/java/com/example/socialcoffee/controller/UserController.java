@@ -1,6 +1,9 @@
 package com.example.socialcoffee.controller;
 
-import com.example.socialcoffee.domain.postgres.*;
+import com.example.socialcoffee.domain.neo4j.NUser;
+import com.example.socialcoffee.domain.postgres.Image;
+import com.example.socialcoffee.domain.postgres.User;
+import com.example.socialcoffee.domain.postgres.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
@@ -10,34 +13,27 @@ import com.example.socialcoffee.dto.request.UserUpdateDTO;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.ContributionType;
 import com.example.socialcoffee.enums.MetaData;
-import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.Status;
-import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.UserSettingModel;
-import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.service.*;
-import com.example.socialcoffee.utils.DateTimeUtil;
-import com.example.socialcoffee.utils.ObjectUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,19 +44,13 @@ public class UserController extends BaseController {
 
     private final CloudinaryService cloudinaryService;
 
-    private final UserFollowRepository userFollowRepository;
-
     private final RepoService repoService;
 
     private final ContributionService contributionService;
 
-    private final NotificationRepository notificationRepository;
-
-    private final ObjectMapper objectMapper;
-
-    private final UserSettingRepository userSettingRepository;
-
     private final ReviewService reviewService;
+
+    private final NotificationService notificationService;
 
     @PutMapping("/users/profile")
     public ResponseEntity<ResponseMetaData> updateProfile(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
@@ -151,27 +141,9 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/users/profile")
-    public ResponseEntity<ResponseMetaData> getProfile(@RequestParam(value = "displayName", required = false) String displayName) {
+    public ResponseEntity<ResponseMetaData> getUserProfile(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser();
-        Long currentUserId = user.getId();
-        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
-                ? userRepository.findByDisplayNameAndStatus(displayName,
-                Status.ACTIVE.getValue())
-                : user;
-        if (Objects.isNull(user)) {
-            return ResponseEntity.notFound().build();
-        }
-        Long viewingUserId = user.getId();
-        boolean isFollowing;
-        if (currentUserId.equals(viewingUserId)) {
-            isFollowing = false;
-        } else {
-            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(viewingUserId,
-                    currentUserId));
-        }
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                new UserProfile(user,
-                        isFollowing)));
+        return userService.getUserProfile(user, displayName);
     }
 
     @PostMapping("/users/{followingWhoId}/follow")
@@ -201,14 +173,12 @@ public class UserController extends BaseController {
                 followers.getContent());
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 pageDtoOut));
-
     }
 
     @GetMapping("/users/recent-followers")
     public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName) {
         User user = getCurrentUser(displayName);
         return userService.getRecentFollowers(user.getId());
-
     }
 
     @GetMapping("/users/following")
@@ -268,105 +238,43 @@ public class UserController extends BaseController {
 
     @PutMapping("/users/notifications/{id}")
     public ResponseEntity<ResponseMetaData> markAsRead(@PathVariable Long id) {
-        Notification notification = notificationRepository.findById(id).orElseThrow(NotFoundException::new);
-        notification.setStatus(NotificationStatus.READ.getValue());
-        notificationRepository.save(notification);
+        notificationService.markNotificationAsRead();
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/users/notifications/mark-all-as-read")
     public ResponseEntity<ResponseMetaData> markAllAsRead() {
         final User currentUser = getCurrentUser();
-        currentUser.getNotifications().forEach(
-                n -> n.setStatus(NotificationStatus.READ.getValue())
-        );
-        userRepository.save(currentUser);
+        notificationService.markAllNotificationsAsRead(currentUser);
         return ResponseEntity.ok().build();
     }
-
 
     @GetMapping("/users/notifications/unread")
     public ResponseEntity<Long> userUnreadCount() {
         final User currentUser = getCurrentUser();
-        Long count = NumberUtils.LONG_ZERO;
-        final List<Notification> notifications = currentUser.getNotifications();
-        if (CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(count);
-        for (final Notification notification : notifications) {
-            if (notification.getStatus().equalsIgnoreCase(NotificationStatus.UNREAD.getValue())) count++;
-        }
-        return ResponseEntity.ok().body(count);
+        return notificationService.getUnreadNotifications(currentUser);
     }
 
     @GetMapping("/users/notifications/notis")
     public ResponseEntity<ResponseMetaData> userNotifications(@Valid PageDtoIn pageDtoIn) {
-        final User currentUser = getCurrentUser();
-        final List<Notification> notifications = currentUser.getNotifications();
-        if (CollectionUtils.isEmpty(notifications))
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                    Collections.emptyList()));
-        notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
-        List<Notification> pageResult = ObjectUtil.getPageResult(notifications,
-                pageDtoIn.getPage() - 1,
-                pageDtoIn.getSize());
-        List<NotificationDTO> notificationDTOS = new ArrayList<>();
-        for (final Notification notification : pageResult) {
-            Object meta = ObjectUtil.stringToObject(objectMapper,
-                    notification.getMeta(),
-                    Object.class);
-            NotificationDTO notificationDTO = NotificationDTO.builder()
-                    .id(notification.getId())
-                    .title(notification.getTitle())
-                    .message(notification.getMessage())
-                    .createdAt(DateTimeUtil.covertLocalDateToString(notification.getCreatedAt()))
-                    .type(notification.getType())
-                    .status(notification.getStatus())
-                    .meta(meta)
-                    .build();
-            notificationDTOS.add(notificationDTO);
-        }
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                notificationDTOS));
+        final User user = getCurrentUser();
+        return notificationService.getUserNotifications(user, pageDtoIn);
     }
 
     @GetMapping("/users/setting")
     public ResponseEntity<ResponseMetaData> getUserSetting() {
-        User user = getCurrentUser();
-        Optional<UserSetting> optionalUserSetting = userSettingRepository.findById(user.getId());
-        UserSettingModel userSettingModel;
-        if (optionalUserSetting.isEmpty()) {
-            UserSetting userSetting = new UserSetting();
-            userSetting.setId(user.getId());
-            userSettingModel = new UserSettingModel();
-            String setting = ObjectUtil.objectToString(objectMapper,
-                    userSettingModel);
-            userSetting.setSetting(setting);
-            userSettingRepository.save(userSetting);
-        } else {
-            userSettingModel = ObjectUtil.stringToObject(objectMapper,
-                    optionalUserSetting.get().getSetting(), UserSettingModel.class);
-        }
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                userSettingModel));
+        return userService.getUserSetting();
     }
 
     @PutMapping("/users/setting")
     public ResponseEntity<ResponseMetaData> updateUserSetting(@RequestBody UserSettingModel userSettingModel) {
-        User user = getCurrentUser();
-        UserSetting userSetting = userSettingRepository.findById(user.getId()).get();
-        String setting = ObjectUtil.objectToString(objectMapper, userSettingModel);
-        userSetting.setSetting(setting);
-        userSettingRepository.save(userSetting);
-        return ResponseEntity.ok().body(new ResponseMetaData(
-                new MetaDTO(MetaData.SUCCESS),
-                userSettingModel
-        ));
+        return userService.updateUserSetting(userSettingModel);
     }
 
     @GetMapping("/users/{displayName}/reviews")
     public ResponseEntity<ResponseMetaData> getReviewByUserId(@PathVariable(value = "displayName") String displayName,
                                                               PageDtoIn pageDtoIn) {
         User user = getCurrentUser();
-        if (Objects.isNull(user)) return ResponseEntity.status(401).build();
         String destinationUser = Objects.isNull(displayName) ? user.getDisplayName() : displayName;
         return reviewService.getReviewByUserId(user,
                 destinationUser,

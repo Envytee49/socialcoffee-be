@@ -34,9 +34,6 @@ public class JwtService {
     @Value("${security.jwt.refresh-token.expire-length-in-seconds}")
     private long refreshExpireLengthInSeconds;
 
-    @Value("${spring.redis.prefix-key}")
-    private String redisPrefix;
-
     public String generateAccessToken(final User user) {
         JWTClaimsSet jwtClaimsSet = buildBaseJwtClaimsSet(user, expireLengthInSeconds)
                 .claim("scope", getRoleList(user))

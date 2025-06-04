@@ -119,7 +119,6 @@ public class CollectionService {
                 collectionDetailVM));
     }
 
-
     public ResponseEntity<ResponseMetaData> updateCollectionName(Long collectionId,
                                                                  String name) {
         if (!StringUtils.hasText(name)) {

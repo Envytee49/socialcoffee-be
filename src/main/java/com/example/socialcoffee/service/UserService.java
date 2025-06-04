@@ -3,22 +3,23 @@ package com.example.socialcoffee.service;
 import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.neo4j.feature.*;
 import com.example.socialcoffee.domain.neo4j.relationship.Prefer;
-import com.example.socialcoffee.domain.postgres.CoffeeShopContribution;
-import com.example.socialcoffee.domain.postgres.Image;
-import com.example.socialcoffee.domain.postgres.User;
-import com.example.socialcoffee.domain.postgres.UserFollow;
+import com.example.socialcoffee.domain.postgres.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.*;
 import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.MetaData;
+import com.example.socialcoffee.enums.Status;
+import com.example.socialcoffee.model.UserSettingModel;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.ReviewRepository;
 import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
+import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.utils.DateTimeUtil;
 import com.example.socialcoffee.utils.ObjectUtil;
+import com.example.socialcoffee.utils.SecurityUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,9 +57,33 @@ public class UserService {
 
     private final Neo4jClient neo4jClient;
 
-    public ResponseEntity<ResponseMetaData> getProfile(User user) {
+    private final UserSettingRepository userSettingRepository;
+
+    public ResponseEntity<ResponseMetaData> getMyProfile(User user) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 new UserProfile(user)));
+    }
+
+    public ResponseEntity<ResponseMetaData> getUserProfile(User user, String displayName) {
+        Long currentUserId = user.getId();
+        user = (StringUtils.isNotBlank(displayName) && !displayName.equalsIgnoreCase(user.getDisplayName()))
+                ? userRepository.findByDisplayNameAndStatus(displayName,
+                Status.ACTIVE.getValue())
+                : user;
+        if (Objects.isNull(user)) {
+            return ResponseEntity.notFound().build();
+        }
+        Long viewingUserId = user.getId();
+        boolean isFollowing;
+        if (currentUserId.equals(viewingUserId)) {
+            isFollowing = false;
+        } else {
+            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(viewingUserId,
+                    currentUserId));
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                new UserProfile(user,
+                        isFollowing)));
     }
 
     public ResponseEntity<ResponseMetaData> getUserCoffeeShopPreference(User user) {
@@ -455,5 +480,35 @@ public class UserService {
         );
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 pageDtoOut));
+    }
+
+    public ResponseEntity<ResponseMetaData> getUserSetting() {
+        Optional<UserSetting> optionalUserSetting = userSettingRepository.findById(SecurityUtil.getUserId());
+        UserSettingModel userSettingModel;
+        if (optionalUserSetting.isEmpty()) {
+            UserSetting userSetting = new UserSetting();
+            userSetting.setId(SecurityUtil.getUserId());
+            userSettingModel = new UserSettingModel();
+            String setting = ObjectUtil.objectToString(objectMapper,
+                    userSettingModel);
+            userSetting.setSetting(setting);
+            userSettingRepository.save(userSetting);
+        } else {
+            userSettingModel = ObjectUtil.stringToObject(objectMapper,
+                    optionalUserSetting.get().getSetting(), UserSettingModel.class);
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                userSettingModel));
+    }
+
+    public ResponseEntity<ResponseMetaData> updateUserSetting(UserSettingModel userSettingModel) {
+        UserSetting userSetting = userSettingRepository.findById(SecurityUtil.getUserId()).get();
+        String setting = ObjectUtil.objectToString(objectMapper, userSettingModel);
+        userSetting.setSetting(setting);
+        userSettingRepository.save(userSetting);
+        return ResponseEntity.ok().body(new ResponseMetaData(
+                new MetaDTO(MetaData.SUCCESS),
+                userSettingModel
+        ));
     }
 }

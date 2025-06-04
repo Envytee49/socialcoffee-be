@@ -49,8 +49,6 @@ public class RecommendationController extends BaseController {
         return recommendationService.findYouMayLikeRecommendation(user);
     }
 
-
-
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/people-with-same-taste")
     public ResponseEntity<ResponseMetaData> getPeopleWithSameTaste() {

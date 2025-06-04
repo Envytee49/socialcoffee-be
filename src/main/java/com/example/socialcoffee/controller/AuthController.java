@@ -26,7 +26,7 @@ public class AuthController extends BaseController {
     @GetMapping("/validate")
     public ResponseEntity<ResponseMetaData> validate() {
         User user = getCurrentUser();
-        return userService.getProfile(user);
+        return userService.getMyProfile(user);
     }
 
     @PostMapping("/google/login")

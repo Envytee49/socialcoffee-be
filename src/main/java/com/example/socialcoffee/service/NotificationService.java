@@ -1,17 +1,28 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.domain.postgres.Notification;
 import com.example.socialcoffee.domain.postgres.User;
+import com.example.socialcoffee.dto.common.PageDtoIn;
+import com.example.socialcoffee.dto.response.MetaDTO;
+import com.example.socialcoffee.dto.response.NotificationDTO;
+import com.example.socialcoffee.dto.response.ResponseMetaData;
+import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.enums.NotificationStatus;
 import com.example.socialcoffee.enums.NotificationType;
+import com.example.socialcoffee.exception.NotFoundException;
+import com.example.socialcoffee.repository.postgres.NotificationRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
+import com.example.socialcoffee.utils.DateTimeUtil;
+import com.example.socialcoffee.utils.ObjectUtil;
+import com.example.socialcoffee.utils.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.example.socialcoffee.utils.ObjectUtil.objectToString;
 
@@ -24,6 +35,60 @@ public class NotificationService {
     private final ObjectMapper objectMapper;
 
     private final CacheableService cacheableService;
+
+    private final NotificationRepository notificationRepository;
+
+    public ResponseEntity<ResponseMetaData> getUserNotifications(User user, PageDtoIn pageDtoIn) {
+        final List<Notification> notifications = user.getNotifications();
+        if (CollectionUtils.isEmpty(notifications))
+            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                    Collections.emptyList()));
+        notifications.sort(Comparator.comparing(Notification::getCreatedAt).reversed());
+        List<Notification> pageResult = ObjectUtil.getPageResult(notifications,
+                pageDtoIn.getPage() - 1,
+                pageDtoIn.getSize());
+        List<NotificationDTO> notificationDTOS = new ArrayList<>();
+        for (final Notification notification : pageResult) {
+            Object meta = ObjectUtil.stringToObject(objectMapper,
+                    notification.getMeta(),
+                    Object.class);
+            NotificationDTO notificationDTO = NotificationDTO.builder()
+                    .id(notification.getId())
+                    .title(notification.getTitle())
+                    .message(notification.getMessage())
+                    .createdAt(DateTimeUtil.covertLocalDateToString(notification.getCreatedAt()))
+                    .type(notification.getType())
+                    .status(notification.getStatus())
+                    .meta(meta)
+                    .build();
+            notificationDTOS.add(notificationDTO);
+        }
+        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+                notificationDTOS));
+    }
+
+    public ResponseEntity<Long> getUnreadNotifications(User user) {
+        Long count = NumberUtils.LONG_ZERO;
+        final List<Notification> notifications = user.getNotifications();
+        if (CollectionUtils.isEmpty(notifications)) return ResponseEntity.ok().body(count);
+        for (final Notification notification : notifications) {
+            if (notification.getStatus().equalsIgnoreCase(NotificationStatus.UNREAD.getValue())) count++;
+        }
+        return ResponseEntity.ok().body(count);
+    }
+
+    public void markAllNotificationsAsRead(User user) {
+        user.getNotifications().forEach(
+                n -> n.setStatus(NotificationStatus.READ.getValue())
+        );
+        userRepository.save(user);
+    }
+
+    public void markNotificationAsRead() {
+        Notification notification = notificationRepository.findById(SecurityUtil.getUserId()).orElseThrow(NotFoundException::new);
+        notification.setStatus(NotificationStatus.READ.getValue());
+        notificationRepository.save(notification);
+    }
 
     public void pushNotiToUsersWhenFinishCreatingShop(String id,
                                                       String name,

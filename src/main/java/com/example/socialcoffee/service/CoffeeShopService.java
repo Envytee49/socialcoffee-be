@@ -1,7 +1,10 @@
 package com.example.socialcoffee.service;
 
 import com.example.socialcoffee.constants.CommonConstant;
+import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.neo4j.feature.*;
+import com.example.socialcoffee.domain.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.domain.postgres.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.common.PageDtoOut;
@@ -12,14 +15,13 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
-import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
-import com.example.socialcoffee.domain.neo4j.NUser;
-import com.example.socialcoffee.domain.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
-import com.example.socialcoffee.repository.postgres.*;
+import com.example.socialcoffee.repository.postgres.AddressRepository;
+import com.example.socialcoffee.repository.postgres.CoffeeShopMoodRepository;
+import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
+import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,13 +38,11 @@ import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.example.socialcoffee.utils.ObjectUtil.objectToString;
 
 @Service
 @RequiredArgsConstructor
@@ -72,9 +72,7 @@ public class CoffeeShopService {
 
     private final Neo4jClient neo4jClient;
 
-    public ResponseEntity<ResponseMetaData> getAllCoffeeShop(final Double lat,
-                                                             final Double lng,
-                                                             final Pageable pageable) {
+    public ResponseEntity<ResponseMetaData> getAllCoffeeShop(final Double lat, final Double lng, final Pageable pageable) {
         final List<CoffeeShop> coffeeShops = coffeeShopRepository.findAll(pageable).getContent();
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                 lat,
@@ -83,9 +81,7 @@ public class CoffeeShopService {
                 coffeeShopVMs));
     }
 
-    public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id,
-                                                              User user,
-                                                              final CoffeeShopSearchRequest filter) {
+    public ResponseEntity<ResponseMetaData> getCoffeeShopById(Long id, User user, CoffeeShopSearchRequest filter) {
         try {
             Optional<CoffeeShop> coffeeShopOptional = coffeeShopRepository.findById(id);
             if (coffeeShopOptional.isEmpty()) {
@@ -133,28 +129,16 @@ public class CoffeeShopService {
         }
     }
 
-    public PageDtoOut<CoffeeShopVM> search(CoffeeShopSearchRequest request,
-                                           Integer page,
-                                           Integer size,
-                                           Sort sort) {
+    public PageDtoOut<CoffeeShopVM> search(CoffeeShopSearchRequest request, Integer page, Integer size, Sort sort) {
         try {
-            Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request,
-                    page,
-                    size,
-                    sort);
+            Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request, page, size, sort);
             List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                             request.getLatitude(),
                             request.getLongitude()))
                     .collect(Collectors.toList());
-            return PageDtoOut.from(page,
-                    size,
-                    coffeeShops.getTotalElements(),
-                    coffeeShopVMs);
+            return PageDtoOut.from(page, size, coffeeShops.getTotalElements(), coffeeShopVMs);
         } catch (EmptyResultDataAccessException e) {
-            return PageDtoOut.from(page,
-                    size,
-                    0,
-                    Collections.emptyList());
+            return PageDtoOut.from(page, size, 0, Collections.emptyList());
         }
     }
 
@@ -191,19 +175,19 @@ public class CoffeeShopService {
 
     public CoffeeShopFilter getCoffeeShopFilters() {
         CoffeeShopFilter filter = new CoffeeShopFilter();
-        filter.setDistances(Arrays.stream(Distance.values()).map(d -> d.name()).toList());
-        filter.setAmbiances(cacheableService.findAmbiances().stream().map(e -> e.getValue()).toList());
-        filter.setAmenities(cacheableService.findAmenities().stream().map(e -> e.getValue()).toList());
-        filter.setCapacities(cacheableService.findCapacities().stream().map(e -> e.getValue()).toList());
-        filter.setParkings(cacheableService.findParkings().stream().map(e -> e.getValue()).toList());
-        filter.setPrices(cacheableService.findPrices().stream().map(e -> e.getValue()).toList());
-        filter.setPurposes(cacheableService.findPurposes().stream().map(e -> e.getValue()).toList());
-        filter.setServiceTypes(cacheableService.findServiceTypes().stream().map(e -> e.getValue()).toList());
-        filter.setCategories(cacheableService.findCategories().stream().map(e -> e.getValue()).toList());
-        filter.setEntertainments(cacheableService.findEntertainments().stream().map(e -> e.getValue()).toList());
-        filter.setSpaces(cacheableService.findSpaces().stream().map(e -> e.getValue()).toList());
-        filter.setSpecialties(cacheableService.findSpecialties().stream().map(e -> e.getValue()).toList());
-        filter.setVisitTimes(cacheableService.findVisitTimes().stream().map(e -> e.getValue()).toList());
+        filter.setDistances(Arrays.stream(Distance.values()).map(Enum::name).toList());
+        filter.setAmbiances(cacheableService.findAmbiances().stream().map(Feature::getValue).toList());
+        filter.setAmenities(cacheableService.findAmenities().stream().map(Feature::getValue).toList());
+        filter.setCapacities(cacheableService.findCapacities().stream().map(Feature::getValue).toList());
+        filter.setParkings(cacheableService.findParkings().stream().map(Feature::getValue).toList());
+        filter.setPrices(cacheableService.findPrices().stream().map(Feature::getValue).toList());
+        filter.setPurposes(cacheableService.findPurposes().stream().map(Feature::getValue).toList());
+        filter.setServiceTypes(cacheableService.findServiceTypes().stream().map(Feature::getValue).toList());
+        filter.setCategories(cacheableService.findCategories().stream().map(Feature::getValue).toList());
+        filter.setEntertainments(cacheableService.findEntertainments().stream().map(Feature::getValue).toList());
+        filter.setSpaces(cacheableService.findSpaces().stream().map(Feature::getValue).toList());
+        filter.setSpecialties(cacheableService.findSpecialties().stream().map(Feature::getValue).toList());
+        filter.setVisitTimes(cacheableService.findVisitTimes().stream().map(Feature::getValue).toList());
         return filter;
     }
 
@@ -272,6 +256,91 @@ public class CoffeeShopService {
         return ResponseEntity.ok().build();
     }
 
+    @Transactional
+    public ResponseEntity<ResponseMetaData> createCoffeeShop(CreateCoffeeShopRequest req) {
+        log.info("Starting creation of coffee shop: {}", req.getName());
+
+        // Save address
+        Address savedAddress = addressRepository.save(buildAddress(req));
+
+        // Build coffee shop
+        CoffeeShop coffeeShop = CoffeeShop.builder()
+                .name(req.getName())
+                .phoneNumber(req.getPhoneNumber())
+                .webAddress(req.getWebAddress())
+                .menuWebAddress(req.getMenuWebAddress())
+                .additionInfo(req.getAdditionInfo())
+                .openHour(req.getOpenHour())
+                .closeHour(req.getCloseHour())
+                .address(savedAddress)
+                .galleryPhotos(imageService.save(req.getGalleryPhotos()))
+                .coverPhoto(cloudinaryService.upload(req.getCoverPhoto()))
+                .description(req.getDescription())
+                .createdBy(CommonConstant.ADMIN_INDEX)
+                .status(Status.ACTIVE.getValue())
+                .build();
+
+        // Process features
+        Set<HasFeature> hasFeatures = new HashSet<>();
+        processFeatures(req.getAmbiances(), cacheableService::findAmbiances, repoService::findNAmbianceById, hasFeatures);
+        processFeatures(req.getAmenities(), cacheableService::findAmenities, repoService::findNAmenityById, hasFeatures);
+        processFeatures(req.getCapacities(), cacheableService::findCapacities, repoService::findNCapacityById, hasFeatures);
+        processFeatures(req.getPurposes(), cacheableService::findPurposes, repoService::findNPurposeById, hasFeatures);
+        processFeatures(req.getDressCodes(), cacheableService::findDressCodes, repoService::findNDressCodeById, hasFeatures);
+        processFeatures(req.getEntertainments(), cacheableService::findEntertainments, repoService::findNEntertainmentById, hasFeatures);
+        processFeatures(req.getParkings(), cacheableService::findParkings, repoService::findNParkingById, hasFeatures);
+        processFeatures(req.getPrices(), cacheableService::findPrices, repoService::findNPriceById, hasFeatures);
+        processFeatures(req.getServiceTypes(), cacheableService::findServiceTypes, repoService::findNServiceTypeById, hasFeatures);
+        processFeatures(req.getSpaces(), cacheableService::findSpaces, repoService::findNSpaceById, hasFeatures);
+        processFeatures(req.getSpecialties(), cacheableService::findSpecialties, repoService::findNSpecialtyById, hasFeatures);
+        processFeatures(req.getVisitTimes(), cacheableService::findVisitTimes, repoService::findNVisitTimeById, hasFeatures);
+
+        // Save coffee shop
+        CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
+
+        // Build and save NCoffeeShop
+        NCoffeeShop nCoffeeShop = NCoffeeShop.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .coverPhoto(saved.getCoverPhoto())
+                .hasFeatures(hasFeatures)
+                .build();
+        repoService.saveNCoffeeShop(nCoffeeShop);
+
+        // Async notification
+        CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenFinishCreatingShop(
+                saved.getId().toString(),
+                saved.getName(),
+                saved.getCoverPhoto()));
+
+        log.info("Coffee shop created successfully: name = {}, id = {}", saved.getName(), saved.getId());
+        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS), coffeeShop));
+    }
+
+    private <T, N> void processFeatures(
+            List<Long> featureIds,
+            Function<Void, List<T>> findFeatures,
+            Function<T, N> mapToNFeature,
+            Set<HasFeature> hasFeatures) {
+        if (featureIds != null && !featureIds.isEmpty()) {
+            findFeatures.apply(null).stream()
+                    .filter(feature -> featureIds.contains(getFeatureId(feature)))
+                    .map(mapToNFeature)
+                    .map(nFeature -> HasFeature.builder().feature(nFeature).build())
+                    .forEach(hasFeatures::add);
+        }
+    }
+
+    private <T> Long getFeatureId(T feature) {
+        // Assuming all feature types have a getId() method; adjust if necessary
+        try {
+            return (Long) feature.getClass().getMethod("getId").invoke(feature);
+        } catch (Exception e) {
+            log.error("Error retrieving ID for feature: {}", feature, e);
+            return null;
+        }
+    }
+
     private Address buildAddress(CreateCoffeeShopRequest req) {
         return Address.builder()
                 .googleMapUrl(req.getGoogleMapUrl())
@@ -285,170 +354,6 @@ public class CoffeeShopService {
                         req.getLatitude()))
                 .build();
     }
-
-    private Address buildAddress(ContributionRequest req) {
-        return Address.builder()
-                .googleMapUrl(req.getGoogleMapUrl())
-                .addressDetail(req.getAddressDetail())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .longitude(req.getLongitude())
-                .latitude(req.getLatitude())
-                .location(GeometryUtil.parseLocation(req.getLongitude(),
-                        req.getLatitude()))
-                .build();
-    }
-
-    @Transactional
-    public ResponseEntity<ResponseMetaData> createCoffeeShop(CreateCoffeeShopRequest req) {
-        Address address = buildAddress(req);
-        log.info("Start create coffee shop with name = {}",
-                req.getName());
-        Address savedAddress = addressRepository.save(address);
-
-        CoffeeShop coffeeShop = new CoffeeShop();
-        coffeeShop.setName(req.getName());
-        coffeeShop.setPhoneNumber(req.getPhoneNumber());
-        coffeeShop.setWebAddress(req.getWebAddress());
-        coffeeShop.setMenuWebAddress(req.getMenuWebAddress());
-        coffeeShop.setAdditionInfo(req.getAdditionInfo());
-        coffeeShop.setOpenHour(req.getOpenHour());
-        coffeeShop.setCloseHour(req.getCloseHour());
-        coffeeShop.setAddress(savedAddress);
-
-        Set<HasFeature> hasFeatures = new HashSet<>();
-        if (req.getAmbiances() != null && !req.getAmbiances().isEmpty()) {
-            List<Ambiance> ambiances = cacheableService.findAmbiances().stream()
-                    .filter(a -> req.getAmbiances().contains(a.getId())).collect(Collectors.toList());
-            for (final Ambiance ambiance : ambiances) {
-                NAmbiance nAmbiance = repoService.findNAmbianceById(ambiance);
-                hasFeatures.add(HasFeature.builder().feature(nAmbiance).build());
-            }
-        }
-
-        if (req.getAmenities() != null && !req.getAmenities().isEmpty()) {
-            List<Amenity> amenities = cacheableService.findAmenities().stream()
-                    .filter(a -> req.getAmenities().contains(a.getId())).collect(Collectors.toList());
-            for (final Amenity amenity : amenities) {
-                NAmenity nAmenity = repoService.findNAmenityById(amenity);
-                hasFeatures.add(HasFeature.builder().feature(nAmenity).build());
-            }
-        }
-
-        if (req.getCapacities() != null && !req.getCapacities().isEmpty()) {
-            List<Capacity> capacities = cacheableService.findCapacities().stream()
-                    .filter(c -> req.getCapacities().contains(c.getId())).collect(Collectors.toList());
-            for (final Capacity capacity : capacities) {
-                NCapacity nCapacity = repoService.findNCapacityById(capacity);
-                hasFeatures.add(HasFeature.builder().feature(nCapacity).build());
-            }
-        }
-
-        if (req.getPurposes() != null && !req.getPurposes().isEmpty()) {
-            List<Purpose> purposes = cacheableService.findPurposes().stream()
-                    .filter(c -> req.getPurposes().contains(c.getId())).collect(Collectors.toList());
-            for (final Purpose purpose : purposes) {
-                NPurpose nPurpose = repoService.findNPurposeById(purpose);
-                hasFeatures.add(HasFeature.builder().feature(nPurpose).build());
-            }
-        }
-
-        if (req.getDressCodes() != null && !req.getDressCodes().isEmpty()) {
-            List<DressCode> dressCodes = cacheableService.findDressCodes().stream()
-                    .filter(d -> req.getDressCodes().contains(d.getId())).collect(Collectors.toList());
-            for (final DressCode dressCode : dressCodes) {
-                NDressCode nDressCode = repoService.findNDressCodeById(dressCode);
-                hasFeatures.add(HasFeature.builder().feature(nDressCode).build());
-            }
-        }
-
-        if (req.getEntertainments() != null && !req.getEntertainments().isEmpty()) {
-            List<Entertainment> entertainments = cacheableService.findEntertainments().stream()
-                    .filter(e -> req.getEntertainments().contains(e.getId())).collect(Collectors.toList());
-            for (final Entertainment entertainment : entertainments) {
-                NEntertainment nEntertainment = repoService.findNEntertainmentById(entertainment);
-                hasFeatures.add(HasFeature.builder().feature(nEntertainment).build());
-            }
-        }
-
-        if (req.getParkings() != null && !req.getParkings().isEmpty()) {
-            List<Parking> parkings = cacheableService.findParkings().stream()
-                    .filter(p -> req.getParkings().contains(p.getId())).collect(Collectors.toList());
-            for (final Parking parking : parkings) {
-                NParking nParking = repoService.findNParkingById(parking);
-                hasFeatures.add(HasFeature.builder().feature(nParking).build());
-            }
-        }
-
-        if (req.getPrices() != null && !req.getPrices().isEmpty()) {
-            List<Price> prices = cacheableService.findPrices().stream()
-                    .filter(p -> req.getPrices().contains(p.getId())).collect(Collectors.toList());
-            for (final Price price : prices) {
-                NPrice nPrice = repoService.findNPriceById(price);
-                hasFeatures.add(HasFeature.builder().feature(nPrice).build());
-            }
-        }
-
-        if (req.getServiceTypes() != null && !req.getServiceTypes().isEmpty()) {
-            List<ServiceType> serviceTypes = cacheableService.findServiceTypes().stream()
-                    .filter(s -> req.getServiceTypes().contains(s.getId())).collect(Collectors.toList());
-            for (final ServiceType serviceType : serviceTypes) {
-                NServiceType nServiceType = repoService.findNServiceTypeById(serviceType);
-                hasFeatures.add(HasFeature.builder().feature(nServiceType).build());
-            }
-        }
-
-        if (req.getSpaces() != null && !req.getSpaces().isEmpty()) {
-            List<Space> spaces = cacheableService.findSpaces().stream()
-                    .filter(s -> req.getSpaces().contains(s.getId())).collect(Collectors.toList());
-            for (final Space space : spaces) {
-                NSpace nSpace = repoService.findNSpaceById(space);
-                hasFeatures.add(HasFeature.builder().feature(nSpace).build());
-            }
-        }
-
-        if (req.getSpecialties() != null && !req.getSpecialties().isEmpty()) {
-            List<Specialty> specialties = cacheableService.findSpecialties().stream()
-                    .filter(s -> req.getSpecialties().contains(s.getId())).collect(Collectors.toList());
-            for (final Specialty specialty : specialties) {
-                NSpecialty nSpecialty = repoService.findNSpecialtyById(specialty);
-                hasFeatures.add(HasFeature.builder().feature(nSpecialty).build());
-            }
-        }
-
-        if (req.getVisitTimes() != null && !req.getVisitTimes().isEmpty()) {
-            List<VisitTime> visitTimes = cacheableService.findVisitTimes().stream()
-                    .filter(v -> req.getVisitTimes().contains(v.getId())).collect(Collectors.toList());
-            for (final VisitTime visitTime : visitTimes) {
-                NVisitTime nVisitTime = repoService.findNVisitTimeById(visitTime);
-                hasFeatures.add(HasFeature.builder().feature(nVisitTime).build());
-            }
-        }
-
-        coffeeShop.setGalleryPhotos(imageService.save(req.getGalleryPhotos()));
-        coffeeShop.setCoverPhoto(cloudinaryService.upload(req.getCoverPhoto()));
-        coffeeShop.setDescription(req.getDescription());
-        coffeeShop.setCreatedBy(CommonConstant.ADMIN_INDEX);
-        coffeeShop.setStatus(Status.ACTIVE.getValue());
-        CoffeeShop saved = coffeeShopRepository.save(coffeeShop);
-        NCoffeeShop nCoffeeShop = NCoffeeShop.builder()
-                .id(saved.getId())
-                .name(saved.getName())
-                .coverPhoto(saved.getCoverPhoto())
-                .hasFeatures(hasFeatures)
-                .build();
-        repoService.saveNCoffeeShop(nCoffeeShop);
-        CompletableFuture.runAsync(() -> notificationService.pushNotiToUsersWhenFinishCreatingShop(saved.getId().toString(),
-                saved.getName(),
-                saved.getCoverPhoto()));
-        log.info("Finish create coffee shop with name = {}, id = {}",
-                req.getName(),
-                coffeeShop.getId());
-        return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                coffeeShop));
-    }
-
 
     @Transactional
     public void createCoffeeShop(ContributionRequest req) {
@@ -603,6 +508,20 @@ public class CoffeeShopService {
         log.info("Finish create coffee shop with name = {}, id = {}",
                 req.getName(),
                 coffeeShop.getId());
+    }
+
+    private Address buildAddress(ContributionRequest req) {
+        return Address.builder()
+                .googleMapUrl(req.getGoogleMapUrl())
+                .addressDetail(req.getAddressDetail())
+                .province(req.getProvince())
+                .district(req.getDistrict())
+                .ward(req.getWard())
+                .longitude(req.getLongitude())
+                .latitude(req.getLatitude())
+                .location(GeometryUtil.parseLocation(req.getLongitude(),
+                        req.getLatitude()))
+                .build();
     }
 
     @Transactional
