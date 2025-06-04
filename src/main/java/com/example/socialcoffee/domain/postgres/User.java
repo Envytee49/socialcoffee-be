@@ -37,6 +37,7 @@ public class User {
 
     private String username;
 
+    @Column(name = "name")
     private String fullName;
 
     private String email;
@@ -151,6 +152,7 @@ public class User {
                                 String meta) {
         if (CollectionUtils.isEmpty(this.notifications)) this.notifications = new ArrayList<>();
         log.info("adding new notification");
+        this.notifications = getNotifications();
         Notification notification = Notification.builder()
                 .title(title)
                 .message(message)

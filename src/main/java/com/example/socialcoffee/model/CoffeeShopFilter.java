@@ -1,6 +1,5 @@
 package com.example.socialcoffee.model;
 
-import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.enums.Distance;

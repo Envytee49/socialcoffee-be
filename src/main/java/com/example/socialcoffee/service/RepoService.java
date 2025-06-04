@@ -4,7 +4,6 @@ import com.example.socialcoffee.domain.neo4j.feature.*;
 import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.domain.postgres.Review;
 import com.example.socialcoffee.domain.postgres.User;
-import com.example.socialcoffee.domain.feature.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.exception.NotFoundException;

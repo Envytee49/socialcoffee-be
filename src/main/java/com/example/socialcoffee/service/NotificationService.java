@@ -18,6 +18,7 @@ import com.example.socialcoffee.utils.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -137,7 +138,7 @@ public class NotificationService {
             userRepository.saveAll(activeUsers);
             log.info("Finish adding new notification for users");
         } catch (Exception e) {
-            log.error("Error: {}", e.getMessage());
+            log.error("Error: {}", e.getMessage()); // lazy load
         }
 
     }

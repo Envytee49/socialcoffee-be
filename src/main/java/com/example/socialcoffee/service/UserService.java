@@ -350,7 +350,7 @@ public class UserService {
     public Page<UserDTO> search(UserSearchRequest request,
                                 Pageable pageable) {
         String name = request.getName();
-        Page<User> users = userRepository.findByUsernameOrNameOrDisplayNameContainingIgnoreCase(name,
+        Page<User> users = userRepository.findByUsernameOrFullNameOrDisplayNameContainingIgnoreCase(name,
                 name,
                 name,
                 pageable);
