@@ -156,7 +156,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findBasedOnYourPreferences(String key, Long userId) {
-        final Map<Long, Double> ids = nCoffeeShopRepository.findBasedOnYourPreferences(userId)
+        final Map<Long, Double> ids = nCoffeeShopRepository.findBasedOnYourPreferences(userId, 1)
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore
@@ -171,7 +171,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findYouMayLikeRecommendation(String key, Long userId) {
-        final Map<Long, Double> ids = nUserRepository.findYouMayLikeRecommendation(userId)
+        final Map<Long, Double> ids = nUserRepository.findYouMayLikeRecommendation(userId, 1)
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore
@@ -186,7 +186,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findLikedByPeopleYouFollow(String key, Long userId) {
-        final Map<Long, Double> ids = nUserRepository.findLikedByPeopleYouFollow(userId)
+        final Map<Long, Double> ids = nUserRepository.findLikedByPeopleYouFollow(userId, 1)
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore

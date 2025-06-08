@@ -143,11 +143,12 @@ public class CoffeeShopController extends BaseController {
 
     @GetMapping("/coffee-shops/search")
     public ResponseEntity<ResponseMetaData> searchCoffeeShop(CoffeeShopSearchRequest request,
-                                                             PageDtoIn pageDtoIn) {
+                                                             PageDtoIn pageDtoIn,
+                                                             @RequestParam(name = "isFromPrompt", defaultValue = "false", required = false) boolean isFromPrompt) {
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(request,
                 pageDtoIn.getPage() - 1,
                 pageDtoIn.getSize(),
-                Sort.unsorted());
+                Sort.unsorted(), isFromPrompt);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 pageDtoOut));
     }
@@ -272,4 +273,8 @@ public class CoffeeShopController extends BaseController {
                 NumberUtils.toLong(parentId));
     }
 
+    @PostMapping("/migrate/features")
+    public void migrateCoffeeShopFeature() {
+        coffeeShopService.migrateCoffeeShopFeature();
+    }
 }

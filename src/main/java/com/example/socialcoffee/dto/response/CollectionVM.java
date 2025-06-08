@@ -25,7 +25,7 @@ public class CollectionVM {
     public CollectionVM(Collection collection, CoffeeShop coffeeShop) {
         this.id = collection.getId();
         this.name = collection.getName();
-        this.coverUrl = collection.getCoverPhoto();
+        this.coverUrl = collection.getCoverUrl();
         this.totalItem = collection.getCoffeeShops().size();
         if (Objects.nonNull(coffeeShop)) {
             this.isSaved = collection.getCoffeeShops().contains(coffeeShop);
@@ -35,7 +35,7 @@ public class CollectionVM {
     public CollectionVM(Collection collection) {
         this.id = collection.getId();
         this.name = collection.getName();
-        this.coverUrl = collection.getCoverPhoto();
+        this.coverUrl = collection.getCoverUrl();
         this.totalItem = collection.getCoffeeShops().size();
     }
 }

@@ -59,7 +59,7 @@ public class User {
 
     private String status = Status.ACTIVE.getValue();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Notification> notifications;
 
     @ManyToMany(fetch = FetchType.LAZY)

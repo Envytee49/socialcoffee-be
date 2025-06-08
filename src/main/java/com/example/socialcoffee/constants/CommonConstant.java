@@ -14,7 +14,7 @@ public interface CommonConstant {
 
     Long ADMIN_INDEX = NumberUtils.LONG_ZERO;
 
-    String USER_PROMPT = "These are the system filters: %s, extract matching filters from the prompt and return only a valid JSON object. Do not include any additional text, characters or explanation. Return the JSON only: ";
+    String USER_PROMPT = "These are the system filters: %s, extract matching filters from the prompt, each value must be matched only within its defined category, do not assign a value to a category it does not belong to (for example 'Acoustic' belongs to ambiances not entertainments). Do not include any additional text, characters or explanation. Return the JSON only: ";
 
     String USER_ID = "User-Id";
 

@@ -84,7 +84,7 @@ public class AdminController extends BaseController {
                 coffeeShopService.search(coffeeShopSearchRequest,
                         pageDtoIn.getPage() - 1,
                         pageDtoIn.getSize(),
-                        Sort.by(Sort.Direction.DESC, "isSponsored"))));
+                        Sort.by(Sort.Direction.DESC, "isSponsored"), false)));
     }
 
     @GetMapping("/requests")

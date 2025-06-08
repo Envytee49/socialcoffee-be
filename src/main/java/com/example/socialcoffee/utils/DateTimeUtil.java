@@ -122,12 +122,12 @@ public class DateTimeUtil {
         return years + "y";
     }
 
-    public static String covertLocalDateToString(LocalDateTime createdAt) {
+    public static String convertLocalDateToString(LocalDateTime createdAt) {
         if (Objects.isNull(createdAt)) return StringUtils.EMPTY;
-        return covertLocalDateToString(createdAt.toLocalDate());
+        return convertLocalDateToString(createdAt.toLocalDate());
     }
 
-    public static String covertLocalDateToString(LocalDate localDate) {
+    public static String convertLocalDateToString(LocalDate localDate) {
         if (Objects.isNull(localDate)) return StringUtils.EMPTY;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy",
                 Locale.ENGLISH);

@@ -47,12 +47,12 @@ public class UserProfile {
         this.displayName = user.getDisplayName();
         this.email = user.getEmail();
         this.bio = user.getBio();
-        this.joined = DateTimeUtil.covertLocalDateToString(user.getCreatedAt());
+        this.joined = DateTimeUtil.convertLocalDateToString(user.getCreatedAt());
         this.location = "Hanoi, Vietnam";
         this.phone = user.getPhone();
         this.backgroundUrl = user.getBackgroundPhoto();
         this.YYYYMMDDdob = DateTimeUtil.covertLocalDateToYYYYMMDDString(user.getDob());
-        this.dob = DateTimeUtil.covertLocalDateToString(user.getDob());
+        this.dob = DateTimeUtil.convertLocalDateToString(user.getDob());
         this.gender = user.getGender();
     }
 }

@@ -1,7 +1,7 @@
 package com.example.socialcoffee.repository.neo4j;
 
-import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
 import com.example.socialcoffee.domain.neo4j.NUser;
+import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
@@ -74,22 +74,21 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
                                     WITH cs, max(similarityScore) AS userScore
 
                                     MATCH (cs)<-[r:REVIEW]-(u:User)
-                                    WITH cs, userScore, count(r) AS reviewCount, max(r.createdAt) AS latestReview, avg(r.rating) AS avgRating
-
-                                    WITH cs, userScore, reviewCount, latestReview, avgRating,
-                                         CASE WHEN latestReview IS NOT NULL
-                                              THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                                              ELSE 0.0 END AS recencyScore
+                                    WITH cs, userScore, count(r) AS reviewCount, avg(r.rating) AS avgRating,
+                                         sum(CASE WHEN duration.inDays(r.createdAt, datetime()).weeks <= $weeks
+                                                                    THEN 1
+                                                                    ELSE 0
+                                                                    END) AS recencyScore
 
                                     RETURN cs.id AS shopId,
-                                           (0.6 * userScore +
-                                            0.15 * (avgRating / 5.0) +
+                                           (0.7 * userScore +
+                                            0.1 * (avgRating / 5.0) +
                                             0.15 * log(reviewCount + 1) +
-                                            0.1 * recencyScore) AS score
+                                            0.05 * log(recencyScore+1)) AS score
                                     ORDER BY score DESC
                                     LIMIT 10
               """)
-    List<CoffeeShopRecommendationDTO> findYouMayLikeRecommendation(@Param("userId") Long userId);
+    List<CoffeeShopRecommendationDTO> findYouMayLikeRecommendation(@Param("userId") Long userId, @Param("weeks") Integer weeks);
 
 
     // 3. Collaborative Filtering: Follow-Based with REVIEW (including rating)
@@ -102,26 +101,23 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
                      MATCH (cs)<-[r:REVIEW]-(reviewer:User)
                      WITH cs, followLikes,
                           count(r) AS reviewCount,
-                          max(r.createdAt) AS latestReview,
-                          avg(r.rating) AS avgRating
-
-                     WITH cs, followLikes, reviewCount, latestReview, avgRating,
-                          CASE WHEN latestReview IS NOT NULL
-                               THEN toFloat(1.0 / (1 + duration.between(latestReview, datetime()).days))
-                               ELSE 0.0
-                          END AS recencyScore
+                          avg(r.rating) AS avgRating,
+                         sum(CASE WHEN duration.inDays(r.createdAt, datetime()).weeks <= $weeks
+                                                    THEN 1
+                                                    ELSE 0
+                                                    END) AS recencyScore
 
                      RETURN cs.id AS shopId,
                             (
-                              0.6 * toFloat(followLikes) / (followLikes + 10) +
-                              0.15 * (avgRating / 5.0) +
+                              0.7 * toFloat(followLikes) / (followLikes + 10) +
+                              0.1 * (avgRating / 5.0) +
                               0.15 * log(reviewCount + 1) +
-                              0.1 * recencyScore
+                              0.05 * log(recencyScore+1)
                             ) AS score
                      ORDER BY score DESC
                      LIMIT 10
             """)
-    List<CoffeeShopRecommendationDTO> findLikedByPeopleYouFollow(@Param("userId") Long userId);
+    List<CoffeeShopRecommendationDTO> findLikedByPeopleYouFollow(@Param("userId") Long userId, @Param("weeks") Integer weeks);
 
     @Query("MATCH (u1:User {id: $userId})-[p:PREFER]->(f) DELETE p")
     void clearAllPreferences(@Param("userId") Long userId);

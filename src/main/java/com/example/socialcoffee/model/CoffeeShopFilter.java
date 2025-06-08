@@ -1,67 +1,64 @@
 package com.example.socialcoffee.model;
 
 import com.example.socialcoffee.domain.postgres.feature.*;
+import com.example.socialcoffee.dto.common.DistanceDTO;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
-import com.example.socialcoffee.enums.Distance;
-import com.example.socialcoffee.utils.StringAppUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Setter
 @Getter
 @Slf4j
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CoffeeShopFilter {
+    private String province;
+
+    private String district;
+
+    private String ward;
+
+    @JsonIgnore
     private String isOpening = "true/false";
 
-    private List<String> distances;
+    private List<DistanceDTO> distances;
 
-    private List<String> ambiances;
+    private List<Ambiance> ambiances;
 
-    private List<String> amenities;
+    private List<Amenity> amenities;
 
-    private List<String> capacities;
+    private List<Capacity> capacities;
 
-    private List<String> categories;
+    private List<Entertainment> entertainments;
 
-    private List<String> entertainments;
+    private List<Parking> parkings;
 
-    private List<String> parkings;
+    private List<Price> prices;
 
-    private List<String> prices;
+    private List<Purpose> purposes;
 
-    private List<String> purposes;
+    private List<ServiceType> serviceTypes;
 
-    private List<String> serviceTypes;
+    private List<Space> spaces;
 
-    private List<String> spaces;
+    private List<Specialty> specialties;
 
-    private List<String> specialties;
+    private List<VisitTime> visitTimes;
 
-    private List<String> visitTimes;
-
-    public List<Integer> getDistanceValues() {
-        List<Integer> values = new ArrayList<>();
-        for (final String distance : distances) {
-            try {
-                final Distance value = Distance.valueOf(distance);
-                values.add(value.getValue());
-            } catch (Exception e) {
-                log.warn("Warning: ",
-                        e);
-            }
-        }
-        return values;
-    }
+    @JsonProperty(value = "isSuggested")
+    private Boolean isSuggested;
 
     public CoffeeShopSearchRequest toSearchRequest(List<Ambiance> ambiances,
                                                    List<Amenity> amenities,
                                                    List<Capacity> capacities,
-                                                   List<Category> categories,
                                                    List<Entertainment> entertainments,
                                                    List<Parking> parkings,
                                                    List<Price> prices,
@@ -75,87 +72,73 @@ public class CoffeeShopFilter {
                 .ambiances(getAmbianceValues(ambiances))
                 .amenities(getAmenityValues(amenities))
                 .capacities(getCapacityValues(capacities))
-                .categories(getCategoryValues(categories))
                 .entertainments(getEntertainmentValues(entertainments))
                 .parkings(getParkingValues(parkings))
-                .prices(getPriceValues(prices))
                 .purposes(getPurposeValues(purposes))
                 .serviceTypes(getServiceTypeValues(serviceTypes))
                 .spaces(getSpaceValues(spaces))
                 .specialties(getSpecialtyValues(specialties))
                 .visitTimes(getVisitTimeValues(visitTimes))
+                .province(this.province)
+                .district(this.district)
+                .ward(this.ward)
                 .build();
     }
 
+    @JsonIgnore
     public List<Long> getAmbianceValues(List<Ambiance> ambiancesEntity) {
-        return extractFeatureIds(ambiances,
-                ambiancesEntity);
+        return extractFeatureIds(ambiances);
     }
 
+    @JsonIgnore
     public List<Long> getAmenityValues(List<Amenity> amenitiesEntity) {
-        return extractFeatureIds(amenities,
-                amenitiesEntity);
+        return extractFeatureIds(amenities);
     }
 
+    @JsonIgnore
     public List<Long> getCapacityValues(List<Capacity> capacitiesEntity) {
-        return extractFeatureIds(capacities,
-                capacitiesEntity);
+        return extractFeatureIds(capacities);
     }
 
-    public List<Long> getCategoryValues(List<Category> categoriesEntity) {
-        return extractFeatureIds(categories,
-                categoriesEntity);
-    }
-
+    @JsonIgnore
     public List<Long> getEntertainmentValues(List<Entertainment> entertainmentsEntity) {
-        return extractFeatureIds(entertainments,
-                entertainmentsEntity);
+        return extractFeatureIds(entertainments);
     }
 
+    @JsonIgnore
     public List<Long> getParkingValues(List<Parking> parkingsEntity) {
-        return extractFeatureIds(parkings,
-                parkingsEntity);
+        return extractFeatureIds(parkings);
     }
 
-    public List<Long> getPriceValues(List<Price> pricesEntity) {
-        return extractFeatureIds(StringAppUtils.formatedListPrices(prices),
-                pricesEntity);
-    }
-
+    @JsonIgnore
     public List<Long> getPurposeValues(List<Purpose> purposesEntity) {
-        return extractFeatureIds(purposes,
-                purposesEntity);
+        return extractFeatureIds(purposes);
     }
 
+    @JsonIgnore
     public List<Long> getServiceTypeValues(List<ServiceType> serviceTypesEntity) {
-        return extractFeatureIds(serviceTypes,
-                serviceTypesEntity);
+        return extractFeatureIds(serviceTypes);
     }
 
+    @JsonIgnore
     public List<Long> getSpaceValues(List<Space> spacesEntity) {
-        return extractFeatureIds(spaces,
-                spacesEntity);
+        return extractFeatureIds(spaces);
     }
 
+    @JsonIgnore
     public List<Long> getSpecialtyValues(List<Specialty> specialtiesEntity) {
-        return extractFeatureIds(specialties,
-                specialtiesEntity);
+        return extractFeatureIds(specialties);
     }
 
+    @JsonIgnore
     public List<Long> getVisitTimeValues(List<VisitTime> visitTimesEntity) {
-        return extractFeatureIds(visitTimes,
-                visitTimesEntity);
+        return extractFeatureIds(visitTimes);
     }
 
-    private <T extends Feature> List<Long> extractFeatureIds(List<String> filterList,
-                                                             List<T> entityList) {
-        if (filterList == null || entityList == null) return Collections.emptyList();
-        Map<String, Long> valueMap = entityList.stream()
-                .collect(Collectors.toMap(Feature::getValue,
-                        Feature::getId));
+    private <T extends Feature> List<Long> extractFeatureIds(List<T> filterList) {
+        if (filterList == null) return Collections.emptyList();
         return filterList.stream()
-                .map(valueMap::get)
-                .filter(Objects::nonNull)
+                .map(f -> f.getId())
                 .collect(Collectors.toList());
     }
 }

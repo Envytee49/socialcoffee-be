@@ -2,6 +2,7 @@ package com.example.socialcoffee.service;
 
 import com.cloudinary.utils.StringUtils;
 import com.example.socialcoffee.constants.CommonConstant;
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.postgres.User;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
@@ -10,7 +11,6 @@ import com.example.socialcoffee.dto.response.MetaDTO;
 import com.example.socialcoffee.dto.response.ResponseMetaData;
 import com.example.socialcoffee.enums.MetaData;
 import com.example.socialcoffee.model.CoffeeShopFilter;
-import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
@@ -39,7 +39,7 @@ public class RecommendationService {
 
     private final CacheableService cacheableService;
 
-    private final GenerateTextService generateTextService;
+    private final GroqService groqService;
 
     private final ObjectMapper objectMapper;
 
@@ -114,15 +114,15 @@ public class RecommendationService {
     @SneakyThrows
     public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
         final String s = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
-        String json = generateTextService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
+        String json = groqService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
         log.info("Returned json: {}, given feature: {}", json, s);
         final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
                 CoffeeShopFilter.class);
+
         final CoffeeShopSearchRequest searchRequest = filter.toSearchRequest(
                 cacheableService.findAmbiances(),
                 cacheableService.findAmenities(),
                 cacheableService.findCapacities(),
-                cacheableService.findCategories(),
                 cacheableService.findEntertainments(),
                 cacheableService.findParkings(),
                 cacheableService.findPrices(),
@@ -132,13 +132,14 @@ public class RecommendationService {
                 cacheableService.findSpecialties(),
                 cacheableService.findVisitTimes()
         );
+        searchRequest.setMatchedFilter(filter);
         final PageDtoOut<CoffeeShopVM> pageDtoOut = coffeeShopService.search(searchRequest,
                 0,
-                5,
-                Sort.unsorted());
+                6,
+                Sort.unsorted(), true);
         List<CoffeeShopVM> data = pageDtoOut.getData();
-        data.sort(Comparator.comparing(CoffeeShopVM::getAverageRating).reversed()
-                .thenComparing(CoffeeShopVM::getReviewCounts).reversed());
+        data.sort(Comparator.comparing(CoffeeShopVM::getAverageRating, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(CoffeeShopVM::getReviewCounts, Comparator.nullsLast(Comparator.reverseOrder())));
         pageDtoOut.setData(data);
         pageDtoOut.setMetaData(searchRequest);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),

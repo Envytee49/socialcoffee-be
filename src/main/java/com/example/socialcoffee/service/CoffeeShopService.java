@@ -3,10 +3,11 @@ package com.example.socialcoffee.service;
 import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
 import com.example.socialcoffee.domain.neo4j.NUser;
-import com.example.socialcoffee.domain.neo4j.feature.*;
+import com.example.socialcoffee.domain.neo4j.feature.NFeature;
 import com.example.socialcoffee.domain.neo4j.relationship.HasFeature;
 import com.example.socialcoffee.domain.postgres.*;
 import com.example.socialcoffee.domain.postgres.feature.*;
+import com.example.socialcoffee.dto.common.DistanceDTO;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.CoffeeShopSearchRequest;
 import com.example.socialcoffee.dto.request.ContributionRequest;
@@ -132,15 +133,17 @@ public class CoffeeShopService {
         }
     }
 
-    public PageDtoOut<CoffeeShopVM> search(CoffeeShopSearchRequest request, Integer page, Integer size, Sort sort) {
+    public PageDtoOut<CoffeeShopVM> search(CoffeeShopSearchRequest request, Integer page, Integer size, Sort sort,
+                                           boolean isFromPrompt) {
         try {
-            Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request, page, size, sort);
+            Page<CoffeeShop> coffeeShops = coffeeShopRepository.searchCoffeeShops(request, page, size, sort, isFromPrompt);
             List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                             request.getLatitude(),
                             request.getLongitude()))
                     .collect(Collectors.toList());
             return PageDtoOut.from(page, size, coffeeShops.getTotalElements(), coffeeShopVMs);
         } catch (EmptyResultDataAccessException e) {
+            log.error("Error: {}", e.getMessage(), e);
             return PageDtoOut.from(page, size, 0, Collections.emptyList());
         }
     }
@@ -178,19 +181,19 @@ public class CoffeeShopService {
 
     public CoffeeShopFilter getCoffeeShopFilters() {
         CoffeeShopFilter filter = new CoffeeShopFilter();
-        filter.setDistances(Arrays.stream(Distance.values()).map(Enum::name).toList());
-        filter.setAmbiances(cacheableService.findAmbiances().stream().map(Feature::getValue).toList());
-        filter.setAmenities(cacheableService.findAmenities().stream().map(Feature::getValue).toList());
-        filter.setCapacities(cacheableService.findCapacities().stream().map(Feature::getValue).toList());
-        filter.setParkings(cacheableService.findParkings().stream().map(Feature::getValue).toList());
-        filter.setPrices(cacheableService.findPrices().stream().map(Feature::getValue).toList());
-        filter.setPurposes(cacheableService.findPurposes().stream().map(Feature::getValue).toList());
-        filter.setServiceTypes(cacheableService.findServiceTypes().stream().map(Feature::getValue).toList());
-        filter.setCategories(cacheableService.findCategories().stream().map(Feature::getValue).toList());
-        filter.setEntertainments(cacheableService.findEntertainments().stream().map(Feature::getValue).toList());
-        filter.setSpaces(cacheableService.findSpaces().stream().map(Feature::getValue).toList());
-        filter.setSpecialties(cacheableService.findSpecialties().stream().map(Feature::getValue).toList());
-        filter.setVisitTimes(cacheableService.findVisitTimes().stream().map(Feature::getValue).toList());
+        filter.setDistances(Arrays.stream(Distance.values()).map(d -> new DistanceDTO((long) d.ordinal(),
+                d.name().toUpperCase())).collect(Collectors.toList()));
+        filter.setAmbiances(cacheableService.findAmbiances());
+        filter.setAmenities(cacheableService.findAmenities());
+        filter.setCapacities(cacheableService.findCapacities());
+        filter.setParkings(cacheableService.findParkings());
+        filter.setPrices(cacheableService.findPrices());
+        filter.setPurposes(cacheableService.findPurposes());
+        filter.setServiceTypes(cacheableService.findServiceTypes());
+        filter.setEntertainments(cacheableService.findEntertainments());
+        filter.setSpaces(cacheableService.findSpaces());
+        filter.setSpecialties(cacheableService.findSpecialties());
+        filter.setVisitTimes(cacheableService.findVisitTimes());
         return filter;
     }
 
@@ -630,4 +633,82 @@ public class CoffeeShopService {
         res.setMetaData(mood.getMessage());
         return res;
     }
+
+    public void migrateCoffeeShopFeature() {
+        // Fetch all coffee shops
+        log.info("Start migrate feature for coffee shops");
+        final List<CoffeeShop> coffeeShops = coffeeShopRepository.findAll();
+
+        // Fetch all feature lists
+        final List<Ambiance> ambiances = cacheableService.findAmbiances();
+        final List<Amenity> amenities = cacheableService.findAmenities();
+        final List<Capacity> capacities = cacheableService.findCapacities();
+        final List<DressCode> dressCodes = cacheableService.findDressCodes();
+        final List<Purpose> purposes = cacheableService.findPurposes();
+        final List<Entertainment> entertainments = cacheableService.findEntertainments();
+        final List<Parking> parkings = cacheableService.findParkings();
+        final List<Price> prices = cacheableService.findPrices();
+        final List<ServiceType> serviceTypes = cacheableService.findServiceTypes();
+        final List<Space> spaces = cacheableService.findSpaces();
+        final List<Specialty> specialties = cacheableService.findSpecialties();
+        final List<VisitTime> visitTimes = cacheableService.findVisitTimes();
+
+        Random random = new Random();
+
+        for (CoffeeShop coffeeShop : coffeeShops) {
+            // Check if all feature lists are empty
+            if (!CollectionUtils.isEmpty(coffeeShop.getAmbiances()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getAmenities()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getCapacities()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getCategories()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getDressCodes()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getPurposes()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getEntertainments()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getParkings()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getPrices()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getServiceTypes()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getSpaces()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getSpecialties()) ||
+                    !CollectionUtils.isEmpty(coffeeShop.getVisitTimes())) {
+                continue; // Skip coffee shops with any existing features
+            }
+            log.info("Start migrate feature for coffee shop: {}", coffeeShop.getName());
+            // Initialize hasFeatures set
+            Set<HasFeature> hasFeatures = new HashSet<>();
+
+            // Randomly select 1 or 2 feature IDs for each feature type
+            processFeatures(getRandomFeatures(ambiances, random), cacheableService::findAmbiances, repoService::findNAmbianceById, coffeeShop::setAmbiances, hasFeatures);
+            processFeatures(getRandomFeatures(amenities, random), cacheableService::findAmenities, repoService::findNAmenityById, coffeeShop::setAmenities, hasFeatures);
+            processFeatures(getRandomFeatures(capacities, random), cacheableService::findCapacities, repoService::findNCapacityById, coffeeShop::setCapacities, hasFeatures);
+            processFeatures(getRandomFeatures(dressCodes, random), cacheableService::findDressCodes, repoService::findNDressCodeById, coffeeShop::setDressCodes, hasFeatures);
+            processFeatures(getRandomFeatures(purposes, random), cacheableService::findPurposes, repoService::findNPurposeById, coffeeShop::setPurposes, hasFeatures);
+            processFeatures(getRandomFeatures(entertainments, random), cacheableService::findEntertainments, repoService::findNEntertainmentById, coffeeShop::setEntertainments, hasFeatures);
+            processFeatures(getRandomFeatures(parkings, random), cacheableService::findParkings, repoService::findNParkingById, coffeeShop::setParkings, hasFeatures);
+            processFeatures(getRandomFeatures(prices, random), cacheableService::findPrices, repoService::findNPriceById, coffeeShop::setPrices, hasFeatures);
+            processFeatures(getRandomFeatures(serviceTypes, random), cacheableService::findServiceTypes, repoService::findNServiceTypeById, coffeeShop::setServiceTypes, hasFeatures);
+            processFeatures(getRandomFeatures(spaces, random), cacheableService::findSpaces, repoService::findNSpaceById, coffeeShop::setSpaces, hasFeatures);
+            processFeatures(getRandomFeatures(specialties, random), cacheableService::findSpecialties, repoService::findNSpecialtyById, coffeeShop::setSpecialties, hasFeatures);
+            processFeatures(getRandomFeatures(visitTimes, random), cacheableService::findVisitTimes, repoService::findNVisitTimeById, coffeeShop::setVisitTimes, hasFeatures);
+
+            // Save updated coffee shop
+            coffeeShopRepository.save(coffeeShop);
+
+            // Update NCoffeeShop
+            NCoffeeShop nCoffeeShop = repoService.findNCoffeeShopById(coffeeShop.getId());
+            nCoffeeShop.setHasFeatures(hasFeatures);
+            repoService.saveNCoffeeShop(nCoffeeShop);
+            log.info("Finish migrate feature for coffee shop: {}", coffeeShop.getName());
+        }
+        log.info("Finish migrate feature for coffee shops");
+    }
+
+    private <T extends Feature> List<Long> getRandomFeatures(List<T> features, Random random) {
+        if (features == null || features.isEmpty()) return List.of();
+
+        int count = random.nextInt(2) + 1; // random 1 or 2
+        List<T> shuffled = new ArrayList<>(features);
+        Collections.shuffle(shuffled, random);
+        return shuffled.subList(0, Math.min(count, shuffled.size())).stream().map(Feature::getId).toList();
+    }
+
 }

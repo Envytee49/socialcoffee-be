@@ -27,21 +27,39 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
     public Page<CoffeeShop> searchCoffeeShops(CoffeeShopSearchRequest request,
                                               Integer page,
                                               Integer size,
-                                              Sort sort) {
+                                              Sort sort,
+                                              boolean isFromPrompt) {
         Pageable pageable = PageRequest.of(page,
                 size,
                 sort);
 
-        Long totalCount = getTotalCount(request);
+        Long totalCount = isFromPrompt ? getTotalCountForPrompt(request) : getTotalCount(request);
 
         // Get the paginated results
-        List<CoffeeShop> coffeeShops = getPagedResults(request,
-                pageable);
+        List<CoffeeShop> coffeeShops = isFromPrompt ? getPagedResultsForPrompt(request, pageable)
+                : getPagedResults(request, pageable);
 
         // Return PageImpl with results, pageable, and total count
         return new PageImpl<>(coffeeShops,
                 pageable,
                 totalCount);
+    }
+
+    private Long getTotalCountForPrompt(CoffeeShopSearchRequest request) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
+        Root<CoffeeShop> root = countQuery.from(CoffeeShop.class);
+
+        // Apply the same predicates as the main query
+        Predicate predicate = buildPredicate(request,
+                criteriaBuilder,
+                root, true);
+
+        // Count distinct IDs to handle joins properly
+        countQuery.select(criteriaBuilder.countDistinct(root.get("id")));
+        countQuery.where(predicate);
+
+        return entityManager.createQuery(countQuery).getSingleResult();
     }
 
     private Long getTotalCount(CoffeeShopSearchRequest request) {
@@ -52,7 +70,7 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
         // Apply the same predicates as the main query
         Predicate predicate = buildPredicate(request,
                 criteriaBuilder,
-                root);
+                root, false);
         List<Join<CoffeeShop, ?>> listJoins = new ArrayList<>();
 
         // Join each list filter if present
@@ -210,7 +228,62 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
 
         // Count distinct IDs to handle joins properly
         countQuery.select(criteriaBuilder.countDistinct(root.get("id")));
-        return entityManager.createQuery(countQuery).getSingleResult();
+        return (long) entityManager.createQuery(countQuery).getResultList().size();
+    }
+
+    private List<CoffeeShop> getPagedResultsForPrompt(CoffeeShopSearchRequest request,
+                                                      Pageable pageable) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<CoffeeShop> criteriaQuery = criteriaBuilder.createQuery(CoffeeShop.class);
+        Root<CoffeeShop> root = criteriaQuery.from(CoffeeShop.class);
+
+        // Apply predicates
+        Predicate predicate = buildPredicate(request,
+                criteriaBuilder,
+                root, true);
+        criteriaQuery.where(predicate);
+        Sort sort = pageable.getSort();
+        List<Order> orders = new ArrayList<>();
+
+        for (Sort.Order sortOrder : sort) {
+            if (sortOrder.isAscending()) {
+                orders.add(criteriaBuilder.asc(root.get(sortOrder.getProperty())));
+            } else {
+                orders.add(criteriaBuilder.desc(root.get(sortOrder.getProperty())));
+            }
+        }
+
+        criteriaQuery.orderBy(orders);
+
+        // Apply sorting
+        if (request.getSort() != null) {
+            Join<CoffeeShop, Review> coffeeShopReviews = root.join("reviews",
+                    JoinType.LEFT);
+            criteriaQuery.groupBy(root.get("id"));
+
+            if (CoffeeShopSort.HIGHEST_RATED.getValue().equals(request.getSort())) {
+                // Handle NULL values with COALESCE for average rating
+                Expression<Double> averageRating = criteriaBuilder.coalesce(
+                        criteriaBuilder.avg(coffeeShopReviews.get("rating")),
+                        0.0
+                );
+                criteriaQuery.orderBy(criteriaBuilder.desc(averageRating));
+            } else if (CoffeeShopSort.MOST_REVIEW.getValue().equals(request.getSort())) {
+                Expression<Long> reviewCount = criteriaBuilder.count(coffeeShopReviews.get("id"));
+                criteriaQuery.orderBy(criteriaBuilder.desc(reviewCount));
+            } else {
+                // Default sorting if needed
+                criteriaQuery.orderBy(criteriaBuilder.asc(root.get("id")));
+            }
+        }
+
+        // Create the typed query and apply pagination
+        TypedQuery<CoffeeShop> typedQuery = entityManager.createQuery(criteriaQuery);
+        typedQuery.setFirstResult((int) pageable.getOffset());
+        typedQuery.setMaxResults(pageable.getPageSize());
+
+        // Execute and return results
+        return typedQuery.getResultList();
     }
 
     private List<CoffeeShop> getPagedResults(CoffeeShopSearchRequest request,
@@ -222,7 +295,7 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
         // Apply predicates
         Predicate predicate = buildPredicate(request,
                 criteriaBuilder,
-                root);
+                root, false);
         List<Join<CoffeeShop, ?>> listJoins = new ArrayList<>();
         if (request.getAmbiances() != null && !request.getAmbiances().isEmpty()) {
             listJoins.add(root.join("ambiances", JoinType.INNER));
@@ -425,7 +498,7 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
 
     private Predicate buildPredicate(CoffeeShopSearchRequest request,
                                      CriteriaBuilder criteriaBuilder,
-                                     Root<CoffeeShop> root) {
+                                     Root<CoffeeShop> root, boolean isFromPrompt) {
         List<Predicate> predicates = new ArrayList<>();
         // Name filter
         if (request.getName() != null && !request.getName().isEmpty()) {
@@ -491,71 +564,74 @@ public class CoffeeShopRepositoryImpl implements CoffeeShopRepositoryCustom {
         }
 
         // Add list predicates
-//        addListPredicate(predicates,
-//                         request.getAmbiances(),
-//                         root,
-//                         criteriaBuilder,
-//                         "ambiances");
-//        addListPredicate(predicates,
-//                         request.getAmenities(),
-//                         root,
-//                         criteriaBuilder,
-//                         "amenities");
-//        addListPredicate(predicates,
-//                         request.getCapacities(),
-//                         root,
-//                         criteriaBuilder,
-//                         "capacities");
-//        addListPredicate(predicates,
-//                         request.getCategories(),
-//                         root,
-//                         criteriaBuilder,
-//                         "categories");
-//        addListPredicate(predicates,
-//                         request.getEntertainments(),
-//                         root,
-//                         criteriaBuilder,
-//                         "entertainments");
-//        addListPredicate(predicates,
-//                         request.getParkings(),
-//                         root,
-//                         criteriaBuilder,
-//                         "parkings");
-//        addListPredicate(predicates,
-//                         request.getPrices(),
-//                         root,
-//                         criteriaBuilder,
-//                         "prices");
-//        addListPredicate(predicates,
-//                         request.getPurposes(),
-//                         root,
-//                         criteriaBuilder,
-//                         "purposes");
-//        addListPredicate(predicates,
-//                         request.getServiceTypes(),
-//                         root,
-//                         criteriaBuilder,
-//                         "serviceTypes");
-//        addListPredicate(predicates,
-//                         request.getSpaces(),
-//                         root,
-//                         criteriaBuilder,
-//                         "spaces");
-//        addListPredicate(predicates,
-//                         request.getSpecialties(),
-//                         root,
-//                         criteriaBuilder,
-//                         "specialties");
-//        addListPredicate(predicates,
-//                         request.getVisitTimes(),
-//                         root,
-//                         criteriaBuilder,
-//                         "visitTimes");
+        if (isFromPrompt) {
+            addListPredicate(predicates,
+                    request.getAmbiances(),
+                    root,
+                    criteriaBuilder,
+                    "ambiances");
+            addListPredicate(predicates,
+                    request.getAmenities(),
+                    root,
+                    criteriaBuilder,
+                    "amenities");
+            addListPredicate(predicates,
+                    request.getCapacities(),
+                    root,
+                    criteriaBuilder,
+                    "capacities");
+            addListPredicate(predicates,
+                    request.getCategories(),
+                    root,
+                    criteriaBuilder,
+                    "categories");
+            addListPredicate(predicates,
+                    request.getEntertainments(),
+                    root,
+                    criteriaBuilder,
+                    "entertainments");
+            addListPredicate(predicates,
+                    request.getParkings(),
+                    root,
+                    criteriaBuilder,
+                    "parkings");
+            addListPredicate(predicates,
+                    request.getPrices(),
+                    root,
+                    criteriaBuilder,
+                    "prices");
+            addListPredicate(predicates,
+                    request.getPurposes(),
+                    root,
+                    criteriaBuilder,
+                    "purposes");
+            addListPredicate(predicates,
+                    request.getServiceTypes(),
+                    root,
+                    criteriaBuilder,
+                    "serviceTypes");
+            addListPredicate(predicates,
+                    request.getSpaces(),
+                    root,
+                    criteriaBuilder,
+                    "spaces");
+            addListPredicate(predicates,
+                    request.getSpecialties(),
+                    root,
+                    criteriaBuilder,
+                    "specialties");
+            addListPredicate(predicates,
+                    request.getVisitTimes(),
+                    root,
+                    criteriaBuilder,
+                    "visitTimes");
+        }
+
 
         // Combine all predicates with AND
         return predicates.isEmpty()
                 ? criteriaBuilder.conjunction()
-                : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+                : criteriaBuilder.or(predicates.toArray(new Predicate[0]));
     }
 
     private void addListPredicate(List<Predicate> predicates,

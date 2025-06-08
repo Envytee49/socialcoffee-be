@@ -457,8 +457,8 @@ public class UserService {
             contributions = contributions.stream().filter(c -> c.getStatus().equalsIgnoreCase(status)).collect(Collectors.toList());
         List<ContributionVM> contributionVMS = contributions.stream().map(c -> {
             ContributionVM contributionVM = new ContributionVM();
-            contributionVM.setCreatedAt(DateTimeUtil.covertLocalDateToString(c.getCreatedAt()));
-            contributionVM.setUpdatedAt(DateTimeUtil.covertLocalDateToString(c.getUpdatedAt()));
+            contributionVM.setCreatedAt(DateTimeUtil.convertLocalDateToString(c.getCreatedAt()));
+            contributionVM.setUpdatedAt(DateTimeUtil.convertLocalDateToString(c.getUpdatedAt()));
             contributionVM.setStatus(c.getStatus());
             contributionVM.setComment(c.getReviewComments());
             try {

@@ -41,7 +41,7 @@ public class CollectionService {
                 .user(user)
                 .build();
         if (Objects.nonNull(request.getFile())) {
-            collection.setCoverPhoto(cloudinaryService.upload(request.getFile()));
+            collection.setCoverUrl(cloudinaryService.upload(request.getFile()));
         }
         collectionRepository.save(collection);
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));

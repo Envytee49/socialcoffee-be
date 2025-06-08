@@ -57,7 +57,7 @@ public class NotificationService {
                     .id(notification.getId())
                     .title(notification.getTitle())
                     .message(notification.getMessage())
-                    .createdAt(DateTimeUtil.covertLocalDateToString(notification.getCreatedAt()))
+                    .createdAt(DateTimeUtil.convertLocalDateToString(notification.getCreatedAt()))
                     .type(notification.getType())
                     .status(notification.getStatus())
                     .meta(meta)
@@ -79,10 +79,11 @@ public class NotificationService {
     }
 
     public void markAllNotificationsAsRead(User user) {
-        user.getNotifications().forEach(
+        List<Notification> notifications = user.getNotifications();
+        notifications.forEach(
                 n -> n.setStatus(NotificationStatus.READ.getValue())
         );
-        userRepository.save(user);
+        notificationRepository.saveAll(notifications);
     }
 
     public void markNotificationAsRead() {
@@ -102,16 +103,19 @@ public class NotificationService {
                 name);
         meta.put("path",
                 path);
+        List<Notification> notifications = new ArrayList<>();
         for (final User activeUser : activeUsers) {
-            activeUser.addNotification("New coffee shop",
-                    NotificationType.COFFEE_SHOP.getValue(),
-                    NotificationStatus.UNREAD.getValue(),
-                    "A new cofee shop is inserted! Check it out",
-                    objectToString(objectMapper, meta));
+            Notification notification = new Notification();
+            notification.setTitle("New coffee shop");
+            notification.setType(NotificationType.COFFEE_SHOP.getValue());
+            notification.setStatus(NotificationStatus.UNREAD.getValue());
+            notification.setMessage("A new cofee shop is inserted! Check it out");
+            notification.setMeta(objectToString(objectMapper, meta));
+            notification.setUser(activeUser);
+            notifications.add(notification);
         }
-        userRepository.saveAll(activeUsers);
+        notificationRepository.saveAll(notifications);
     }
-
 
     public void pushNotiToUsersWhenFinishUpdatingShop(String id,
                                                       String name,
@@ -128,19 +132,22 @@ public class NotificationService {
                     path);
             String message = String.format("%s was edited! Check the change",
                     name);
+            List<Notification> notifications = new ArrayList<>();
             for (final User activeUser : activeUsers) {
-                activeUser.addNotification("Coffee shop edit",
-                        NotificationType.COFFEE_SHOP.getValue(),
-                        NotificationStatus.UNREAD.getValue(),
-                        message,
-                        objectToString(objectMapper, meta));
+                Notification notification = new Notification();
+                notification.setTitle("Coffee shop edit");
+                notification.setType(NotificationType.COFFEE_SHOP.getValue());
+                notification.setStatus(NotificationStatus.UNREAD.getValue());
+                notification.setMessage(message);
+                notification.setMeta(objectToString(objectMapper, meta));
+                notification.setUser(activeUser);
+                notifications.add(notification);
             }
-            userRepository.saveAll(activeUsers);
+            notificationRepository.saveAll(notifications);
             log.info("Finish adding new notification for users");
         } catch (Exception e) {
-            log.error("Error: {}", e.getMessage()); // lazy load
+            log.error("Error: {}", e.getMessage());
         }
-
     }
 
     public void pushNotiToUsersWhenSuccessRegister(User saved) {
@@ -151,12 +158,14 @@ public class NotificationService {
                 saved.getDisplayName());
         String message = String.format("Hi %s! Welcome to the system!",
                 saved.getDisplayName());
-        saved.addNotification("New comer",
-                NotificationType.USER.getValue(),
-                NotificationStatus.UNREAD.getValue(),
-                message,
-                objectToString(objectMapper, meta));
-        userRepository.save(saved);
+        Notification notification = new Notification();
+        notification.setTitle("New comer");
+        notification.setType(NotificationType.USER.getValue());
+        notification.setStatus(NotificationStatus.UNREAD.getValue());
+        notification.setMessage(message);
+        notification.setMeta(objectToString(objectMapper, meta));
+        notification.setUser(saved);
+        notificationRepository.save(notification);
     }
 
     public void pushNotiToUsersWhenApproveContribution(User user,
@@ -164,12 +173,14 @@ public class NotificationService {
         String message = String.format("Hi %s! Your contribution for coffee shop %s was approved! Thank you for your contribution",
                 user.getDisplayName(),
                 name);
-        user.addNotification("Contribution approved",
-                NotificationType.USER.getValue(),
-                NotificationStatus.UNREAD.getValue(),
-                message,
-                null);
-        userRepository.save(user);
+        Notification notification = new Notification();
+        notification.setTitle("Contribution approved");
+        notification.setType(NotificationType.USER.getValue());
+        notification.setStatus(NotificationStatus.UNREAD.getValue());
+        notification.setMessage(message);
+        notification.setMeta(null);
+        notification.setUser(user);
+        notificationRepository.save(notification);
     }
 
     public void pushNotiToUsersWhenRejectContribution(User user,
@@ -177,12 +188,14 @@ public class NotificationService {
         String message = String.format("Hi %s! Your contribution for coffee shop %s was rejected! Please check admin comment",
                 user.getDisplayName(),
                 name);
-        user.addNotification("Contribution rejected",
-                NotificationType.USER.getValue(),
-                NotificationStatus.UNREAD.getValue(),
-                message,
-                null);
-        userRepository.save(user);
+        Notification notification = new Notification();
+        notification.setTitle("Contribution rejected");
+        notification.setType(NotificationType.USER.getValue());
+        notification.setStatus(NotificationStatus.UNREAD.getValue());
+        notification.setMessage(message);
+        notification.setMeta(null);
+        notification.setUser(user);
+        notificationRepository.save(notification);
     }
 
     public void pushNotiToAdminWhenContribute(String username, String cfName) {
@@ -190,12 +203,14 @@ public class NotificationService {
                 username,
                 cfName);
         User admin = userRepository.findByUserId(0L).get();
-        admin.addNotification("New contribution",
-                NotificationType.USER.getValue(),
-                NotificationStatus.UNREAD.getValue(),
-                message,
-                null);
-        userRepository.save(admin);
+        Notification notification = new Notification();
+        notification.setTitle("New contribution");
+        notification.setType(NotificationType.USER.getValue());
+        notification.setStatus(NotificationStatus.UNREAD.getValue());
+        notification.setMessage(message);
+        notification.setMeta(null);
+        notification.setUser(admin);
+        notificationRepository.save(notification);
     }
 
     public void pushNotiToAdminWhenSuggestAnEdit(String displayName,
@@ -204,11 +219,13 @@ public class NotificationService {
                 displayName,
                 name);
         User admin = userRepository.findByUserId(0L).get();
-        admin.addNotification("Edit suggestion",
-                NotificationType.USER.getValue(),
-                NotificationStatus.UNREAD.getValue(),
-                message,
-                null);
-        userRepository.save(admin);
+        Notification notification = new Notification();
+        notification.setTitle("Edit suggestion");
+        notification.setType(NotificationType.USER.getValue());
+        notification.setStatus(NotificationStatus.UNREAD.getValue());
+        notification.setMessage(message);
+        notification.setMeta(null);
+        notification.setUser(admin);
+        notificationRepository.save(notification);
     }
 }

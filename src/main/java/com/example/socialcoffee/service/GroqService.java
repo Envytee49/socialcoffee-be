@@ -9,13 +9,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GenerateTextService {
+public class GroqService {
     private final ChatClient chatClient;
 
     public String parseFilterFromPrompt(String prompt) {
         try {
             if (StringAppUtils.isEmpty(prompt)) return null;
             log.info("Start parseFilterFromPrompt");
+
             final String res = chatClient.prompt().user(prompt).call().content();
             log.info("Finish parseFilterFromPrompt");
             return res;
@@ -24,4 +25,5 @@ public class GenerateTextService {
             throw new RuntimeException("FAILED generating description", e);
         }
     }
+
 }

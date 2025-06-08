@@ -14,6 +14,7 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -87,24 +88,33 @@ public class NUser {
                 .bindAll(params).run();
     }
 
-    public void addReview(NCoffeeShop coffeeShop, Integer rating) {
+    public void addReview(Long userId, Long coffeeShopId, Long reviewId, Integer rating, Neo4jClient neo4jClient) {
         if (CollectionUtils.isEmpty(this.reviewCoffeeShops)) {
             this.reviewCoffeeShops = new HashSet<>();
         }
-        this.reviewCoffeeShops.add(Review.builder()
-                .coffeeShop(coffeeShop)
-                .rating(rating)
-                .build());
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("coffeeShopId", coffeeShopId);
+        params.put("rating", rating);
+        params.put("reviewId", reviewId);
+        params.put("createdAt", LocalDateTime.now());
+        params.put("updatedAt", LocalDateTime.now());
+
+        neo4jClient.query(
+                "MATCH (u:User {id: $userId}), (cs:CoffeeShop {id: $coffeeShopId}) " +
+                        "MERGE (u)-[r:REVIEW {id: $reviewId, rating: $rating, createdAt: $createdAt, updatedAt: $updatedAt}]->(cs)"
+        ).bindAll(params).run();
     }
 
-    public void removeReview(Neo4jClient neo4jClient, Long myId, Long coffeeShopId) {
+    public void removeReview(Neo4jClient neo4jClient, Long myId, Long coffeeShopId, Long reviewId) {
         if (CollectionUtils.isEmpty(this.reviewCoffeeShops)) {
             return;
         }
         Map<String, Object> params = new HashMap<>();
         params.put("myId", myId);
         params.put("coffeeShopId", coffeeShopId);
-        neo4jClient.query("MATCH (u:User {id: $myId}) -[f:REVIEW]-> (m:CoffeeShop {id: $coffeeShopId}) DELETE f")
+        params.put("reviewId", reviewId);
+        neo4jClient.query("MATCH (u:User {id: $myId}) -[f:REVIEW {id: $reviewId}]-> (m:CoffeeShop {id: $coffeeShopId}) DELETE f")
                 .bindAll(params).run();
     }
 }

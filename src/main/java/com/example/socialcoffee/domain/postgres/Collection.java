@@ -23,7 +23,7 @@ public class Collection {
 
     private String description;
 
-    private String coverPhoto;
+    private String coverUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;

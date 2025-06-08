@@ -17,5 +17,6 @@ public interface CoffeeShopRepositoryCustom {
     Page<CoffeeShop> searchCoffeeShops(CoffeeShopSearchRequest request,
                                        Integer page,
                                        Integer size,
-                                       Sort sort);
+                                       Sort sort,
+                                       boolean isFromPrompt);
 }

@@ -1,5 +1,6 @@
 package com.example.socialcoffee.dto.request;
 
+import com.example.socialcoffee.model.CoffeeShopFilter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
@@ -55,5 +56,8 @@ public class CoffeeShopSearchRequest {
     private List<Long> specialties;
 
     private List<Long> visitTimes;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private CoffeeShopFilter matchedFilter;
 }
 

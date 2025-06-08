@@ -152,8 +152,8 @@ public class ContributionService {
         List<ContributionVM> contributionVMS = contributions.getContent().stream().map(c -> {
             ContributionVM contributionVM = new ContributionVM();
             contributionVM.setId(c.getId());
-            contributionVM.setCreatedAt(DateTimeUtil.covertLocalDateToString(c.getCreatedAt()));
-            contributionVM.setUpdatedAt(DateTimeUtil.covertLocalDateToString(c.getUpdatedAt()));
+            contributionVM.setCreatedAt(DateTimeUtil.convertLocalDateToString(c.getCreatedAt()));
+            contributionVM.setUpdatedAt(DateTimeUtil.convertLocalDateToString(c.getUpdatedAt()));
             contributionVM.setSubmittedBy(c.getSubmittedBy().getDisplayName());
             contributionVM.setStatus(c.getStatus());
             contributionVM.setComment(c.getReviewComments());

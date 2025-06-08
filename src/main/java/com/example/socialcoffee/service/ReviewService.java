@@ -72,9 +72,9 @@ public class ReviewService {
                                    images,
                                    user,
                                    coffeeShop);
-        reviewRepository.save(review);
+        review = reviewRepository.save(review);
         final NUser nUserById = repoService.findNUserById(user.getId());
-        nUserById.addReview(repoService.findNCoffeeShopById(coffeeShop.getId()), rating);
+        nUserById.addReview(user.getId(), coffeeShop.getId(), review.getId(), rating, neo4jClient);
         cacheableService.clearAllWhenReview();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
@@ -89,7 +89,7 @@ public class ReviewService {
         reviewRepository.save(review);
         final Long userId = review.getUser().getId();
         final NUser nUserById = repoService.findNUserById(userId);
-        nUserById.removeReview(neo4jClient, userId, review.getCoffeeShop().getId());
+        nUserById.removeReview(neo4jClient, userId, review.getCoffeeShop().getId(), reviewId);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
