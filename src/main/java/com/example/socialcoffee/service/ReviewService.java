@@ -44,7 +44,7 @@ public class ReviewService {
 
     private final ReviewReactionRepository reviewReactionRepository;
 
-    private final UserFollowRepository userFollowRepository;
+//    private final UserFollowRepository userFollowRepository;
 
     private final RepoService repoService;
 

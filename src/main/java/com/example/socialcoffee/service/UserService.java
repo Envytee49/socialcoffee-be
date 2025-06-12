@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 public class UserService {
     private final NUserRepository nUserRepository;
 
-    private final UserFollowRepository userFollowRepository;
+//    private final UserFollowRepository userFollowRepository;
 
     private final UserRepository userRepository;
 
@@ -380,17 +380,17 @@ public class UserService {
                 photosByUserId));
     }
 
-    public ResponseEntity<ResponseMetaData> getRecentFollowing(Long id) {
-        List<User> recentFollowing = userFollowRepository.findFollowingsByFollowerId(id);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                recentFollowing.stream().map(User::toUserDTO)));
-    }
-
-    public ResponseEntity<ResponseMetaData> getRecentFollowers(Long id) {
-        final List<User> recentFollowers = userFollowRepository.findFollowersByFolloweeId(id);
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                recentFollowers.stream().map(User::toUserDTO)));
-    }
+//    public ResponseEntity<ResponseMetaData> getRecentFollowing(Long id) {
+//        List<User> recentFollowing = userFollowRepository.findFollowingsByFollowerId(id);
+//        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+//                recentFollowing.stream().map(User::toUserDTO)));
+//    }
+//
+//    public ResponseEntity<ResponseMetaData> getRecentFollowers(Long id) {
+//        final List<User> recentFollowers = userFollowRepository.findFollowersByFolloweeId(id);
+//        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+//                recentFollowers.stream().map(User::toUserDTO)));
+//    }
 
     public ResponseEntity<ResponseMetaData> migrateUsers() {
         final List<User> all = repoService.fetchUsersFromPostgres();

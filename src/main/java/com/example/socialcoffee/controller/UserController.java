@@ -3,7 +3,6 @@ package com.example.socialcoffee.controller;
 import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.postgres.Image;
 import com.example.socialcoffee.domain.postgres.User;
-import com.example.socialcoffee.domain.postgres.UserFollow;
 import com.example.socialcoffee.dto.common.PageDtoIn;
 import com.example.socialcoffee.dto.common.PageDtoOut;
 import com.example.socialcoffee.dto.request.UpdatePreferenceRequest;
@@ -168,11 +167,11 @@ public class UserController extends BaseController {
                 pageDtoOut));
     }
 
-    @GetMapping("/users/recent-followers")
-    public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName) {
-        User user = getCurrentUser(displayName);
-        return userService.getRecentFollowers(user.getId());
-    }
+//    @GetMapping("/users/recent-followers")
+//    public ResponseEntity<ResponseMetaData> getFollowers(@RequestParam(value = "displayName", required = false) String displayName) {
+//        User user = getCurrentUser(displayName);
+//        return userService.getRecentFollowers(user.getId());
+//    }
 
     @GetMapping("/users/following")
     public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName,
@@ -189,11 +188,11 @@ public class UserController extends BaseController {
                 pageDtoOut));
     }
 
-    @GetMapping("/users/recent-following")
-    public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName) {
-        User user = getCurrentUser(displayName);
-        return userService.getRecentFollowing(user.getId());
-    }
+//    @GetMapping("/users/recent-following")
+//    public ResponseEntity<ResponseMetaData> getFollowing(@RequestParam(value = "displayName", required = false) String displayName) {
+//        User user = getCurrentUser(displayName);
+//        return userService.getRecentFollowing(user.getId());
+//    }
 
     @PostMapping("/users/migrate/neo4j")
     public ResponseEntity<ResponseMetaData> migrateUser() {

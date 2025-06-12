@@ -37,9 +37,6 @@ public class CoffeeShop {
     private List<Image> galleryPhotos;
     @OneToOne
     private Address address;
-    @ManyToMany(mappedBy = "likedCoffeeShops", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<User> users;
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     private String status;

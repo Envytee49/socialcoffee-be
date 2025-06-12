@@ -216,14 +216,6 @@ public class CoffeeShopController extends BaseController {
                 new MetaDTO(MetaData.SUCCESS)));
     }
 
-    @PostMapping("/coffee-shops/moods/populate")
-    public ResponseEntity<ResponseMetaData> populateCoffeeShopMoods() {
-        coffeeShopService.populateCoffeeShopMoods();
-        return ResponseEntity.ok().body(new ResponseMetaData(
-                new MetaDTO(MetaData.SUCCESS)
-        ));
-    }
-
     @GetMapping("/coffee-shops/{shopId}/moods")
     public ResponseEntity<ResponseMetaData> getCoffeeShopMoodCounts(@PathVariable Long shopId) {
         MoodCountDto moodCounts = coffeeShopService.getCoffeeShopMoodCounts(shopId);
@@ -271,15 +263,5 @@ public class CoffeeShopController extends BaseController {
                 content,
                 file,
                 NumberUtils.toLong(parentId));
-    }
-
-    @PostMapping("/migrate/features")
-    public void migrateCoffeeShopFeature() {
-        coffeeShopService.migrateCoffeeShopFeature();
-    }
-
-    @PostMapping("/migrate/features")
-    public void migrateCoffeeShopMood() {
-        coffeeShopService.migrateCoffeeShopMood();
     }
 }

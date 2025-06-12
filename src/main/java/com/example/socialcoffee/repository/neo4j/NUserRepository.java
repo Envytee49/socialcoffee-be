@@ -9,6 +9,7 @@ import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface NUserRepository extends Neo4jRepository<NUser, Long> {
     @Query("MATCH (u1:User {id: $userId})-[:LIKE]->(cs1:CoffeeShop) " +
@@ -83,10 +84,10 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
                                                                     END) AS recencyScore
 
                                     RETURN cs.id AS shopId,
-                                           (0.7 * userScore +
+                                           (0.8 * userScore +
                                             0.1 * (avgRating / 5.0) +
-                                            0.15 * log(reviewCount + 1) +
-                                            0.05 * log(recencyScore+1)) AS score
+                                            0.1 * (toFloat((recencyScore+1)) / (reviewCount + 1))
+                                            ) AS score
                                     ORDER BY score DESC
                                     LIMIT 10
               """)
@@ -110,11 +111,10 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
 
                      RETURN cs.id AS shopId,
                             (
-                              0.7 * toFloat(followLikes) / (followLikes + 10) +
+                              0.8 * toFloat(followLikes) / (followLikes + 10) +
                               0.1 * (avgRating / 5.0) +
-                              0.15 * log(reviewCount + 1) +
-                              0.05 * log(recencyScore+1)
-                            ) AS score
+                              0.1 * (toFloat((recencyScore+1)) / (reviewCount + 1))
+                              ) AS score
                      ORDER BY score DESC
                      LIMIT 10
             """)
@@ -125,7 +125,7 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
 
     @Query(value = "MATCH (u:User {id: $userId})-[r:LIKE]->(cs:CoffeeShop {id: $shopId}) " +
             "RETURN count(r) > 0")
-    boolean userListExist(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId);
+    boolean userLikeExist(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId);
 
     @Query(value = "MATCH (u:User {id: $userId})-[r:FOLLOW]->(u2:User {id: $followingWhoId}) " +
             "RETURN count(r) > 0")
@@ -147,4 +147,7 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
     @Query(value = "MATCH (u:User {id: $userId})-[r:TAG_MOOD]->(:CoffeeShop {id: $shopId}) " +
             "RETURN r.name")
     List<String> getUserMoodForCoffeeShop(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId);
+
+    @Query(value = "MATCH (u:User {id: $userId}) RETURN u")
+    Optional<NUser> findUser(@Param(value = "userId") Long userId);
 }

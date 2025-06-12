@@ -17,12 +17,12 @@ import com.example.socialcoffee.dto.response.*;
 import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
+import com.example.socialcoffee.model.MoodCount;
+import com.example.socialcoffee.model.MoodScore;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
-import com.example.socialcoffee.repository.postgres.CoffeeShopMoodRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
-import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.utils.GeometryUtil;
 import com.example.socialcoffee.utils.SecurityUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -72,8 +72,6 @@ public class CoffeeShopService {
 
     private final NotificationService notificationService;
 
-    private final CoffeeShopMoodRepository coffeeShopMoodRepository;
-
     private final ConfigResource configResource;
 
     private final NUserRepository nUserRepository;
@@ -111,7 +109,7 @@ public class CoffeeShopService {
                 if (Objects.nonNull(filter))
                     coffeeShopDetailVM.setFeatureDto(filter);
             }
-            boolean likeExists = nUserRepository.userListExist(user.getId(), id);
+            boolean likeExists = nUserRepository.userLikeExist(user.getId(), id);
             coffeeShopDetailVM.setIsLiked(likeExists);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                     coffeeShopDetailVM));
@@ -569,73 +567,6 @@ public class CoffeeShopService {
         }
     }
 
-    @Transactional
-    public void populateCoffeeShopMoods() {
-        Random random = new Random();
-        List<Long> userIds = cacheableService.getActiveUsers().stream()
-                .map(User::getId)
-                .toList();
-        List<Long> shopIds = coffeeShopRepository.findAll().stream()
-                .map(CoffeeShop::getId)
-                .toList();
-        Mood[] moods = Mood.values();
-
-        for (Long userId : userIds) {
-            for (Long shopId : shopIds) {
-                coffeeShopMoodRepository.deleteByShopIdAndUserId(shopId,
-                        userId);
-
-                int numMoods = random.nextInt(2) + 1; // 1 or 2
-                for (int i = 0; i < numMoods; i++) {
-                    String mood = moods[random.nextInt(moods.length)].getValue();
-                    // Avoid duplicate moods for the same shop and user
-                    if (coffeeShopMoodRepository.findByShopIdAndUserIdAndMood(shopId,
-                            userId,
-                            mood) == null) {
-                        log.info("Save coffee shop id = {}, user id = {}, mood = {}",
-                                shopId,
-                                userId,
-                                mood);
-                        CoffeeShopMood newMood = CoffeeShopMood.builder()
-                                .shopId(shopId)
-                                .userId(userId)
-                                .mood(mood)
-                                .build();
-                        coffeeShopMoodRepository.save(newMood);
-                        log.info("Finish coffee shop id = {}, user id = {}, mood = {}",
-                                shopId,
-                                userId,
-                                mood);
-                    }
-                }
-            }
-        }
-    }
-//
-//    @Transactional(readOnly = true)
-//    public MoodCountDto getCoffeeShopMoodCounts(Long shopId) {
-//        MoodCountDto moodCountDto = new MoodCountDto();
-//        List<CoffeeShopMood> moods = coffeeShopMoodRepository.findByShopId(shopId);
-//        Map<String, Long> moodCounts = new HashMap<>();
-//        for (Mood mood : Mood.values()) {
-//            moodCounts.put(mood.getValue(),
-//                    0L);
-//        }
-//        for (CoffeeShopMood mood : moods) {
-//            moodCounts.merge(mood.getMood(),
-//                    1L,
-//                    Long::sum);
-//        }
-//        moodCountDto.setMoodCounts(moodCounts);
-//        List<String> userMoodCounts = new ArrayList<>();
-//        final List<CoffeeShopMood> userMoodCheckedList = moods.stream().filter(m -> m.getUserId().equals(SecurityUtil.getUserId())).toList();
-//        for (final CoffeeShopMood coffeeShopMood : userMoodCheckedList) {
-//            userMoodCounts.add(coffeeShopMood.getMood().toLowerCase());
-//        }
-//        moodCountDto.setUserMoodCounts(userMoodCounts);
-//        return moodCountDto;
-//    }
-
     public MoodCountDto getCoffeeShopMoodCounts(Long shopId) {
         MoodCountDto moodCountDto = new MoodCountDto();
 
@@ -643,12 +574,12 @@ public class CoffeeShopService {
         for (Mood mood : Mood.values()) {
             moodCounts.put(mood.name().toLowerCase(), 0L);
         }
-        List<Map<String, Object>> moodResults = nCoffeeShopRepository.getMoodsForCoffeeShop(shopId);
+        List<MoodCount> moodResults = nCoffeeShopRepository.getMoodsForCoffeeShop(shopId);
 
         // Aggregate mood counts
-        for (Map<String, Object> result : moodResults) {
-            String mood = ((String) result.get("mood")).toLowerCase();
-            Long count = (Long) result.get("count");
+        for (MoodCount moodResult : moodResults) {
+            String mood = moodResult.getMood().toLowerCase();
+            Long count = moodResult.getCount();
             moodCounts.put(mood, count);
         }
 
@@ -667,142 +598,26 @@ public class CoffeeShopService {
                                                  Double latitude,
                                                  Double longitude,
                                                  PageRequest pageRequest) {
-        Page<Long> topCoffeeShopByMood = nCoffeeShopRepository.findTopCoffeeShopByMood(
+        Page<MoodScore> topCoffeeShopByMood = nCoffeeShopRepository.findTopCoffeeShopByMood(
                 mood.getValue(),
                 SecurityUtil.getUserId(),
                 configResource.getMoodCountThreshold(),
                 configResource.getAvgRatingThreshold(),
                 configResource.getReviewRecencyThresholdByWeek(),
                 pageRequest);
-        List<CoffeeShop> coffeeShops = coffeeShopRepository.findAllById(topCoffeeShopByMood.getContent());
+        final Map<Long, Double> moodScoreMap = topCoffeeShopByMood.getContent().stream().collect(Collectors.toMap(MoodScore::getShopId, MoodScore::getScore));
+        List<CoffeeShop> coffeeShops = coffeeShopRepository.findAllById(moodScoreMap.keySet());
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
                 latitude,
-                longitude)).collect(Collectors.toList());
+                longitude,
+                moodScoreMap.getOrDefault(c.getId(), 0.0)))
+                .sorted(Comparator.comparing(CoffeeShopVM::getScore).reversed())
+                .collect(Collectors.toList());
         PageDtoOut<CoffeeShopVM> res = PageDtoOut.from(pageRequest.getPageNumber(),
                 pageRequest.getPageSize(),
                 topCoffeeShopByMood.getTotalElements(),
                 coffeeShopVMs);
         res.setMetaData(mood.getMessage());
         return res;
-    }
-
-    public void migrateCoffeeShopFeature() {
-        // Fetch all coffee shops
-        log.info("Start migrate feature for coffee shops");
-        final List<CoffeeShop> coffeeShops = coffeeShopRepository.findAll();
-
-        // Fetch all feature lists
-        final List<Ambiance> ambiances = cacheableService.findAmbiances();
-        final List<Amenity> amenities = cacheableService.findAmenities();
-        final List<Capacity> capacities = cacheableService.findCapacities();
-        final List<DressCode> dressCodes = cacheableService.findDressCodes();
-        final List<Purpose> purposes = cacheableService.findPurposes();
-        final List<Entertainment> entertainments = cacheableService.findEntertainments();
-        final List<Parking> parkings = cacheableService.findParkings();
-        final List<Price> prices = cacheableService.findPrices();
-        final List<ServiceType> serviceTypes = cacheableService.findServiceTypes();
-        final List<Space> spaces = cacheableService.findSpaces();
-        final List<Specialty> specialties = cacheableService.findSpecialties();
-        final List<VisitTime> visitTimes = cacheableService.findVisitTimes();
-
-        Random random = new Random();
-
-        for (CoffeeShop coffeeShop : coffeeShops) {
-            // Check if all feature lists are empty
-            if (!CollectionUtils.isEmpty(coffeeShop.getAmbiances()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getAmenities()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getCapacities()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getCategories()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getDressCodes()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getPurposes()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getEntertainments()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getParkings()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getPrices()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getServiceTypes()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getSpaces()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getSpecialties()) ||
-                    !CollectionUtils.isEmpty(coffeeShop.getVisitTimes())) {
-                continue; // Skip coffee shops with any existing features
-            }
-            log.info("Start migrate feature for coffee shop: {}", coffeeShop.getName());
-            // Initialize hasFeatures set
-            Set<HasFeature> hasFeatures = new HashSet<>();
-
-            // Randomly select 1 or 2 feature IDs for each feature type
-            processFeatures(getRandomFeatures(ambiances, random), cacheableService::findAmbiances, repoService::findNAmbianceById, coffeeShop::setAmbiances, hasFeatures);
-            processFeatures(getRandomFeatures(amenities, random), cacheableService::findAmenities, repoService::findNAmenityById, coffeeShop::setAmenities, hasFeatures);
-            processFeatures(getRandomFeatures(capacities, random), cacheableService::findCapacities, repoService::findNCapacityById, coffeeShop::setCapacities, hasFeatures);
-            processFeatures(getRandomFeatures(dressCodes, random), cacheableService::findDressCodes, repoService::findNDressCodeById, coffeeShop::setDressCodes, hasFeatures);
-            processFeatures(getRandomFeatures(purposes, random), cacheableService::findPurposes, repoService::findNPurposeById, coffeeShop::setPurposes, hasFeatures);
-            processFeatures(getRandomFeatures(entertainments, random), cacheableService::findEntertainments, repoService::findNEntertainmentById, coffeeShop::setEntertainments, hasFeatures);
-            processFeatures(getRandomFeatures(parkings, random), cacheableService::findParkings, repoService::findNParkingById, coffeeShop::setParkings, hasFeatures);
-            processFeatures(getRandomFeatures(prices, random), cacheableService::findPrices, repoService::findNPriceById, coffeeShop::setPrices, hasFeatures);
-            processFeatures(getRandomFeatures(serviceTypes, random), cacheableService::findServiceTypes, repoService::findNServiceTypeById, coffeeShop::setServiceTypes, hasFeatures);
-            processFeatures(getRandomFeatures(spaces, random), cacheableService::findSpaces, repoService::findNSpaceById, coffeeShop::setSpaces, hasFeatures);
-            processFeatures(getRandomFeatures(specialties, random), cacheableService::findSpecialties, repoService::findNSpecialtyById, coffeeShop::setSpecialties, hasFeatures);
-            processFeatures(getRandomFeatures(visitTimes, random), cacheableService::findVisitTimes, repoService::findNVisitTimeById, coffeeShop::setVisitTimes, hasFeatures);
-
-            // Save updated coffee shop
-            coffeeShopRepository.save(coffeeShop);
-
-            // Update NCoffeeShop
-            NCoffeeShop nCoffeeShop = repoService.findNCoffeeShopById(coffeeShop.getId());
-            nCoffeeShop.setHasFeatures(hasFeatures);
-            repoService.saveNCoffeeShop(nCoffeeShop);
-            log.info("Finish migrate feature for coffee shop: {}", coffeeShop.getName());
-        }
-        log.info("Finish migrate feature for coffee shops");
-    }
-
-    private <T extends Feature> List<Long> getRandomFeatures(List<T> features, Random random) {
-        if (features == null || features.isEmpty()) return List.of();
-
-        int count = random.nextInt(2) + 1; // random 1 or 2
-        List<T> shuffled = new ArrayList<>(features);
-        Collections.shuffle(shuffled, random);
-        return shuffled.subList(0, Math.min(count, shuffled.size())).stream().map(Feature::getId).toList();
-    }
-
-    public void migrateCoffeeShopMood() {
-        log.info("Starting review migration from PostgreSQL to Neo4j");
-
-        int page = 0;
-        int BATCH_SIZE = 100;
-        Page<CoffeeShopMood> coffeeShopMoods;
-        long totalMigrated = 0;
-        long totalSkipped = 0;
-
-        do {
-            coffeeShopMoods = coffeeShopMoodRepository.findAll(PageRequest.of(page, BATCH_SIZE));
-            log.info("Processing batch {} with {} reviews", page, coffeeShopMoods.getNumberOfElements());
-
-            for (CoffeeShopMood shopMood : coffeeShopMoods.getContent()) {
-                try {
-                    Long userId = shopMood.getUserId();
-                    Long coffeeShopId = shopMood.getShopId();
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("userId", userId);
-                    params.put("coffeeShopId", coffeeShopId);
-                    params.put("moodId", shopMood.getId().toString());
-                    params.put("name", shopMood.getMood());
-                    params.put("createdAt", shopMood.getCreatedAt());
-                    params.put("updatedAt", shopMood.getUpdatedAt());
-
-                    neo4jClient.query(
-                            "MATCH (u:User {id: $userId}), (cs:CoffeeShop {id: $coffeeShopId}) " +
-                                    "MERGE (u)-[r:TAG_MOOD {id: $moodId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt}]->(cs)"
-                    ).bindAll(params).run();
-
-                    totalMigrated++;
-                } catch (Exception e) {
-                    log.error("Failed to migrate review {}: {}", shopMood.getId(), e.getMessage());
-                    totalSkipped++;
-                }
-            }
-
-            page++;
-        } while (coffeeShopMoods.hasNext());
-
-        log.info("Migration completed: {} reviews migrated, {} reviews skipped", totalMigrated, totalSkipped);
     }
 }

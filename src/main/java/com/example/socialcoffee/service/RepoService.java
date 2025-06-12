@@ -224,7 +224,7 @@ public class RepoService {
 
     @Transactional("neo4jTransactionManager")
     public NUser findNUserById(Long id) {
-        return nUserRepository.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+        return nUserRepository.findUser(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
     }
 
     @Transactional("neo4jTransactionManager")
