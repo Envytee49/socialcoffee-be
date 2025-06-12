@@ -1,5 +1,6 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.configuration.ConfigResource;
 import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
 import com.example.socialcoffee.domain.neo4j.NUser;
@@ -17,6 +18,7 @@ import com.example.socialcoffee.enums.*;
 import com.example.socialcoffee.exception.NotFoundException;
 import com.example.socialcoffee.model.CoffeeShopFilter;
 import com.example.socialcoffee.repository.neo4j.NCoffeeShopRepository;
+import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.AddressRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopMoodRepository;
 import com.example.socialcoffee.repository.postgres.CoffeeShopRepository;
@@ -68,11 +70,13 @@ public class CoffeeShopService {
 
     private final ObjectMapper objectMapper;
 
-    private final UserRepository userRepository;
-
     private final NotificationService notificationService;
 
     private final CoffeeShopMoodRepository coffeeShopMoodRepository;
+
+    private final ConfigResource configResource;
+
+    private final NUserRepository nUserRepository;
 
     private final Neo4jClient neo4jClient;
 
@@ -107,6 +111,8 @@ public class CoffeeShopService {
                 if (Objects.nonNull(filter))
                     coffeeShopDetailVM.setFeatureDto(filter);
             }
+            boolean likeExists = nUserRepository.userListExist(user.getId(), id);
+            coffeeShopDetailVM.setIsLiked(likeExists);
             return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                     coffeeShopDetailVM));
         } catch (Exception exception) {
@@ -247,18 +253,14 @@ public class CoffeeShopService {
     public ResponseEntity<ResponseMetaData> likeCoffeeShop(Long shopId,
                                                            User currentUser) {
         NUser nUser = repoService.findNUserById(currentUser.getId());
-        nUser.addLike(repoService.findNCoffeeShopById(shopId));
-        repoService.saveNUser(nUser);
-        final CoffeeShop coffeeShop = coffeeShopRepository.findByShopId(shopId);
-        currentUser.addLike(coffeeShop);
-        userRepository.save(currentUser);
+        nUser.addLike(neo4jClient, shopId);
         return ResponseEntity.ok().build();
     }
 
     public ResponseEntity<ResponseMetaData> unlikeCoffeeShop(Long shopId,
                                                              User currentUser) {
         NUser nUser = repoService.findNUserById(currentUser.getId());
-        nUser.removeLike(neo4jClient, currentUser.getId(), shopId);
+        nUser.removeLike(neo4jClient, shopId);
         return ResponseEntity.ok().build();
     }
 
@@ -522,30 +524,48 @@ public class CoffeeShopService {
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
-    @Transactional
-    public void toggleCoffeeShopMood(Long shopId,
-                                     Long userId,
-                                     String mood) {
+//    @Transactional
+//    public void toggleCoffeeShopMood(Long shopId,
+//                                     Long userId,
+//                                     String mood) {
+//        try {
+//            Mood.valueOf(mood.toUpperCase());
+//        } catch (IllegalArgumentException e) {
+//            throw new IllegalArgumentException("Invalid mood: " + mood);
+//        }
+//
+//        CoffeeShopMood existingMood = coffeeShopMoodRepository
+//                .findByShopIdAndUserIdAndMood(shopId,
+//                        userId,
+//                        mood);
+//
+//        if (existingMood != null) {
+//            coffeeShopMoodRepository.delete(existingMood);
+//        } else {
+//            CoffeeShopMood newMood = CoffeeShopMood.builder()
+//                    .shopId(shopId)
+//                    .userId(userId)
+//                    .mood(mood)
+//                    .build();
+//            coffeeShopMoodRepository.save(newMood);
+//        }
+//    }
+
+    public void toggleCoffeeShopMood(Long shopId, Long userId, String mood) {
         try {
             Mood.valueOf(mood.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid mood: " + mood);
         }
 
-        CoffeeShopMood existingMood = coffeeShopMoodRepository
-                .findByShopIdAndUserIdAndMood(shopId,
-                        userId,
-                        mood);
+        NUser user = repoService.findNUserById(userId);
 
-        if (existingMood != null) {
-            coffeeShopMoodRepository.delete(existingMood);
+        boolean moodExists = nUserRepository.tagMoodCoffeeShopExist(userId, shopId, mood);
+
+        if (moodExists) {
+            user.removeTagMood(neo4jClient, shopId, mood);
         } else {
-            CoffeeShopMood newMood = CoffeeShopMood.builder()
-                    .shopId(shopId)
-                    .userId(userId)
-                    .mood(mood)
-                    .build();
-            coffeeShopMoodRepository.save(newMood);
+            user.addTagMood(neo4jClient, shopId, mood);
         }
     }
 
@@ -591,28 +611,55 @@ public class CoffeeShopService {
             }
         }
     }
+//
+//    @Transactional(readOnly = true)
+//    public MoodCountDto getCoffeeShopMoodCounts(Long shopId) {
+//        MoodCountDto moodCountDto = new MoodCountDto();
+//        List<CoffeeShopMood> moods = coffeeShopMoodRepository.findByShopId(shopId);
+//        Map<String, Long> moodCounts = new HashMap<>();
+//        for (Mood mood : Mood.values()) {
+//            moodCounts.put(mood.getValue(),
+//                    0L);
+//        }
+//        for (CoffeeShopMood mood : moods) {
+//            moodCounts.merge(mood.getMood(),
+//                    1L,
+//                    Long::sum);
+//        }
+//        moodCountDto.setMoodCounts(moodCounts);
+//        List<String> userMoodCounts = new ArrayList<>();
+//        final List<CoffeeShopMood> userMoodCheckedList = moods.stream().filter(m -> m.getUserId().equals(SecurityUtil.getUserId())).toList();
+//        for (final CoffeeShopMood coffeeShopMood : userMoodCheckedList) {
+//            userMoodCounts.add(coffeeShopMood.getMood().toLowerCase());
+//        }
+//        moodCountDto.setUserMoodCounts(userMoodCounts);
+//        return moodCountDto;
+//    }
 
-    @Transactional(readOnly = true)
     public MoodCountDto getCoffeeShopMoodCounts(Long shopId) {
         MoodCountDto moodCountDto = new MoodCountDto();
-        List<CoffeeShopMood> moods = coffeeShopMoodRepository.findByShopId(shopId);
+
         Map<String, Long> moodCounts = new HashMap<>();
         for (Mood mood : Mood.values()) {
-            moodCounts.put(mood.getValue(),
-                    0L);
+            moodCounts.put(mood.name().toLowerCase(), 0L);
         }
-        for (CoffeeShopMood mood : moods) {
-            moodCounts.merge(mood.getMood(),
-                    1L,
-                    Long::sum);
+        List<Map<String, Object>> moodResults = nCoffeeShopRepository.getMoodsForCoffeeShop(shopId);
+
+        // Aggregate mood counts
+        for (Map<String, Object> result : moodResults) {
+            String mood = ((String) result.get("mood")).toLowerCase();
+            Long count = (Long) result.get("count");
+            moodCounts.put(mood, count);
         }
+
         moodCountDto.setMoodCounts(moodCounts);
-        List<String> userMoodCounts = new ArrayList<>();
-        final List<CoffeeShopMood> userMoodCheckedList = moods.stream().filter(m -> m.getUserId().equals(SecurityUtil.getUserId())).toList();
-        for (final CoffeeShopMood coffeeShopMood : userMoodCheckedList) {
-            userMoodCounts.add(coffeeShopMood.getMood().toLowerCase());
-        }
+
+        // Query to get the current user's moods for the coffee shop
+        Long currentUserId = SecurityUtil.getUserId();
+        List<String> userMoodCounts = nUserRepository.getUserMoodForCoffeeShop(currentUserId, shopId);
+
         moodCountDto.setUserMoodCounts(userMoodCounts);
+
         return moodCountDto;
     }
 
@@ -620,7 +667,12 @@ public class CoffeeShopService {
                                                  Double latitude,
                                                  Double longitude,
                                                  PageRequest pageRequest) {
-        Page<Long> topCoffeeShopByMood = coffeeShopRepository.findTopCoffeeShopByMood(mood.getValue(),
+        Page<Long> topCoffeeShopByMood = nCoffeeShopRepository.findTopCoffeeShopByMood(
+                mood.getValue(),
+                SecurityUtil.getUserId(),
+                configResource.getMoodCountThreshold(),
+                configResource.getAvgRatingThreshold(),
+                configResource.getReviewRecencyThresholdByWeek(),
                 pageRequest);
         List<CoffeeShop> coffeeShops = coffeeShopRepository.findAllById(topCoffeeShopByMood.getContent());
         List<CoffeeShopVM> coffeeShopVMs = coffeeShops.stream().map(c -> CoffeeShopVM.toVM(c,
@@ -711,4 +763,46 @@ public class CoffeeShopService {
         return shuffled.subList(0, Math.min(count, shuffled.size())).stream().map(Feature::getId).toList();
     }
 
+    public void migrateCoffeeShopMood() {
+        log.info("Starting review migration from PostgreSQL to Neo4j");
+
+        int page = 0;
+        int BATCH_SIZE = 100;
+        Page<CoffeeShopMood> coffeeShopMoods;
+        long totalMigrated = 0;
+        long totalSkipped = 0;
+
+        do {
+            coffeeShopMoods = coffeeShopMoodRepository.findAll(PageRequest.of(page, BATCH_SIZE));
+            log.info("Processing batch {} with {} reviews", page, coffeeShopMoods.getNumberOfElements());
+
+            for (CoffeeShopMood shopMood : coffeeShopMoods.getContent()) {
+                try {
+                    Long userId = shopMood.getUserId();
+                    Long coffeeShopId = shopMood.getShopId();
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("userId", userId);
+                    params.put("coffeeShopId", coffeeShopId);
+                    params.put("moodId", shopMood.getId().toString());
+                    params.put("name", shopMood.getMood());
+                    params.put("createdAt", shopMood.getCreatedAt());
+                    params.put("updatedAt", shopMood.getUpdatedAt());
+
+                    neo4jClient.query(
+                            "MATCH (u:User {id: $userId}), (cs:CoffeeShop {id: $coffeeShopId}) " +
+                                    "MERGE (u)-[r:TAG_MOOD {id: $moodId, name: $name, createdAt: $createdAt, updatedAt: $updatedAt}]->(cs)"
+                    ).bindAll(params).run();
+
+                    totalMigrated++;
+                } catch (Exception e) {
+                    log.error("Failed to migrate review {}: {}", shopMood.getId(), e.getMessage());
+                    totalSkipped++;
+                }
+            }
+
+            page++;
+        } while (coffeeShopMoods.hasNext());
+
+        log.info("Migration completed: {} reviews migrated, {} reviews skipped", totalMigrated, totalSkipped);
+    }
 }

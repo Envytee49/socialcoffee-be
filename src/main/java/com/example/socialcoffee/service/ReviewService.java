@@ -74,7 +74,7 @@ public class ReviewService {
                                    coffeeShop);
         review = reviewRepository.save(review);
         final NUser nUserById = repoService.findNUserById(user.getId());
-        nUserById.addReview(user.getId(), coffeeShop.getId(), review.getId(), rating, neo4jClient);
+        nUserById.addReview(neo4jClient, coffeeShop.getId(), review.getId(), rating);
         cacheableService.clearAllWhenReview();
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
@@ -89,7 +89,7 @@ public class ReviewService {
         reviewRepository.save(review);
         final Long userId = review.getUser().getId();
         final NUser nUserById = repoService.findNUserById(userId);
-        nUserById.removeReview(neo4jClient, userId, review.getCoffeeShop().getId(), reviewId);
+        nUserById.removeReview(neo4jClient, review.getCoffeeShop().getId(), reviewId);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
@@ -295,20 +295,20 @@ public class ReviewService {
                 pageDtoOut));
     }
 
-    public ResponseEntity<ResponseMetaData> getReviewReaction(final Long userId,
-                                                              String type,
-                                                              Long reviewId) {
-        final List<User> users = reviewReactionRepository.findByReviewIdAndType(reviewId,
-                type);
-        final Set<Long> relation = userFollowRepository.findRelationByIdIn(
-                users
-                        .stream()
-                        .map(u -> new UserFollow.UserFollowerId(u.getId(),
-                                userId))
-                        .toList());
-        final List<UserDTO> userDTOS = users.stream().map(u -> new UserDTO(u,
-                relation.contains(u.getId()))).toList();
-        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
-                userDTOS));
-    }
+//    public ResponseEntity<ResponseMetaData> getReviewReaction(final Long userId,
+//                                                              String type,
+//                                                              Long reviewId) {
+//        final List<User> users = reviewReactionRepository.findByReviewIdAndType(reviewId,
+//                type);
+//        final Set<Long> relation = userFollowRepository.findRelationByIdIn(
+//                users
+//                        .stream()
+//                        .map(u -> new UserFollow.UserFollowerId(u.getId(),
+//                                userId))
+//                        .toList());
+//        final List<UserDTO> userDTOS = users.stream().map(u -> new UserDTO(u,
+//                relation.contains(u.getId()))).toList();
+//        return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
+//                userDTOS));
+//    }
 }

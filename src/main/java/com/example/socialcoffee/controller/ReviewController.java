@@ -44,13 +44,13 @@ public class ReviewController extends BaseController {
         return reviewService.getReviews(pageDtoIn, sortBy);
     }
 
-    @GetMapping("/reviews/reaction")
-    public ResponseEntity<ResponseMetaData> getReviewReaction(@RequestParam(value = "type") String type,
-                                                              @RequestParam(value = "reviewId") Long reviewId) {
-        return reviewService.getReviewReaction(SecurityUtil.getUserId(),
-                type,
-                reviewId);
-    }
+//    @GetMapping("/reviews/reaction")
+//    public ResponseEntity<ResponseMetaData> getReviewReaction(@RequestParam(value = "type") String type,
+//                                                              @RequestParam(value = "reviewId") Long reviewId) {
+//        return reviewService.getReviewReaction(SecurityUtil.getUserId(),
+//                type,
+//                reviewId);
+//    }
 
     @DeleteMapping("/reviews/{review_id}")
     public ResponseEntity<ResponseMetaData> deleteReview(@PathVariable("review_id") Long reviewId) {
@@ -62,6 +62,4 @@ public class ReviewController extends BaseController {
         repoService.migrateReviews();
         return ResponseEntity.ok().build();
     }
-
-
 }

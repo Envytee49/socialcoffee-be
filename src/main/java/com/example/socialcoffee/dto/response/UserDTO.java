@@ -1,5 +1,6 @@
 package com.example.socialcoffee.dto.response;
 
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.postgres.User;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
@@ -28,11 +29,10 @@ public class UserDTO {
         this.profilePhoto = user.getProfilePhoto();
     }
 
-    public UserDTO(User user, Boolean isFollowing) {
+    public UserDTO(NUser user) {
         this.id = user.getId();
         this.displayName = user.getDisplayName();
-        this.username = user.getUsername();
         this.profilePhoto = user.getProfilePhoto();
-        this.isFollowing = isFollowing;
+        this.isFollowing = true;
     }
 }

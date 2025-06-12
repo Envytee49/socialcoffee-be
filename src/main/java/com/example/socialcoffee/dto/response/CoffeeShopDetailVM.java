@@ -10,6 +10,7 @@ import com.example.socialcoffee.utils.NumberUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.BeanUtils;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Getter
+@Setter
 @NoArgsConstructor
 public class CoffeeShopDetailVM {
     private Long id;
@@ -46,6 +48,8 @@ public class CoffeeShopDetailVM {
     private String status;
 
     private Boolean isSponsored;
+
+    private Boolean isLiked;
 
     private List<Image> galleryPhotos;
 

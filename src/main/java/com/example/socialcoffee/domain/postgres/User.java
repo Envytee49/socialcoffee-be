@@ -1,7 +1,5 @@
 package com.example.socialcoffee.domain.postgres;
 
-import com.example.socialcoffee.dto.response.FollowerDTO;
-import com.example.socialcoffee.dto.response.FollowingDTO;
 import com.example.socialcoffee.dto.response.UserDTO;
 import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.FacebookUserInfo;
@@ -13,14 +11,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Entity
@@ -72,16 +66,6 @@ public class User {
     )
     private List<Role> roles;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "users_likes",
-            joinColumns = @JoinColumn(
-                    name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(
-                    name = "coffee_shop_id", referencedColumnName = "id")
-    )
-    private Set<CoffeeShop> likedCoffeeShops;
-
     private String profilePhoto;
 
     private String backgroundPhoto;
@@ -118,49 +102,7 @@ public class User {
         this.email = info.getEmail();
     }
 
-    public void addReview(Review review) {
-        if (CollectionUtils.isEmpty(this.reviews)) this.reviews = new ArrayList<>();
-        this.reviews.add(review);
-    }
-
-    public void addLike(CoffeeShop coffeeShop) {
-        if (CollectionUtils.isEmpty(this.likedCoffeeShops)) this.likedCoffeeShops = new HashSet<>();
-        this.likedCoffeeShops.add(coffeeShop);
-    }
-
-    public void removeLike(CoffeeShop coffeeShop) {
-        if (CollectionUtils.isEmpty(this.likedCoffeeShops)) return;
-        this.likedCoffeeShops.remove(coffeeShop);
-    }
-
     public UserDTO toUserDTO() {
         return new UserDTO(this);
-    }
-
-    public FollowerDTO toFollowerDTO() {
-        return new FollowerDTO(this);
-    }
-
-    public FollowingDTO toFollowingDTO() {
-        return new FollowingDTO(this);
-    }
-
-    public void addNotification(String title,
-                                String type,
-                                String status,
-                                String message,
-                                String meta) {
-        if (CollectionUtils.isEmpty(this.notifications)) this.notifications = new ArrayList<>();
-        log.info("adding new notification");
-        this.notifications = getNotifications();
-        Notification notification = Notification.builder()
-                .title(title)
-                .message(message)
-                .type(type)
-                .status(status)
-                .meta(meta)
-                .user(this)
-                .build();
-        this.notifications.add(notification);
     }
 }

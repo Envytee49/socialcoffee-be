@@ -210,7 +210,7 @@ public class CoffeeShopController extends BaseController {
             @RequestBody MoodRequest moodRequest
     ) {
         coffeeShopService.toggleCoffeeShopMood(shopId,
-                getCurrentUser().getId(),
+                SecurityUtil.getUserId(),
                 moodRequest.getMood());
         return ResponseEntity.ok().body(new ResponseMetaData(
                 new MetaDTO(MetaData.SUCCESS)));
@@ -276,5 +276,10 @@ public class CoffeeShopController extends BaseController {
     @PostMapping("/migrate/features")
     public void migrateCoffeeShopFeature() {
         coffeeShopService.migrateCoffeeShopFeature();
+    }
+
+    @PostMapping("/migrate/features")
+    public void migrateCoffeeShopMood() {
+        coffeeShopService.migrateCoffeeShopMood();
     }
 }

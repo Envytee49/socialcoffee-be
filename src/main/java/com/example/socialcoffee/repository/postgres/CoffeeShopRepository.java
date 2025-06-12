@@ -13,13 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, JpaSpecificationExecutor<CoffeeShop>, CoffeeShopRepositoryCustom {
-    @Query(value = "SELECT cs.id FROM coffee_shops cs " +
-            "JOIN description_embedding de ON cs.embedding_description_id = de.id " +
-            "ORDER BY de.description_embedding <=> CAST(:embedding AS VECTOR(384)) " +
-            "LIMIT :limit", nativeQuery = true)
-    List<Long> findSimilarCoffeeShops(@Param("embedding") String embedding,
-                                      @Param("limit") int limit);
-
     @Query(value = "SELECT c FROM CoffeeShop c WHERE c.id = :shopId")
     CoffeeShop findByShopId(@Param("shopId") Long shopId);
 
@@ -32,9 +25,6 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
 
     Page<CoffeeShop> findByStatus(String status,
                                   Pageable pageable);
-
-    @Query("SELECT cs.createdBy, COUNT(cs) FROM CoffeeShop cs GROUP BY cs.createdBy ORDER BY COUNT(cs) DESC LIMIT :limit")
-    List<Object[]> findTopContributors(@Param("limit") int limit);
 
     @Query("SELECT cs " +
             "FROM CoffeeShop cs " +
@@ -84,42 +74,4 @@ public interface CoffeeShopRepository extends JpaRepository<CoffeeShop, Long>, J
     List<Long> findIdByIsSponsored(@Param(value = "isSponsor") Boolean isSponsor);
 
     List<CoffeeShop> findByIsSponsored(boolean b);
-
-    @Query(value = """
-            SELECT csm.shop_id
-            FROM (
-                SELECT shop_id, COUNT(*) AS mood_count
-                FROM coffee_shop_mood
-                WHERE mood = :mood
-                GROUP BY shop_id
-            ) AS csm
-            JOIN (
-                SELECT coffee_shop_id AS shop_id, AVG(rating) AS avg_rating, COUNT(id) AS review_count
-                FROM reviews
-                GROUP BY coffee_shop_id
-            ) AS r ON csm.shop_id = r.shop_id
-            WHERE mood_count > 20 AND avg_rating > 3.0
-            ORDER BY (0.6 * mood_count + 0.3 * COALESCE(avg_rating, 0) + 0.1 * review_count) DESC
-            """,
-            countQuery = """
-                    SELECT COUNT(*)
-                    FROM (
-                        SELECT csm.shop_id
-                        FROM (
-                            SELECT shop_id, COUNT(*) AS mood_count
-                            FROM coffee_shop_mood
-                            WHERE mood = :mood
-                            GROUP BY shop_id
-                        ) AS csm
-                        JOIN (
-                            SELECT coffee_shop_id AS shop_id, AVG(rating) AS avg_rating, COUNT(id) AS review_count
-                            FROM reviews
-                            GROUP BY coffee_shop_id
-                        ) AS r ON csm.shop_id = r.shop_id
-                        WHERE mood_count > 20 AND avg_rating > 3.0
-                    ) AS subquery
-                    """,
-            nativeQuery = true)
-    Page<Long> findTopCoffeeShopByMood(@Param("mood") String mood,
-                                       Pageable pageable);
 }

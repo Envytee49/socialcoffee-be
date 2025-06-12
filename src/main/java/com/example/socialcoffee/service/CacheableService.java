@@ -1,5 +1,6 @@
 package com.example.socialcoffee.service;
 
+import com.example.socialcoffee.configuration.ConfigResource;
 import com.example.socialcoffee.domain.postgres.AuthProvider;
 import com.example.socialcoffee.domain.postgres.CoffeeShop;
 import com.example.socialcoffee.domain.postgres.Role;
@@ -70,6 +71,8 @@ public class CacheableService {
     private final UserRepository userRepository;
 
     private final NUserRepository nUserRepository;
+
+    private final ConfigResource configResource;
 
     @Cacheable(value = "ambiances")
     public List<Ambiance> findAmbiances() {
@@ -156,7 +159,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findBasedOnYourPreferences(String key, Long userId) {
-        final Map<Long, Double> ids = nCoffeeShopRepository.findBasedOnYourPreferences(userId, 1)
+        final Map<Long, Double> ids = nCoffeeShopRepository.findBasedOnYourPreferences(userId, configResource.getReviewRecencyThresholdByWeek())
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore
@@ -171,7 +174,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findYouMayLikeRecommendation(String key, Long userId) {
-        final Map<Long, Double> ids = nUserRepository.findYouMayLikeRecommendation(userId, 1)
+        final Map<Long, Double> ids = nUserRepository.findYouMayLikeRecommendation(userId, configResource.getReviewRecencyThresholdByWeek())
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore
@@ -186,7 +189,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findLikedByPeopleYouFollow(String key, Long userId) {
-        final Map<Long, Double> ids = nUserRepository.findLikedByPeopleYouFollow(userId, 1)
+        final Map<Long, Double> ids = nUserRepository.findLikedByPeopleYouFollow(userId, configResource.getReviewRecencyThresholdByWeek())
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore
@@ -201,7 +204,7 @@ public class CacheableService {
 
     @Cacheable(value = "recommendation", key = "#key + #userId")
     public List<CoffeeShopVM> findSimilarToPlacesYouLike(String key, Long userId) {
-        final Map<Long, Double> ids = nCoffeeShopRepository.findSimilarToPlacesYouLike(userId)
+        final Map<Long, Double> ids = nCoffeeShopRepository.findSimilarToPlacesYouLike(userId, configResource.getReviewRecencyThresholdByWeek())
                 .stream().collect(Collectors.toMap(
                         CoffeeShopRecommendationDTO::getShopId,
                         CoffeeShopRecommendationDTO::getScore

@@ -1,6 +1,7 @@
 package com.example.socialcoffee.service;
 
 import com.cloudinary.utils.StringUtils;
+import com.example.socialcoffee.configuration.ConfigResource;
 import com.example.socialcoffee.constants.CommonConstant;
 import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.postgres.User;
@@ -48,6 +49,8 @@ public class RecommendationService {
     private final NUserRepository nUserRepository;
 
     private final UserRepository userRepository;
+
+    private final ConfigResource configResource;
 
     public ResponseEntity<ResponseMetaData> getRelatedCoffeeShop(Long coffeeShopId) {
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
@@ -112,10 +115,10 @@ public class RecommendationService {
     }
 
     @SneakyThrows
-    public ResponseEntity<ResponseMetaData> getRecommendation(String prompt) {
-        final String s = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
-        String json = groqService.parseFilterFromPrompt(String.format(CommonConstant.USER_PROMPT, s) + prompt);
-        log.info("Returned json: {}, given feature: {}", json, s);
+    public ResponseEntity<ResponseMetaData> getRecommendation(String userPrompt) {
+        final String systemFilters = objectMapper.writeValueAsString(coffeeShopService.getCoffeeShopFilters());
+        String json = groqService.parseFilterFromPrompt(String.format(configResource.prompt(), systemFilters, userPrompt));
+        log.info("Returned json: {}, given feature: {}", json, systemFilters);
         final CoffeeShopFilter filter = objectMapper.readValue(StringAppUtils.getJson(json),
                 CoffeeShopFilter.class);
 

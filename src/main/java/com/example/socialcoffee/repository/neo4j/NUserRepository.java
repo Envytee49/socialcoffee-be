@@ -2,6 +2,8 @@ package com.example.socialcoffee.repository.neo4j;
 
 import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
@@ -90,7 +92,6 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
               """)
     List<CoffeeShopRecommendationDTO> findYouMayLikeRecommendation(@Param("userId") Long userId, @Param("weeks") Integer weeks);
 
-
     // 3. Collaborative Filtering: Follow-Based with REVIEW (including rating)
     @Query(value = """
             MATCH (u:User {id: $userId})-[:FOLLOW]->(u2:User)-[:LIKE]->(cs:CoffeeShop)
@@ -119,6 +120,31 @@ public interface NUserRepository extends Neo4jRepository<NUser, Long> {
             """)
     List<CoffeeShopRecommendationDTO> findLikedByPeopleYouFollow(@Param("userId") Long userId, @Param("weeks") Integer weeks);
 
-    @Query("MATCH (u1:User {id: $userId})-[p:PREFER]->(f) DELETE p")
+    @Query(value = "MATCH (u1:User {id: $userId})-[p:PREFER]->(f) DELETE p")
     void clearAllPreferences(@Param("userId") Long userId);
+
+    @Query(value = "MATCH (u:User {id: $userId})-[r:LIKE]->(cs:CoffeeShop {id: $shopId}) " +
+            "RETURN count(r) > 0")
+    boolean userListExist(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId);
+
+    @Query(value = "MATCH (u:User {id: $userId})-[r:FOLLOW]->(u2:User {id: $followingWhoId}) " +
+            "RETURN count(r) > 0")
+    boolean userFollowExist(@Param(value = "userId") Long userId, @Param(value = "followingWhoId") Long followingWhoId);
+
+    @Query(value = "MATCH (u:User {id: $userId})-[r:TAG_MOOD {name: $mood}]->(cs:CoffeeShop {id: $shopId}) " +
+            "RETURN count(r) > 0 AS exists")
+    boolean tagMoodCoffeeShopExist(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId,
+                                   @Param(value = "mood") String mood);
+
+    @Query(value = "MATCH (u:User {id: $userId}) <-[r:FOLLOW]- (u2:User) RETURN u2",
+            countQuery = "MATCH (u:User {id: $userId}) -[r:FOLLOW]-> (u2:User) RETURN count(u2)")
+    Page<NUser> findFollowers(Long userId, Pageable pageable);
+
+    @Query(value = "MATCH (u:User {id: $userId}) -[r:FOLLOW]-> (u2:User) RETURN u2",
+            countQuery = "MATCH (u:User {id: $userId}) -[r:FOLLOW]-> (u2:User) RETURN count(u2)")
+    Page<NUser> findFollowings(Long userId, Pageable pageable);
+
+    @Query(value = "MATCH (u:User {id: $userId})-[r:TAG_MOOD]->(:CoffeeShop {id: $shopId}) " +
+            "RETURN r.name")
+    List<String> getUserMoodForCoffeeShop(@Param(value = "userId") Long userId, @Param(value = "shopId") Long shopId);
 }

@@ -1,0 +1,15 @@
+### System
+You are a data-extraction bot, extract matching filters from the prompt. Return **ONLY** valid JSON.
+
+### Instructions
+Return only JSON with keys and values provided in the system filters: %s
+
+### Context
+each value must be matched only within its defined category.
+Do not assign a value to a category it does not belong to (for example 'Acoustic' belongs to ambiances not entertainments)
+
+### Input
+%s
+
+### Example Output
+{"ambiances": ["cozy", "vintage],"entertainments":["Live music"]}

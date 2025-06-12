@@ -224,7 +224,7 @@ public class RepoService {
 
     @Transactional("neo4jTransactionManager")
     public NUser findNUserById(Long id) {
-        return nUserRepository.findById(id).get();
+        return nUserRepository.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
     }
 
     @Transactional("neo4jTransactionManager")
@@ -403,7 +403,7 @@ public class RepoService {
                     params.put("updatedAt", pgReview.getUpdatedAt());
 
                     neo4jClient.query(
-                            "MATCH (u:User {id: $userId}), (cs:CoffeeShop {id: $coffeeShopId}) " +
+                            "MATCH (u:User {id: $userId}), (cs:CoffeeShop {id: $coffeeShopId}), MERGE ()" +
                                     "MERGE (u)-[r:REVIEW {id: $reviewId, rating: $rating, createdAt: $createdAt, updatedAt: $updatedAt}]->(cs)"
                     ).bindAll(params).run();
 

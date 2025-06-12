@@ -14,7 +14,6 @@ import com.example.socialcoffee.enums.Status;
 import com.example.socialcoffee.model.UserSettingModel;
 import com.example.socialcoffee.repository.neo4j.NUserRepository;
 import com.example.socialcoffee.repository.postgres.ReviewRepository;
-import com.example.socialcoffee.repository.postgres.UserFollowRepository;
 import com.example.socialcoffee.repository.postgres.UserRepository;
 import com.example.socialcoffee.repository.postgres.UserSettingRepository;
 import com.example.socialcoffee.utils.DateTimeUtil;
@@ -78,8 +77,7 @@ public class UserService {
         if (currentUserId.equals(viewingUserId)) {
             isFollowing = false;
         } else {
-            isFollowing = userFollowRepository.existsById(new UserFollow.UserFollowerId(viewingUserId,
-                    currentUserId));
+            isFollowing = nUserRepository.userFollowExist(viewingUserId, currentUserId);
         }
         return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS),
                 new UserProfile(user,
@@ -283,68 +281,34 @@ public class UserService {
     @Transactional
     public ResponseEntity<ResponseMetaData> followUser(User user,
                                                        Long followingWhoId) {
-        // Check if users exist
-        Optional<User> optionalFollowee = userRepository.findById(followingWhoId);
-        if (optionalFollowee.isEmpty())
-            return ResponseEntity.badRequest().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOUND)));
-        // Check if already following
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(followingWhoId,
-                user.getId());
-        if (userFollowRepository.existsById(id)) {
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.ALREADY_FOLLOWING)));
-        }
-
-        // Create and save follow relationship
-        UserFollow userFollow = new UserFollow();
-        userFollow.setUserFollowerId(id);
-        userFollowRepository.save(userFollow);
         NUser u1 = repoService.findNUserById(user.getId());
-        NUser u2 = repoService.findNUserById(followingWhoId);
-        u1.addFollowing(u2);
-        repoService.saveNUser(u1);
+        u1.removeFollowing(neo4jClient, followingWhoId);
+        u1.addFollowing(neo4jClient, followingWhoId);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
     @Transactional
     public ResponseEntity<ResponseMetaData> unfollowUser(User user,
                                                          Long unfollowingWhoId) {
-        UserFollow.UserFollowerId id = new UserFollow.UserFollowerId(unfollowingWhoId,
-                user.getId());
-
-        if (!userFollowRepository.existsById(id)) {
-            return ResponseEntity.ok().body(new ResponseMetaData(new MetaDTO(MetaData.NOT_FOLLOWING)));
-        }
-
-        userFollowRepository.deleteById(id);
         NUser u1 = repoService.findNUserById(user.getId());
-        u1.removeFollowing(neo4jClient, u1.getId(), unfollowingWhoId);
+        u1.removeFollowing(neo4jClient, unfollowingWhoId);
         return ResponseEntity.ok(new ResponseMetaData(new MetaDTO(MetaData.SUCCESS)));
     }
 
     public Page<FollowerDTO> getFollowers(Long userId,
                                           Pageable pageable) {
         // Get users who follow the specified user
-        Page<User> followers = userFollowRepository.findFollowersByFolloweeId(userId,
+        Page<NUser> followers = nUserRepository.findFollowers(userId,
                 pageable);
-        final Set<Long> relation = userFollowRepository.findRelationByIdIn(
-                followers
-                        .getContent()
-                        .stream()
-                        .map(u -> new UserFollow.UserFollowerId(u.getId(),
-                                userId))
-                        .toList());
 
-
-        return followers.map(u -> new FollowerDTO(u,
-                relation.contains(u.getId())));
+        return followers.map(u -> new FollowerDTO(u, true));
     }
 
     public Page<FollowingDTO> getFollowing(Long userId,
                                            Pageable pageable) {
         // Get users who the specified user follows
-        Page<User> following = userFollowRepository.findFollowingsByFollowerId(userId,
-                pageable);
-        return following.map(User::toFollowingDTO);
+        Page<NUser> following = nUserRepository.findFollowings(userId, pageable);
+        return following.map(u -> new FollowingDTO(u, true));
     }
 
     public Page<UserDTO> search(UserSearchRequest request,

@@ -2,11 +2,14 @@ package com.example.socialcoffee.repository.neo4j;
 
 import com.example.socialcoffee.domain.neo4j.NCoffeeShop;
 import com.example.socialcoffee.model.CoffeeShopRecommendationDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 
 public interface NCoffeeShopRepository extends Neo4jRepository<NCoffeeShop, Long> {
     @Query("""
@@ -135,8 +138,63 @@ public interface NCoffeeShopRepository extends Neo4jRepository<NCoffeeShop, Long
             ORDER BY score DESC
             LIMIT 10
             """)
-    List<CoffeeShopRecommendationDTO> findSimilarToPlacesYouLike(@Param("userId") Long userId);
+    List<CoffeeShopRecommendationDTO> findSimilarToPlacesYouLike(@Param("userId") Long userId,
+                                                                 @Param("weeks") Integer weeks);
 
     @Query("MATCH (u1:CoffeeShop {id: $coffeeShopId})-[p:HAS_FEATURE]->(f) DELETE p")
     void clearAllFeatures(@Param("coffeeShopId") Long coffeeShopId);
+
+    @Query(value = """
+            MATCH (cs:CoffeeShop)<-[m:TAG_MOOD {name: $mood}]-(:User)
+            WITH cs, count(m) AS mood_count
+            WHERE mood_count > $moodCountThreshold
+            
+            MATCH (cs)<-[r:REVIEW]-(:User)
+            WITH cs, mood_count,
+                 avg(r.rating) AS avg_rating,
+                 count(r) AS review_count,
+                 sum(CASE WHEN duration.inDays(r.createdAt, datetime()).weeks <= $weeks
+                          THEN 1
+                          ELSE 0
+                     END) AS recent_review_count
+            WHERE avg_rating > $avgRatingThreshold
+            
+            OPTIONAL MATCH (u:User {id: $userId})-[:LIKE]->(cs)
+            WHERE u IS NULL
+            
+            RETURN cs.id AS shopId,
+                   (
+                     0.7 * toFloat(mood_count) +
+                     0.1 * toFloat(avg_rating) +
+                     0.15 * log(review_count) +
+                     0.05 * log(recent_review_count)
+                   ) AS score
+            ORDER BY score DESC
+            SKIP $skip LIMIT $limit
+            """,
+            countQuery = """
+            MATCH (cs:CoffeeShop)<-[m:TAG_MOOD {name: $mood}]-(:User)
+            WITH cs, count(m) AS mood_count
+            WHERE mood_count > $moodCountThreshold
+            
+            MATCH (cs)<-[r:REVIEW]-(:User)
+            WITH cs, mood_count,
+                 avg(r.rating) AS avg_rating
+            WHERE avg_rating > $avgRatingThreshold
+            
+            OPTIONAL MATCH (u:User {id: $userId})-[:LIKE]->(cs)
+            WHERE u IS NULL
+            
+            RETURN count(cs) AS count
+            """)
+    Page<Long> findTopCoffeeShopByMood(@Param("mood") String mood,
+                                       @Param("userId") Long userId,
+                                       @Param("moodCountThreshold") Integer moodCountThreshold,
+                                       @Param("avgRatingThreshold") Double avgRatingThreshold,
+                                       @Param("weeks") Integer weeks,
+                                       Pageable pageRequest);
+
+    @Query(value = "MATCH (:User)-[r:TAG_MOOD]->(:CoffeeShop {id: $shopId}) " +
+            "RETURN r.name AS mood, COUNT(r) AS count")
+    List<Map<String, Object>> getMoodsForCoffeeShop(@Param(value = "shopId") Long shopId);
 }

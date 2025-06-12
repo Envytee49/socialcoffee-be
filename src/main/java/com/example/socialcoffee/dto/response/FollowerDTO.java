@@ -1,5 +1,6 @@
 package com.example.socialcoffee.dto.response;
 
+import com.example.socialcoffee.domain.neo4j.NUser;
 import com.example.socialcoffee.domain.postgres.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class FollowerDTO extends UserDTO {
         super(user);
     }
 
-    public FollowerDTO(final User user, boolean isFollowing) {
+    public FollowerDTO(final NUser user, boolean isFollowing) {
         super(user);
         this.isFollowing = isFollowing;
     }
